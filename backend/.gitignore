@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+gcs-keyfile.json
+*.log
+.DS_Store
+
+# Credentials and secrets
+CREDENTIALS.md
+*credentials*.md
+!CREDENTIALS.template.md

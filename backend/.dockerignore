@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+!.env.example
+dist
+coverage
+*.log
+.git
+.gitignore
+README.md
+.vscode
+.idea
+*.test.ts
+__tests__
+gcs-keyfile.json
+*.json.backup

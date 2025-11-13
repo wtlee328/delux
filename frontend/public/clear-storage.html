@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Storage - Delux+</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    button {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #c0392b;
+    }
+    .success {
+      background: #2ecc71;
+      color: white;
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 20px;
+      display: none;
+    }
+    .info {
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      border-left: 4px solid #3498db;
+    }
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Clear Browser Storage</h1>
+    <p>If you're experiencing login issues or seeing JSON parsing errors, clearing your browser's local storage can help.</p>
+    
+    <div class="info">
+      <strong>What this does:</strong>
+      <ul>
+        <li>Removes stored authentication token</li>
+        <li>Removes stored user data</li>
+        <li>Clears any corrupted data</li>
+      </ul>
+      <p><strong>Note:</strong> You will need to log in again after clearing storage.</p>
+    </div>
+
+    <button onclick="clearStorage()">Clear Storage & Reload</button>
+    
+    <div id="success" class="success">
+      ✓ Storage cleared successfully! Redirecting to login...
+    </div>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+      <a href="/">← Back to Delux+</a>
+    </div>
+  </div>
+
+  <script>
+    function clearStorage() {
+      // Clear localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Show success message
+      document.getElementById('success').style.display = 'block';
+      
+      // Redirect to home after 2 seconds
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

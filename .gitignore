@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+gcs-keyfile.json
+
+# Deployment artifacts
+deployment/cloud_sql_proxy
+deployment/*.json.backup
+deployment/CREDENTIALS.md
+.firebase/
+.firebaserc.backup
