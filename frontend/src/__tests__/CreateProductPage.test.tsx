@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import axios from 'axios';
 import CreateProductPage from '../pages/supplier/CreateProductPage';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/Toast';
 
 // Mock axios
 vi.mock('axios');
@@ -45,7 +46,9 @@ const renderCreateProductPage = () => {
   return render(
     <BrowserRouter>
       <AuthProvider>
-        <CreateProductPage />
+        <ToastProvider>
+          <CreateProductPage />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );
