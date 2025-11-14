@@ -122,11 +122,7 @@ const CreateProductPage: React.FC = () => {
         submitData.append('coverImage', formData.封面圖);
       }
 
-      await axios.post('/api/supplier/tours', submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await axios.post('/api/supplier/tours', submitData);
 
       showSuccess('產品創建成功');
       // Redirect to dashboard on success
