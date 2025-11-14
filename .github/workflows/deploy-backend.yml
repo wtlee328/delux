@@ -1,0 +1,91 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: asia-east1
+  SERVICE_NAME: delux-plus-backend
+  IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/delux-plus-backend
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+                       -t ${{ env.IMAGE_NAME }}:latest \
+                       ./backend
+
+      - name: Push Docker image to GCR
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image=${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            --set-secrets="DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest" \
+            --set-env-vars="DB_HOST=/cloudsql/${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }}" \
+            --set-env-vars="DB_PORT=5432" \
+            --set-env-vars="DB_NAME=${{ secrets.DB_NAME }}" \
+            --set-env-vars="DB_USER=${{ secrets.DB_USER }}" \
+            --set-env-vars="GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}" \
+            --set-env-vars="CORS_ORIGIN=${{ secrets.FRONTEND_URL }}" \
+            --add-cloudsql-instances=${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }} \
+            --service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
+            --memory=512Mi \
+            --cpu=1 \
+            --timeout=300 \
+            --max-instances=10 \
+            --min-instances=0
+
+      - name: Get Service URL
+        id: get-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --format="value(status.url)")
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "Backend deployed to: $SERVICE_URL"
+
+      - name: Test Health Endpoint
+        run: |
+          sleep 10
+          curl -f ${{ steps.get-url.outputs.url }}/health || exit 1
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Backend deployed successfully!"
+          echo "🔗 URL: ${{ steps.get-url.outputs.url }}"
+          echo "📦 Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "🌍 Region: ${{ env.GCP_REGION }}"

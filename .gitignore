@@ -6,6 +6,14 @@ dist/
 .DS_Store
 gcs-keyfile.json
 
+# Service account keys - NEVER COMMIT THESE!
+*-key.json
+*-keyfile.json
+github-actions-key.json
+firebase-github-actions-key.json
+.github/*.json
+.github/*-key.json
+
 # Deployment artifacts
 deployment/cloud_sql_proxy
 deployment/*.json.backup

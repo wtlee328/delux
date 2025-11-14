@@ -131,6 +131,51 @@ cd frontend
 npm run build
 ```
 
+## Deployment
+
+### Manual Deployment
+
+See the [deployment guide](deployment/README.md) for detailed instructions on deploying to Google Cloud Platform.
+
+### Automated CI/CD
+
+Automated deployment from GitHub to GCP is configured using GitHub Actions.
+
+**Quick Setup:**
+1. Run the setup script: `.github/setup-cicd.sh`
+2. Add secrets to GitHub repository settings
+3. Push to `main` branch to trigger deployment
+
+**Documentation:**
+- 🚀 [Quick Start Guide](.github/QUICK-START.md) - Get started in 5 minutes
+- 📖 [Complete CI/CD Setup](.github/CICD-SETUP.md) - Detailed configuration guide
+- 📋 [CI/CD Summary](CICD-SUMMARY.md) - Overview and usage examples
+
+**What's Automated:**
+- ✅ Backend deployment to Cloud Run
+- ✅ Frontend deployment to Firebase Hosting
+- ✅ Automated testing on push/PR
+- ✅ Docker image building and pushing
+- ✅ Health checks after deployment
+
+Push to `main` branch and your changes will automatically deploy! 🎉
+
+## Database Seeding
+
+Create initial admin user and test data:
+
+```bash
+cd backend
+
+# Create admin user
+npm run seed:admin
+
+# Create test data (optional)
+npm run seed:test
+```
+
+See [backend/SEEDING.md](backend/SEEDING.md) for detailed instructions.
+
 ## License
 
 See LICENSE file for details.
