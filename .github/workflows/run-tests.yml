@@ -57,10 +57,9 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      # Temporarily skip tests - need to fix ToastProvider wrapping in all test files
-      # - name: Run tests
-      #   working-directory: ./frontend
-      #   run: npm test
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test
 
       - name: Run build
         working-directory: ./frontend
