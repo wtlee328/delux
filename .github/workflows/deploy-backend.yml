@@ -54,7 +54,7 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --set-env-vars="NODE_ENV=production" \
-            --set-secrets="DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest" \
+            --set-secrets="DB_PASSWORD=delux-db-password:latest,JWT_SECRET=delux-jwt-secret:latest" \
             --set-env-vars="DB_HOST=/cloudsql/${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }}" \
             --set-env-vars="DB_PORT=5432" \
             --set-env-vars="DB_NAME=${{ secrets.DB_NAME }}" \
