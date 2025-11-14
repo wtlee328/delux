@@ -113,13 +113,13 @@ const CreateProductPage: React.FC = () => {
 
     try {
       const submitData = new FormData();
-      submitData.append('產品標題', formData.產品標題);
-      submitData.append('目的地', formData.目的地);
-      submitData.append('天數', formData.天數);
-      submitData.append('產品描述', formData.產品描述);
-      submitData.append('淨價', formData.淨價);
+      submitData.append('title', formData.產品標題);
+      submitData.append('destination', formData.目的地);
+      submitData.append('durationDays', formData.天數);
+      submitData.append('description', formData.產品描述);
+      submitData.append('netPrice', formData.淨價);
       if (formData.封面圖) {
-        submitData.append('封面圖', formData.封面圖);
+        submitData.append('coverImage', formData.封面圖);
       }
 
       await axios.post('/api/supplier/tours', submitData, {
