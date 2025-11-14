@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast';
 import { validateProductForm } from '../../utils/validation';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import axios from 'axios';
+import axios from '../../config/axios';
 
 interface FormData {
   產品標題: string;

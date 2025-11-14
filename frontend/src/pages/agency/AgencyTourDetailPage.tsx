@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../../config/axios';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ProductDetail {
