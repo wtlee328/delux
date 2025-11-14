@@ -43,7 +43,8 @@ async function loadMigrations(): Promise<Migration[]> {
   const migrationsDir = __dirname;
   const files = fs.readdirSync(migrationsDir)
     .filter(file => file.endsWith('.ts') || file.endsWith('.js'))
-    .filter(file => file !== 'runner.ts' && file !== 'runner.js')
+    .filter(file => !file.endsWith('.d.ts')) // Exclude TypeScript declaration files
+    .filter(file => file !== 'runner.ts' && file !== 'runner.js' && file !== 'README.md')
     .sort();
 
   const migrations: Migration[] = [];

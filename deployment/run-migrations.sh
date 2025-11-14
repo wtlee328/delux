@@ -1,22 +1,36 @@
 #!/bin/bash
 
-# Delux+ Database Migration Runner
-# This script runs database migrations against Cloud SQL
+# Run database migrations on production
+# This script connects to Cloud SQL and runs all pending migrations
 
 set -e
 
-echo "=== Delux+ Database Migration ==="
+PROJECT_ID="delux-plus-prod"
+REGION="asia-east1"
+INSTANCE_NAME="delux-plus-db"
 
-# Check if required environment variables are set
-if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ]; then
-    echo "Error: Required environment variables not set"
-    echo "Required: DB_HOST, DB_NAME, DB_USER, DB_PASSWORD"
-    exit 1
-fi
+echo "🔄 Running database migrations on production..."
+echo "Project: $PROJECT_ID"
+echo "Instance: $INSTANCE_NAME"
+echo ""
 
-echo "Database: $DB_NAME"
-echo "Host: $DB_HOST"
-echo "User: $DB_USER"
+# Get database credentials from secrets
+echo "📝 Fetching database credentials..."
+DB_PASSWORD=$(gcloud secrets versions access latest --secret="delux-db-password" --project=$PROJECT_ID)
+
+# Get the public IP of the Cloud SQL instance
+echo "📝 Getting Cloud SQL instance IP..."
+DB_HOST=$(gcloud sql instances describe $INSTANCE_NAME --project=$PROJECT_ID --format="value(ipAddresses[0].ipAddress)")
+
+# Set environment variables for migration
+export DB_HOST="$DB_HOST"
+export DB_PORT="5432"
+export DB_NAME="delux_plus"
+export DB_USER="postgres"
+export DB_PASSWORD="$DB_PASSWORD"
+export NODE_ENV="production"
+
+echo "✅ Credentials loaded"
 echo ""
 
 # Navigate to backend directory
@@ -24,17 +38,17 @@ cd "$(dirname "$0")/../backend"
 
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then
-    echo "Installing dependencies..."
-    npm install
+  echo "📦 Installing dependencies..."
+  npm install
 fi
 
-# Build TypeScript
-echo "Building application..."
-npm run build
-
 # Run migrations
-echo "Running migrations..."
+echo "🚀 Running migrations..."
 npm run migrate
 
 echo ""
-echo "=== Migrations Complete ==="
+echo "✅ Migrations completed successfully!"
+echo ""
+echo "Next steps:"
+echo "1. Run: ./seed-production.sh"
+echo "2. Or manually: cd backend && npm run seed:admin"
