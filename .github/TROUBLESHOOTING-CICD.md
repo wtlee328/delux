@@ -144,7 +144,48 @@ git push origin main
    ./setup-cicd.sh
    ```
 
-### Issue 4: Workflows don't trigger
+### Issue 4: "Permission denied on secret" - Secret Manager Access
+
+**Symptom:** Cloud Run deployment fails with:
+```
+Permission denied on secret: projects/XXX/secrets/db-password/versions/latest 
+for Revision service account XXX. The service account used must be granted 
+the 'Secret Manager Secret Accessor' role
+```
+
+**Root Cause:** The Cloud Run service account doesn't have permission to access Secret Manager secrets.
+
+**Solution:**
+
+Run the fix script:
+```bash
+cd .github
+./fix-secret-permissions.sh
+```
+
+Or manually grant the role:
+```bash
+gcloud projects add-iam-policy-binding delux-plus-prod \
+  --member="serviceAccount:delux-plus-storage-sa@delux-plus-prod.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+**Verify the fix:**
+```bash
+# Check if the service account has the role
+gcloud projects get-iam-policy delux-plus-prod \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:serviceAccount:delux-plus-storage-sa@*"
+```
+
+**Then redeploy:**
+```bash
+# Trigger a new deployment by pushing a commit
+git commit --allow-empty -m "chore: trigger redeployment after fixing permissions"
+git push origin main
+```
+
+### Issue 5: Workflows don't trigger
 
 **Symptom:** No workflows run when you push
 
@@ -162,7 +203,7 @@ git push origin main
 
 4. Make changes in `backend/` or `frontend/` directories
 
-### Issue 5: "Resource not found" errors
+### Issue 6: "Resource not found" errors
 
 **Symptom:** Deployment fails because Cloud Run service or SQL instance not found
 
