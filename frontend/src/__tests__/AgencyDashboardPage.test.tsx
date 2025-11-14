@@ -130,9 +130,14 @@ describe('AgencyDashboardPage', () => {
       renderAgencyDashboardPage();
       const user = userEvent.setup();
 
+      // Wait for products to load first (which populates the dropdown options)
       await waitFor(() => {
-        expect(screen.getByLabelText('目的地：')).toBeInTheDocument();
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
       });
+
+      // Clear the mock to track the next call
+      mockedAxios.get.mockClear();
+      mockedAxios.get.mockResolvedValue({ data: [mockProducts[0]] });
 
       const destinationSelect = screen.getByLabelText('目的地：') as HTMLSelectElement;
       await user.selectOptions(destinationSelect, 'Tokyo');
