@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import axios from 'axios';
 import LoginPage from '../pages/LoginPage';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/Toast';
 
 // Mock axios
 vi.mock('axios');
@@ -24,7 +25,9 @@ const renderLoginPage = () => {
   return render(
     <BrowserRouter>
       <AuthProvider>
-        <LoginPage />
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );
@@ -52,9 +55,10 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /登入/i });
     await user.click(submitButton);
     
-    // HTML5 validation should prevent submission
-    const emailInput = screen.getByLabelText(/電子郵件/i) as HTMLInputElement;
-    expect(emailInput.validity.valid).toBe(false);
+    // Custom validation should show error messages
+    await waitFor(() => {
+      expect(screen.getByText(/電子郵件為必填/i)).toBeInTheDocument();
+    });
   });
 
   it('handles successful login and redirects admin to /admin/users', async () => {

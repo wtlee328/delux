@@ -143,6 +143,9 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
 
   return (
     <div
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
       style={{
         backgroundColor: getBackgroundColor(toast.type),
         color: 'white',
