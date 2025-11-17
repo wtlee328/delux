@@ -49,24 +49,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post('/api/auth/login', { email, password });
-    const { token: newToken, user: newUser } = response.data;
-    
-    // Validate response data
-    if (!newToken || !newUser) {
-      throw new Error('Invalid login response: missing token or user data');
+    try {
+      console.log('Attempting login with:', email);
+      const response = await axios.post('/api/auth/login', { email, password });
+      console.log('Login response:', response.data);
+      const { token: newToken, user: newUser } = response.data;
+      
+      // Validate response data
+      if (!newToken || !newUser) {
+        throw new Error('Invalid login response: missing token or user data');
+      }
+      
+      // Store in state
+      setToken(newToken);
+      setUser(newUser);
+      
+      // Store in localStorage
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      // Set default authorization header for axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    } catch (error) {
+      console.error('Login error in AuthContext:', error);
+      throw error;
     }
-    
-    // Store in state
-    setToken(newToken);
-    setUser(newUser);
-    
-    // Store in localStorage
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    // Set default authorization header for axios
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };
 
   const logout = () => {

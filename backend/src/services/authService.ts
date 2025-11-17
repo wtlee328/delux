@@ -29,11 +29,21 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  // Query user from database
-  const result = await pool.query(
-    'SELECT id, email, password_hash, name, role, active_role FROM users WHERE email = $1',
-    [email]
-  );
+  // Query user from database (handle case where active_role column doesn't exist yet)
+  let result;
+  try {
+    result = await pool.query(
+      'SELECT id, email, password_hash, name, role, active_role FROM users WHERE email = $1',
+      [email]
+    );
+  } catch (error) {
+    // active_role column doesn't exist yet, query without it
+    console.log('active_role column not found, using legacy query');
+    result = await pool.query(
+      'SELECT id, email, password_hash, name, role FROM users WHERE email = $1',
+      [email]
+    );
+  }
 
   if (result.rows.length === 0) {
     throw new Error('Invalid email or password');
@@ -100,10 +110,16 @@ export async function setActiveRole(
   role: 'admin' | 'supplier' | 'agency'
 ): Promise<LoginResponse> {
   // Verify user has this role
-  const roleCheck = await pool.query(
-    'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2',
-    [userId, role]
-  );
+  let roleCheck;
+  try {
+    roleCheck = await pool.query(
+      'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2',
+      [userId, role]
+    );
+  } catch (error) {
+    // user_roles table doesn't exist yet
+    roleCheck = { rows: [] };
+  }
 
   if (roleCheck.rows.length === 0) {
     // Check if user has this role in legacy role column
@@ -117,11 +133,16 @@ export async function setActiveRole(
     }
   }
 
-  // Update active_role in users table
-  await pool.query(
-    'UPDATE users SET active_role = $1 WHERE id = $2',
-    [role, userId]
-  );
+  // Update active_role in users table (if column exists)
+  try {
+    await pool.query(
+      'UPDATE users SET active_role = $1 WHERE id = $2',
+      [role, userId]
+    );
+  } catch (error) {
+    // active_role column doesn't exist yet, skip update
+    console.log('active_role column not found, skipping update');
+  }
 
   // Get user info
   const userResult = await pool.query(
@@ -132,12 +153,18 @@ export async function setActiveRole(
   const user = userResult.rows[0];
 
   // Get all roles
-  const rolesResult = await pool.query(
-    'SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role',
-    [userId]
-  );
-
-  const roles = rolesResult.rows.map(row => row.role);
+  let roles: string[] = [];
+  try {
+    const rolesResult = await pool.query(
+      'SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role',
+      [userId]
+    );
+    roles = rolesResult.rows.map(row => row.role);
+  } catch (error) {
+    // user_roles table doesn't exist yet
+    console.log('user_roles table not found in setActiveRole');
+  }
+  
   const userRoles = roles.length > 0 ? roles : [user.role];
 
   // Generate new JWT token with selected role
