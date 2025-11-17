@@ -42,6 +42,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [timeline, setTimeline] = useState<TimelineDay[]>([
     { dayNumber: 1, items: [] },
   ]);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -56,7 +57,7 @@ const ItineraryPlannerPage: React.FC = () => {
   };
 
   const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
+    const { source, destination, draggableId } = result;
 
     if (!destination) {
       return;
@@ -64,8 +65,25 @@ const ItineraryPlannerPage: React.FC = () => {
 
     // Handle drag from library to timeline
     if (source.droppableId === 'resource-library' && destination.droppableId.startsWith('day-')) {
-      // This would require access to the product being dragged
-      // For now, we'll handle this in a simplified way
+      const destDayNum = parseInt(destination.droppableId.replace('day-', ''));
+      
+      // Find the product being dragged
+      const product = availableProducts.find(p => p.id === draggableId);
+      if (!product) return;
+
+      // Create a copy of the product for the timeline
+      const productCopy = { ...product };
+
+      const newTimeline = timeline.map(day => {
+        if (day.dayNumber === destDayNum) {
+          const newItems = [...day.items];
+          newItems.splice(destination.index, 0, productCopy);
+          return { ...day, items: newItems };
+        }
+        return day;
+      });
+
+      setTimeline(newTimeline);
       return;
     }
 
@@ -197,7 +215,10 @@ const ItineraryPlannerPage: React.FC = () => {
                 <Droppable droppableId="resource-library" isDropDisabled={true}>
                   {(provided: any) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
-                      <ResourceLibrary onProductHover={setHoveredProduct} />
+                      <ResourceLibrary 
+                        onProductHover={setHoveredProduct}
+                        onProductsLoaded={setAvailableProducts}
+                      />
                       {provided.placeholder}
                     </div>
                   )}

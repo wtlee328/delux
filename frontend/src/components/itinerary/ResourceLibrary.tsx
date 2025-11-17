@@ -19,9 +19,10 @@ interface Product {
 
 interface ResourceLibraryProps {
   onProductHover?: (product: Product | null) => void;
+  onProductsLoaded?: (products: Product[]) => void;
 }
 
-const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover }) => {
+const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, onProductsLoaded }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +42,10 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover }) => 
         productType: p.productType || 'activity',
       }));
       setProducts(productsWithType);
+      // Notify parent component of loaded products
+      if (onProductsLoaded) {
+        onProductsLoaded(productsWithType);
+      }
     } catch (err) {
       console.error('Failed to fetch products:', err);
     } finally {

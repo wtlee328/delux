@@ -412,7 +412,7 @@
     - Store timeline configuration and product associations
     - _Requirements: 3.4_
   
-  - [-] 19.8 Write tests for itinerary planning interface
+  - [ ] 19.8 Write tests for itinerary planning interface
     - Test drag-and-drop functionality
     - Test timeline day management
     - Test map pin updates
