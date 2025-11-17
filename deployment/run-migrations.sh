@@ -33,6 +33,22 @@ export NODE_ENV="production"
 echo "✅ Credentials loaded"
 echo ""
 
+# Start Cloud SQL Proxy in the background
+echo "🔌 Starting Cloud SQL Proxy..."
+cloud-sql-proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
+PROXY_PID=$!
+
+# Wait for proxy to be ready
+echo "⏳ Waiting for proxy to connect..."
+sleep 5
+
+# Override DB_HOST and DB_PORT to use proxy
+export DB_HOST="127.0.0.1"
+export DB_PORT="5433"
+
+echo "✅ Cloud SQL Proxy connected"
+echo ""
+
 # Navigate to backend directory
 cd "$(dirname "$0")/../backend"
 
@@ -45,6 +61,11 @@ fi
 # Run migrations
 echo "🚀 Running migrations..."
 npm run migrate
+
+# Stop the proxy
+echo ""
+echo "🛑 Stopping Cloud SQL Proxy..."
+kill $PROXY_PID
 
 echo ""
 echo "✅ Migrations completed successfully!"
