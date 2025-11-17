@@ -93,6 +93,9 @@ const RoleSelectionPage: React.FC = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
+      // Small delay to ensure removal completes
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Update localStorage with new token and user info
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -106,6 +109,9 @@ const RoleSelectionPage: React.FC = () => {
 
       const redirectPath = getRedirectPath(role);
       console.log('Redirecting to:', redirectPath);
+
+      // Small delay to ensure localStorage write completes
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Force page reload to ensure AuthContext picks up new token
       window.location.href = redirectPath;
