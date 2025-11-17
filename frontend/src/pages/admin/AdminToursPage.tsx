@@ -85,6 +85,26 @@ const AdminToursPage: React.FC = () => {
     navigate(`/admin/tours/${productId}`);
   };
 
+  const handleDeleteProduct = async (productId: string, productTitle: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent row click navigation
+    
+    const confirmMessage = `⚠️ 警告：刪除產品\n\n您即將刪除產品：\n標題：${productTitle}\n\n此操作將永久刪除該產品及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/admin/tours/${productId}`);
+      // Refresh the product list
+      await fetchProducts();
+      await fetchPendingCount();
+    } catch (err: any) {
+      setError('刪除產品失敗，請稍後再試');
+      console.error('Error deleting product:', err);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -137,6 +157,7 @@ const AdminToursPage: React.FC = () => {
                   <th style={styles.th}>產品標題</th>
                   <th style={styles.th}>供應商名稱</th>
                   <th style={styles.th}>狀態</th>
+                  <th style={styles.th}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,6 +173,14 @@ const AdminToursPage: React.FC = () => {
                       <span style={getStatusStyle(product.status)}>
                         {product.status}
                       </span>
+                    </td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={(e) => handleDeleteProduct(product.id, product.title, e)}
+                        style={styles.deleteButton}
+                      >
+                        刪除
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -294,6 +323,16 @@ const styles = {
     padding: '2rem',
     textAlign: 'center' as const,
     color: '#6c757d',
+  },
+  deleteButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    transition: 'background-color 0.2s',
   },
 };
 

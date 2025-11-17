@@ -81,7 +81,7 @@ export async function createProduct(
 }
 
 /**
- * Update an existing product with ownership validation
+ * Update an existing product with ownership validation (excluding soft-deleted products)
  * @param id - Product ID
  * @param supplierId - Supplier ID for ownership validation
  * @param productData - Updated product data
@@ -93,9 +93,9 @@ export async function updateProduct(
   supplierId: string,
   productData: UpdateProductRequest
 ): Promise<Product> {
-  // First verify ownership
+  // First verify ownership and that product is not soft-deleted
   const ownershipCheck = await pool.query(
-    'SELECT id FROM products WHERE id = $1 AND supplier_id = $2',
+    'SELECT id FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [id, supplierId]
   );
 
@@ -162,7 +162,7 @@ export async function updateProduct(
 }
 
 /**
- * Get all products for a specific supplier
+ * Get all products for a specific supplier (excluding soft-deleted products)
  * @param supplierId - Supplier ID
  * @returns Array of products owned by the supplier
  */
@@ -170,7 +170,7 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
   const result = await pool.query(
     `SELECT id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at
      FROM products
-     WHERE supplier_id = $1
+     WHERE supplier_id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)
      ORDER BY created_at DESC`,
     [supplierId]
   );
@@ -191,7 +191,7 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
 }
 
 /**
- * Get all products for admin view with supplier information
+ * Get all products for admin view with supplier information (excluding soft-deleted products)
  * @returns Array of all products with supplier names
  */
 export async function getAllProducts(): Promise<ProductWithSupplier[]> {
@@ -201,6 +201,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
+     WHERE p.is_deleted = FALSE OR p.is_deleted IS NULL
      ORDER BY p.created_at DESC`
   );
 
@@ -221,7 +222,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
 }
 
 /**
- * Get published products with optional filtering for agency view
+ * Get published products with optional filtering for agency view (excluding soft-deleted products)
  * @param filters - Optional filters for destination and duration
  * @returns Array of published products with supplier names
  */
@@ -232,7 +233,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
            u.name as supplier_name
     FROM products p
     JOIN users u ON p.supplier_id = u.id
-    WHERE p.status = '已發佈'
+    WHERE p.status = '已發佈' AND (p.is_deleted = FALSE OR p.is_deleted IS NULL)
   `;
 
   const values: any[] = [];
@@ -269,10 +270,10 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
 }
 
 /**
- * Get a single product by ID
+ * Get a single product by ID (excluding soft-deleted products)
  * @param id - Product ID
  * @returns Product with supplier information
- * @throws Error if product not found
+ * @throws Error if product not found or soft-deleted
  */
 export async function getProductById(id: string): Promise<ProductWithSupplier> {
   const result = await pool.query(
@@ -281,7 +282,7 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
-     WHERE p.id = $1`,
+     WHERE p.id = $1 AND (p.is_deleted = FALSE OR p.is_deleted IS NULL)`,
     [id]
   );
 
@@ -308,7 +309,7 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
 }
 
 /**
- * Update product status
+ * Update product status (excluding soft-deleted products)
  * @param id - Product ID
  * @param status - New status
  * @param supplierId - Optional supplier ID for ownership validation (required for supplier updates)
@@ -323,7 +324,7 @@ export async function updateProductStatus(
   // If supplierId is provided, verify ownership
   if (supplierId) {
     const ownershipCheck = await pool.query(
-      'SELECT id FROM products WHERE id = $1 AND supplier_id = $2',
+      'SELECT id FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [id, supplierId]
     );
 
@@ -334,7 +335,7 @@ export async function updateProductStatus(
   const result = await pool.query(
     `UPDATE products
      SET status = $1, updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2
+     WHERE id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)
      RETURNING id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at`,
     [status, id]
   );
@@ -361,7 +362,7 @@ export async function updateProductStatus(
 }
 
 /**
- * Get products by status for admin review
+ * Get products by status for admin review (excluding soft-deleted products)
  * @param status - Product status to filter by
  * @returns Array of products with the specified status
  */
@@ -372,7 +373,7 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
-     WHERE p.status = $1
+     WHERE p.status = $1 AND (p.is_deleted = FALSE OR p.is_deleted IS NULL)
      ORDER BY p.created_at DESC`,
     [status]
   );
@@ -400,9 +401,45 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
  */
 export async function getProductCountByStatus(status: ProductStatus): Promise<number> {
   const result = await pool.query(
-    'SELECT COUNT(*) as count FROM products WHERE status = $1',
+    'SELECT COUNT(*) as count FROM products WHERE status = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [status]
   );
 
   return parseInt(result.rows[0].count);
+}
+
+/**
+ * Soft delete a product (marks as deleted without removing from database)
+ * @param id - Product ID
+ * @param supplierId - Optional supplier ID for ownership validation (required for supplier deletes)
+ * @throws Error if product not found or access denied
+ */
+export async function deleteProduct(id: string, supplierId?: string): Promise<void> {
+  // If supplierId is provided, verify ownership
+  if (supplierId) {
+    const ownershipCheck = await pool.query(
+      'SELECT id FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
+      [id, supplierId]
+    );
+
+    if (ownershipCheck.rows.length === 0) {
+      throw new Error('Product not found or access denied');
+    }
+  } else {
+    // Admin delete - just check if product exists and is not already deleted
+    const existingProduct = await pool.query(
+      'SELECT id FROM products WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
+      [id]
+    );
+
+    if (existingProduct.rows.length === 0) {
+      throw new Error('Product not found');
+    }
+  }
+
+  // Soft delete product by setting is_deleted flag and deleted_at timestamp
+  await pool.query(
+    'UPDATE products SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+    [id]
+  );
 }

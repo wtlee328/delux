@@ -340,20 +340,20 @@
     - Send notification to supplier on revision request with feedback
     - _Requirements: 3.2_
 
-- [ ] 18. Implement admin account deletion functionality
-  - [ ] 18.1 Add user search to admin interface
+- [x] 18. Implement admin account deletion functionality
+  - [x] 18.1 Add user search to admin interface
     - Create search bar component on /admin/users page
     - Implement search by email and name
     - Add real-time search filtering
     - _Requirements: 3.3_
   
-  - [ ] 18.2 Create delete account feature
+  - [x] 18.2 Create delete account feature
     - Add "Delete" button to each user row
     - Implement confirmation modal with warning message
     - Require explicit confirmation before deletion
     - _Requirements: 3.3_
   
-  - [ ] 18.3 Implement soft delete backend
+  - [x] 18.3 Implement soft delete backend
     - Add is_deleted or status column to users table
     - Create soft delete endpoint that sets inactive flag
     - Update user queries to exclude soft-deleted users

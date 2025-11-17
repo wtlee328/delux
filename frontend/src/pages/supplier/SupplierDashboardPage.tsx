@@ -36,6 +36,23 @@ const SupplierDashboardPage: React.FC = () => {
     }
   };
 
+  const handleDeleteProduct = async (productId: string, productTitle: string) => {
+    const confirmMessage = `⚠️ 警告：刪除產品\n\n您即將刪除產品：\n標題：${productTitle}\n\n此操作將永久刪除該產品及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/supplier/tours/${productId}`);
+      // Refresh the product list
+      await fetchProducts();
+    } catch (err: any) {
+      setError('刪除產品失敗，請稍後再試');
+      console.error('Error deleting product:', err);
+    }
+  };
+
   const getStatusBadge = (status: ProductStatus) => {
     const statusConfig = {
       '草稿': { bg: '#6c757d', color: 'white' },
@@ -119,12 +136,20 @@ const SupplierDashboardPage: React.FC = () => {
                       {new Date(product.createdAt).toLocaleDateString('zh-TW')}
                     </td>
                     <td style={styles.td}>
-                      <button
-                        onClick={() => navigate(`/supplier/tours/edit/${product.id}`)}
-                        style={styles.editButton}
-                      >
-                        編輯
-                      </button>
+                      <div style={styles.actionButtons}>
+                        <button
+                          onClick={() => navigate(`/supplier/tours/edit/${product.id}`)}
+                          style={styles.editButton}
+                        >
+                          編輯
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id, product.title)}
+                          style={styles.deleteButton}
+                        >
+                          刪除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -226,6 +251,10 @@ const styles = {
     fontWeight: 'bold',
     display: 'inline-block',
   },
+  actionButtons: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
   editButton: {
     padding: '0.5rem 1rem',
     backgroundColor: '#007bff',
@@ -233,6 +262,16 @@ const styles = {
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
+    fontSize: '0.875rem',
+  },
+  deleteButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
   },
 };
 

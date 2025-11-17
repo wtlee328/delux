@@ -28,9 +28,9 @@ export interface User {
 export async function createUser(userData: CreateUserRequest): Promise<User> {
   const { email, password, name, role, roles } = userData;
 
-  // Validate email uniqueness
+  // Validate email uniqueness (excluding soft-deleted users)
   const existingUser = await pool.query(
-    'SELECT id FROM users WHERE email = $1',
+    'SELECT id FROM users WHERE email = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [email]
   );
 
@@ -83,12 +83,13 @@ export async function createUser(userData: CreateUserRequest): Promise<User> {
 
 /**
  * Get all users for admin user list
- * @returns Array of all users with their roles
+ * @returns Array of all users with their roles (excluding soft-deleted users)
  */
 export async function getAllUsers(): Promise<User[]> {
   const result = await pool.query(
     `SELECT id, email, name, role, created_at, updated_at
      FROM users
+     WHERE is_deleted = FALSE OR is_deleted IS NULL
      ORDER BY created_at DESC`
   );
 
@@ -126,13 +127,13 @@ export async function getAllUsers(): Promise<User[]> {
  * Get user by ID
  * @param id - User ID
  * @returns User details with all roles
- * @throws Error if user not found
+ * @throws Error if user not found or soft-deleted
  */
 export async function getUserById(id: string): Promise<User> {
   const result = await pool.query(
     `SELECT id, email, name, role, created_at, updated_at
      FROM users
-     WHERE id = $1`,
+     WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)`,
     [id]
   );
 
@@ -183,9 +184,9 @@ export interface UpdateUserRequest {
 export async function updateUser(id: string, updateData: UpdateUserRequest): Promise<User> {
   const { name, email, password, roles } = updateData;
 
-  // Check if user exists
+  // Check if user exists and is not soft-deleted
   const existingUser = await pool.query(
-    'SELECT id FROM users WHERE id = $1',
+    'SELECT id FROM users WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [id]
   );
 
@@ -193,10 +194,10 @@ export async function updateUser(id: string, updateData: UpdateUserRequest): Pro
     throw new Error('User not found');
   }
 
-  // If email is being updated, check uniqueness
+  // If email is being updated, check uniqueness (excluding soft-deleted users)
   if (email) {
     const emailCheck = await pool.query(
-      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      'SELECT id FROM users WHERE email = $1 AND id != $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [email, id]
     );
 
@@ -295,14 +296,14 @@ export async function updateUser(id: string, updateData: UpdateUserRequest): Pro
 }
 
 /**
- * Delete a user
+ * Soft delete a user (marks as deleted without removing from database)
  * @param id - User ID
  * @throws Error if user not found
  */
 export async function deleteUser(id: string): Promise<void> {
-  // Check if user exists
+  // Check if user exists and is not already soft-deleted
   const existingUser = await pool.query(
-    'SELECT id FROM users WHERE id = $1',
+    'SELECT id FROM users WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [id]
   );
 
@@ -310,6 +311,9 @@ export async function deleteUser(id: string): Promise<void> {
     throw new Error('User not found');
   }
 
-  // Delete user (CASCADE will delete user_roles entries)
-  await pool.query('DELETE FROM users WHERE id = $1', [id]);
+  // Soft delete user by setting is_deleted flag and deleted_at timestamp
+  await pool.query(
+    'UPDATE users SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+    [id]
+  );
 }

@@ -30,17 +30,18 @@ export async function login(
   password: string
 ): Promise<LoginResponse> {
   // Query user from database (handle case where active_role column doesn't exist yet)
+  // Exclude soft-deleted users from login
   let result;
   try {
     result = await pool.query(
-      'SELECT id, email, password_hash, name, role, active_role FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, active_role FROM users WHERE email = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [email]
     );
   } catch (error) {
     // active_role column doesn't exist yet, query without it
     console.log('active_role column not found, using legacy query');
     result = await pool.query(
-      'SELECT id, email, password_hash, name, role FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role FROM users WHERE email = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [email]
     );
   }
@@ -144,11 +145,15 @@ export async function setActiveRole(
     console.log('active_role column not found, skipping update');
   }
 
-  // Get user info
+  // Get user info (exclude soft-deleted users)
   const userResult = await pool.query(
-    'SELECT id, email, name, role FROM users WHERE id = $1',
+    'SELECT id, email, name, role FROM users WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [userId]
   );
+
+  if (userResult.rows.length === 0) {
+    throw new Error('User not found');
+  }
 
   const user = userResult.rows[0];
 

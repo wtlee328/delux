@@ -31,6 +31,7 @@ const AdminUsersPage: React.FC = () => {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -92,14 +93,16 @@ const AdminUsersPage: React.FC = () => {
     setFieldErrors({});
   };
 
-  const handleDelete = async (userId: string, userName: string) => {
-    if (!window.confirm(`確定要刪除用戶 "${userName}" 嗎？此操作無法撤銷。`)) {
+  const handleDelete = async (userId: string, userName: string, userEmail: string) => {
+    const confirmMessage = `⚠️ 警告：刪除用戶帳號\n\n您即將刪除用戶：\n姓名：${userName}\n電子郵件：${userEmail}\n\n此操作將永久刪除該用戶的帳號及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
+    
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
       await axios.delete(`/api/admin/users/${userId}`);
-      showSuccess('用戶已刪除');
+      showSuccess('用戶已成功刪除');
       await fetchUsers();
     } catch (err: any) {
       showError('刪除用戶失敗，請稍後再試');
@@ -194,6 +197,17 @@ const AdminUsersPage: React.FC = () => {
     }
   };
 
+  // Filter users based on search query
+  const filteredUsers = users.filter((u) => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const nameMatch = u.name.toLowerCase().includes(query);
+    const emailMatch = u.email.toLowerCase().includes(query);
+    
+    return nameMatch || emailMatch;
+  });
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -213,6 +227,15 @@ const AdminUsersPage: React.FC = () => {
       </header>
       <main style={styles.main}>
         <div style={styles.actionBar}>
+          <div style={styles.searchContainer}>
+            <input
+              type="text"
+              placeholder="搜尋用戶 (姓名或電子郵件)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={styles.searchInput}
+            />
+          </div>
           <button 
             onClick={() => {
               if (showForm) {
@@ -362,7 +385,7 @@ const AdminUsersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <tr key={u.id} style={styles.tr}>
                     <td style={styles.td}>{u.name}</td>
                     <td style={styles.td}>{u.email}</td>
@@ -380,7 +403,7 @@ const AdminUsersPage: React.FC = () => {
                           編輯
                         </button>
                         <button
-                          onClick={() => handleDelete(u.id, u.name)}
+                          onClick={() => handleDelete(u.id, u.name, u.email)}
                           style={styles.deleteButton}
                         >
                           刪除
@@ -393,6 +416,9 @@ const AdminUsersPage: React.FC = () => {
             </table>
             {users.length === 0 && (
               <p style={styles.emptyMessage}>尚無用戶</p>
+            )}
+            {users.length > 0 && filteredUsers.length === 0 && (
+              <p style={styles.emptyMessage}>找不到符合搜尋條件的用戶</p>
             )}
           </div>
         )}
@@ -452,6 +478,22 @@ const styles = {
   },
   actionBar: {
     marginBottom: '1.5rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  searchContainer: {
+    flex: 1,
+    maxWidth: '400px',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '0.75rem',
+    fontSize: '1rem',
+    border: '1px solid #ced4da',
+    borderRadius: '4px',
+    outline: 'none',
   },
   addButton: {
     padding: '0.75rem 1.5rem',

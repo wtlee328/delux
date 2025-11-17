@@ -215,3 +215,29 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+/**
+ * DELETE /api/supplier/tours/:id
+ * Delete a tour product (supplier only - with ownership validation)
+ */
+router.delete('/tours/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const supplierId = req.user!.userId;
+
+    const { deleteProduct } = await import('../services/productService');
+    await deleteProduct(id, supplierId);
+
+    res.status(204).send();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Product deletion failed';
+
+    if (message === 'Product not found or access denied') {
+      res.status(404).json({ error: message });
+      return;
+    }
+
+    console.error('Delete product error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
