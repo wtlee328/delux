@@ -9,6 +9,7 @@ interface User {
   email: string;
   name: string;
   role: 'admin' | 'supplier' | 'agency';
+  roles: ('admin' | 'supplier' | 'agency')[];
   createdAt: string;
 }
 
@@ -23,6 +24,7 @@ const AdminUsersPage: React.FC = () => {
     password: '',
     name: '',
     role: 'supplier' as 'admin' | 'supplier' | 'agency',
+    roles: [] as ('admin' | 'supplier' | 'agency')[],
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -53,8 +55,24 @@ const AdminUsersPage: React.FC = () => {
     }
   };
 
+  const handleRoleCheckboxChange = (role: 'admin' | 'supplier' | 'agency') => {
+    setFormData(prev => {
+      const roles = prev.roles.includes(role)
+        ? prev.roles.filter(r => r !== role)
+        : [...prev.roles, role];
+      return { ...prev, roles };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate at least one role is selected
+    if (formData.roles.length === 0) {
+      setFieldErrors({ role: '請至少選擇一個角色' });
+      showError('請至少選擇一個角色');
+      return;
+    }
     
     // Validate form
     const validation = validateUserForm(formData);
@@ -76,6 +94,7 @@ const AdminUsersPage: React.FC = () => {
         password: '',
         name: '',
         role: 'supplier',
+        roles: [],
       });
       
       // Refresh user list
@@ -207,24 +226,42 @@ const AdminUsersPage: React.FC = () => {
               </div>
 
               <div style={styles.formGroup}>
-                <label htmlFor="role" style={styles.label}>
+                <label style={styles.label}>
                   角色 <span style={styles.required}>*</span>
+                  <span style={styles.helpText}> (可選擇多個)</span>
                 </label>
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  disabled={submitting}
-                  style={{
-                    ...styles.select,
-                    ...(fieldErrors.role ? styles.inputError : {})
-                  }}
-                >
-                  <option value="supplier">當地供應商</option>
-                  <option value="agency">台灣旅行社</option>
-                  <option value="admin">帝樂 Admin</option>
-                </select>
+                <div style={styles.checkboxGroup}>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes('supplier')}
+                      onChange={() => handleRoleCheckboxChange('supplier')}
+                      disabled={submitting}
+                      style={styles.checkbox}
+                    />
+                    <span>當地供應商</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes('agency')}
+                      onChange={() => handleRoleCheckboxChange('agency')}
+                      disabled={submitting}
+                      style={styles.checkbox}
+                    />
+                    <span>台灣旅行社</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes('admin')}
+                      onChange={() => handleRoleCheckboxChange('admin')}
+                      disabled={submitting}
+                      style={styles.checkbox}
+                    />
+                    <span>帝樂 Admin</span>
+                  </label>
+                </div>
                 {fieldErrors.role && (
                   <span style={styles.errorText}>{fieldErrors.role}</span>
                 )}
@@ -257,7 +294,11 @@ const AdminUsersPage: React.FC = () => {
                   <tr key={u.id} style={styles.tr}>
                     <td style={styles.td}>{u.name}</td>
                     <td style={styles.td}>{u.email}</td>
-                    <td style={styles.td}>{getRoleLabel(u.role)}</td>
+                    <td style={styles.td}>
+                      {u.roles && u.roles.length > 0
+                        ? u.roles.map(r => getRoleLabel(r)).join(', ')
+                        : getRoleLabel(u.role)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -373,6 +414,29 @@ const styles = {
     borderRadius: '4px',
     outline: 'none',
     backgroundColor: 'white',
+  },
+  checkboxGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.75rem',
+    padding: '0.5rem 0',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  checkbox: {
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer',
+  },
+  helpText: {
+    fontSize: '0.875rem',
+    color: '#6c757d',
+    fontWeight: 'normal',
   },
   submitButton: {
     padding: '0.75rem 1.5rem',
