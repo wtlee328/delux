@@ -143,9 +143,9 @@ const LoginPage: React.FC = () => {
 
         <div style={styles.footer}>
           <p style={styles.footerText}>
-            <span style={styles.contextLink}>您是供應商嗎？</span>
+            <span style={styles.contextLinkDisabled}>您是供應商嗎？</span>
             {' · '}
-            <span style={styles.contextLink}>管理員登入</span>
+            <span style={styles.contextLinkDisabled}>管理員登入</span>
           </p>
           <p style={styles.helpText}>
             使用您的帳號登入以存取平台功能
@@ -242,9 +242,8 @@ const styles = {
     color: '#666',
     marginBottom: '0.5rem',
   },
-  contextLink: {
-    color: '#007bff',
-    cursor: 'pointer',
+  contextLinkDisabled: {
+    color: '#999',
     fontWeight: '500',
   },
   helpText: {

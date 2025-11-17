@@ -48,13 +48,18 @@ export async function login(
     throw new Error('Invalid email or password');
   }
 
-  // Get all roles for this user
-  const rolesResult = await pool.query(
-    'SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role',
-    [user.id]
-  );
-
-  const roles = rolesResult.rows.map(row => row.role);
+  // Get all roles for this user (handle case where user_roles table doesn't exist yet)
+  let roles: string[] = [];
+  try {
+    const rolesResult = await pool.query(
+      'SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role',
+      [user.id]
+    );
+    roles = rolesResult.rows.map(row => row.role);
+  } catch (error) {
+    // user_roles table doesn't exist yet, will use legacy role
+    console.log('user_roles table not found, using legacy role');
+  }
   
   // If no roles in user_roles table, fall back to single role from users table
   const userRoles = roles.length > 0 ? roles : [user.role];

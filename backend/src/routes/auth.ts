@@ -37,8 +37,6 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
-
 /**
  * POST /api/auth/select-role
  * Set active role for multi-role users
@@ -78,3 +76,5 @@ router.post('/select-role', requireAuth, async (req: Request, res: Response) => 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+export default router;
