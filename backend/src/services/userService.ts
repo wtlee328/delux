@@ -165,3 +165,149 @@ export async function getUserById(id: string): Promise<User> {
     updatedAt: user.updated_at,
   };
 }
+
+export interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  roles?: ('admin' | 'supplier' | 'agency')[];
+}
+
+/**
+ * Update user information
+ * @param id - User ID
+ * @param updateData - Fields to update
+ * @returns Updated user
+ * @throws Error if user not found or email already exists
+ */
+export async function updateUser(id: string, updateData: UpdateUserRequest): Promise<User> {
+  const { name, email, password, roles } = updateData;
+
+  // Check if user exists
+  const existingUser = await pool.query(
+    'SELECT id FROM users WHERE id = $1',
+    [id]
+  );
+
+  if (existingUser.rows.length === 0) {
+    throw new Error('User not found');
+  }
+
+  // If email is being updated, check uniqueness
+  if (email) {
+    const emailCheck = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email, id]
+    );
+
+    if (emailCheck.rows.length > 0) {
+      throw new Error('Email already registered');
+    }
+  }
+
+  // Build update query dynamically
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramCount = 1;
+
+  if (name !== undefined) {
+    updates.push(`name = $${paramCount}`);
+    values.push(name);
+    paramCount++;
+  }
+
+  if (email !== undefined) {
+    updates.push(`email = $${paramCount}`);
+    values.push(email);
+    paramCount++;
+  }
+
+  if (password !== undefined) {
+    const passwordHash = await hashPassword(password);
+    updates.push(`password_hash = $${paramCount}`);
+    values.push(passwordHash);
+    paramCount++;
+  }
+
+  updates.push(`updated_at = CURRENT_TIMESTAMP`);
+
+  // Update roles if provided
+  if (roles && roles.length > 0) {
+    const primaryRole = roles[0];
+    updates.push(`role = $${paramCount}`);
+    values.push(primaryRole);
+    paramCount++;
+
+    // Update user_roles table
+    try {
+      // Delete existing roles
+      await pool.query('DELETE FROM user_roles WHERE user_id = $1', [id]);
+
+      // Insert new roles
+      for (const role of roles) {
+        await pool.query(
+          `INSERT INTO user_roles (user_id, role)
+           VALUES ($1, $2)
+           ON CONFLICT (user_id, role) DO NOTHING`,
+          [id, role]
+        );
+      }
+    } catch (error) {
+      console.log('user_roles table not found during user update');
+    }
+  }
+
+  // Execute update
+  values.push(id);
+  const result = await pool.query(
+    `UPDATE users 
+     SET ${updates.join(', ')}
+     WHERE id = $${paramCount}
+     RETURNING id, email, name, role, created_at, updated_at`,
+    values
+  );
+
+  const user = result.rows[0];
+
+  // Get all roles for this user
+  let userRoles: string[] = [];
+  try {
+    const rolesResult = await pool.query(
+      'SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role',
+      [user.id]
+    );
+    userRoles = rolesResult.rows.map(r => r.role);
+  } catch (error) {
+    console.log('user_roles table not found in updateUser');
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roles: userRoles.length > 0 ? userRoles : [user.role],
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+  };
+}
+
+/**
+ * Delete a user
+ * @param id - User ID
+ * @throws Error if user not found
+ */
+export async function deleteUser(id: string): Promise<void> {
+  // Check if user exists
+  const existingUser = await pool.query(
+    'SELECT id FROM users WHERE id = $1',
+    [id]
+  );
+
+  if (existingUser.rows.length === 0) {
+    throw new Error('User not found');
+  }
+
+  // Delete user (CASCADE will delete user_roles entries)
+  await pool.query('DELETE FROM users WHERE id = $1', [id]);
+}

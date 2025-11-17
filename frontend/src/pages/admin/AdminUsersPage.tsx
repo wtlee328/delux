@@ -19,6 +19,7 @@ const AdminUsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -64,6 +65,46 @@ const AdminUsersPage: React.FC = () => {
     });
   };
 
+  const handleEdit = (userToEdit: User) => {
+    setEditingUser(userToEdit);
+    setFormData({
+      email: userToEdit.email,
+      password: '',
+      name: userToEdit.name,
+      role: userToEdit.role,
+      roles: userToEdit.roles || [userToEdit.role],
+    });
+    setShowForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setFormData({
+      email: '',
+      password: '',
+      name: '',
+      role: 'supplier',
+      roles: [],
+    });
+    setShowForm(false);
+    setFieldErrors({});
+  };
+
+  const handleDelete = async (userId: string, userName: string) => {
+    if (!window.confirm(`確定要刪除用戶 "${userName}" 嗎？此操作無法撤銷。`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/admin/users/${userId}`);
+      showSuccess('用戶已刪除');
+      await fetchUsers();
+    } catch (err: any) {
+      showError('刪除用戶失敗，請稍後再試');
+      console.error('Error deleting user:', err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -74,21 +115,41 @@ const AdminUsersPage: React.FC = () => {
       return;
     }
     
-    // Validate form
-    const validation = validateUserForm(formData);
-    if (!validation.isValid) {
-      setFieldErrors(validation.errors);
-      showError('請修正表單錯誤');
-      return;
+    // For edit, password is optional
+    if (!editingUser) {
+      const validation = validateUserForm(formData);
+      if (!validation.isValid) {
+        setFieldErrors(validation.errors);
+        showError('請修正表單錯誤');
+        return;
+      }
     }
 
     try {
       setSubmitting(true);
       setFieldErrors({});
       
-      await axios.post('/api/admin/users', formData);
+      if (editingUser) {
+        // Update existing user
+        const updateData: any = {
+          name: formData.name,
+          email: formData.email,
+          roles: formData.roles,
+        };
+        
+        // Only include password if it's been changed
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
+        
+        await axios.put(`/api/admin/users/${editingUser.id}`, updateData);
+        showSuccess('用戶更新成功');
+      } else {
+        // Create new user
+        await axios.post('/api/admin/users', formData);
+        showSuccess('用戶創建成功');
+      }
       
-      showSuccess('用戶創建成功');
       setFormData({
         email: '',
         password: '',
@@ -96,6 +157,7 @@ const AdminUsersPage: React.FC = () => {
         role: 'supplier',
         roles: [],
       });
+      setEditingUser(null);
       
       // Refresh user list
       await fetchUsers();
@@ -109,9 +171,9 @@ const AdminUsersPage: React.FC = () => {
         setFieldErrors({ email: '此電子郵件已被註冊' });
         showError('此電子郵件已被註冊');
       } else {
-        showError('創建用戶失敗，請稍後再試');
+        showError(editingUser ? '更新用戶失敗，請稍後再試' : '創建用戶失敗，請稍後再試');
       }
-      console.error('Error creating user:', err);
+      console.error('Error saving user:', err);
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +212,13 @@ const AdminUsersPage: React.FC = () => {
       <main style={styles.main}>
         <div style={styles.actionBar}>
           <button 
-            onClick={() => setShowForm(!showForm)} 
+            onClick={() => {
+              if (showForm) {
+                handleCancelEdit();
+              } else {
+                setShowForm(true);
+              }
+            }} 
             style={styles.addButton}
           >
             {showForm ? '取消' : '新增用戶'}
@@ -159,7 +227,7 @@ const AdminUsersPage: React.FC = () => {
 
         {showForm && (
           <div style={styles.formContainer}>
-            <h2 style={styles.formTitle}>新增用戶</h2>
+            <h2 style={styles.formTitle}>{editingUser ? '編輯用戶' : '新增用戶'}</h2>
             
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.formGroup}>
@@ -185,7 +253,7 @@ const AdminUsersPage: React.FC = () => {
 
               <div style={styles.formGroup}>
                 <label htmlFor="password" style={styles.label}>
-                  臨時密碼 <span style={styles.required}>*</span>
+                  {editingUser ? '新密碼 (留空表示不更改)' : '臨時密碼'} {!editingUser && <span style={styles.required}>*</span>}
                 </label>
                 <input
                   type="password"
@@ -194,6 +262,7 @@ const AdminUsersPage: React.FC = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={submitting}
+                  placeholder={editingUser ? '留空表示不更改密碼' : ''}
                   style={{
                     ...styles.input,
                     ...(fieldErrors.password ? styles.inputError : {})
@@ -272,7 +341,7 @@ const AdminUsersPage: React.FC = () => {
                 disabled={submitting}
                 style={submitting ? { ...styles.submitButton, ...styles.submitButtonDisabled } : styles.submitButton}
               >
-                {submitting ? '創建中...' : '創建用戶'}
+                {submitting ? (editingUser ? '更新中...' : '創建中...') : (editingUser ? '更新用戶' : '創建用戶')}
               </button>
             </form>
           </div>
@@ -287,6 +356,7 @@ const AdminUsersPage: React.FC = () => {
                   <th style={styles.th}>姓名</th>
                   <th style={styles.th}>電子郵件</th>
                   <th style={styles.th}>角色</th>
+                  <th style={styles.th}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -298,6 +368,22 @@ const AdminUsersPage: React.FC = () => {
                       {u.roles && u.roles.length > 0
                         ? u.roles.map(r => getRoleLabel(r)).join(', ')
                         : getRoleLabel(u.role)}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.actionButtons}>
+                        <button
+                          onClick={() => handleEdit(u)}
+                          style={styles.editButton}
+                        >
+                          編輯
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u.id, u.name)}
+                          style={styles.deleteButton}
+                        >
+                          刪除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -487,6 +573,30 @@ const styles = {
     padding: '2rem',
     textAlign: 'center' as const,
     color: '#6c757d',
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  editButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    transition: 'background-color 0.2s',
+  },
+  deleteButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    transition: 'background-color 0.2s',
   },
 };
 

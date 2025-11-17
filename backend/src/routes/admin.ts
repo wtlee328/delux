@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
-import { createUser, getAllUsers } from '../services/userService';
+import { createUser, getAllUsers, updateUser, deleteUser } from '../services/userService';
 
 const router = Router();
 
@@ -28,26 +28,37 @@ router.get('/users', async (req: Request, res: Response) => {
  */
 router.post('/users', async (req: Request, res: Response) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, roles } = req.body;
 
     // Validate required fields
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name) {
       res.status(400).json({ 
-        error: 'All fields are required: email, password, name, role' 
+        error: 'Required fields: email, password, name' 
       });
       return;
     }
 
-    // Validate role
-    if (!['admin', 'supplier', 'agency'].includes(role)) {
+    // Validate roles array or single role
+    const userRoles = roles && roles.length > 0 ? roles : [role];
+    if (userRoles.length === 0) {
       res.status(400).json({ 
-        error: 'Invalid role. Must be admin, supplier, or agency' 
+        error: 'At least one role is required' 
       });
       return;
+    }
+
+    // Validate each role
+    for (const r of userRoles) {
+      if (!['admin', 'supplier', 'agency'].includes(r)) {
+        res.status(400).json({ 
+          error: 'Invalid role. Must be admin, supplier, or agency' 
+        });
+        return;
+      }
     }
 
     // Create user
-    const user = await createUser({ email, password, name, role });
+    const user = await createUser({ email, password, name, role: userRoles[0], roles: userRoles });
 
     res.status(201).json(user);
   } catch (error) {
@@ -61,6 +72,88 @@ router.post('/users', async (req: Request, res: Response) => {
 
     // Handle other errors
     console.error('Create user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:id
+ * Update a user (admin only)
+ */
+router.put('/users/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, roles } = req.body;
+
+    // Validate at least one field to update
+    if (!name && !email && !password && !roles) {
+      res.status(400).json({ 
+        error: 'At least one field must be provided to update' 
+      });
+      return;
+    }
+
+    // Validate roles if provided
+    if (roles) {
+      if (!Array.isArray(roles) || roles.length === 0) {
+        res.status(400).json({ 
+          error: 'Roles must be a non-empty array' 
+        });
+        return;
+      }
+
+      for (const role of roles) {
+        if (!['admin', 'supplier', 'agency'].includes(role)) {
+          res.status(400).json({ 
+            error: 'Invalid role. Must be admin, supplier, or agency' 
+          });
+          return;
+        }
+      }
+    }
+
+    // Update user
+    const user = await updateUser(id, { name, email, password, roles });
+
+    res.json(user);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'User update failed';
+
+    if (message === 'User not found') {
+      res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === 'Email already registered') {
+      res.status(409).json({ error: message });
+      return;
+    }
+
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/admin/users/:id
+ * Delete a user (admin only)
+ */
+router.delete('/users/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await deleteUser(id);
+
+    res.status(204).send();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'User deletion failed';
+
+    if (message === 'User not found') {
+      res.status(404).json({ error: message });
+      return;
+    }
+
+    console.error('Delete user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
