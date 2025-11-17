@@ -48,7 +48,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
             <h3 style={styles.dayTitle}>Day {day.dayNumber}</h3>
           </div>
           <Droppable droppableId={`day-${day.dayNumber}`}>
-            {(provided, snapshot) => (
+            {(provided: any, snapshot: any) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
@@ -62,7 +62,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                 )}
                 {day.items.map((item, index) => (
                   <Draggable key={item.id} draggableId={`timeline-${item.id}`} index={index}>
-                    {(provided, snapshot) => (
+                    {(provided: any, snapshot: any) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}

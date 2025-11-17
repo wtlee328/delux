@@ -107,7 +107,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover }) => 
         )}
         {!loading && filteredProducts.map((product, index) => (
           <Draggable key={product.id} draggableId={product.id} index={index}>
-            {(provided, snapshot) => (
+            {(provided: any, snapshot: any) => (
               <div
                 ref={provided.innerRef}
                 {...provided.draggableProps}

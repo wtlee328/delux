@@ -184,7 +184,7 @@ const ItineraryPlannerPage: React.FC = () => {
             {isMobileMenuOpen.library && (
               <div style={styles.panelContent}>
                 <Droppable droppableId="resource-library" isDropDisabled={true}>
-                  {(provided) => (
+                  {(provided: any) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
                       <ResourceLibrary onProductHover={setHoveredProduct} />
                       {provided.placeholder}

@@ -48,9 +48,9 @@ const MapView: React.FC<MapViewProps> = ({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
   });
 
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [map, setMap] = useState<any>(null);
 
-  const onLoad = useCallback((map: google.maps.Map) => {
+  const onLoad = useCallback((map: any) => {
     setMap(map);
   }, []);
 
@@ -60,8 +60,8 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Auto-fit bounds when timeline products change
   React.useEffect(() => {
-    if (map && timelineProducts.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
+    if (map && timelineProducts.length > 0 && (window as any).google) {
+      const bounds = new (window as any).google.maps.LatLngBounds();
       let hasLocations = false;
 
       timelineProducts.forEach(day => {
