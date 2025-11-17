@@ -5,7 +5,8 @@ import { useToast } from '../../components/Toast';
 import { validateProductForm } from '../../utils/validation';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import axios from '../../config/axios';
+import axios from 'axios';
+import axiosInstance from '../../config/axios';
 
 interface FormData {
   產品標題: string;
@@ -122,7 +123,16 @@ const CreateProductPage: React.FC = () => {
         submitData.append('coverImage', formData.封面圖);
       }
 
-      await axios.post('/api/supplier/tours', submitData);
+      // Use raw axios for FormData to avoid Content-Type header issues
+      // Get the base URL and auth token from the configured instance
+      const baseURL = axiosInstance.defaults.baseURL;
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${baseURL}/api/supplier/tours`, submitData, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+      });
 
       showSuccess('產品創建成功');
       // Redirect to dashboard on success
