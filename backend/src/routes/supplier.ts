@@ -24,11 +24,15 @@ router.use(requireRole(['supplier']));
  */
 router.post('/tours', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file ? { name: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } : 'No file');
+    
     const { title, destination, durationDays, description, netPrice } = req.body;
     const supplierId = req.user!.userId;
 
     // Validate required fields
     if (!title || !destination || !durationDays || !description || !netPrice) {
+      console.error('Missing required fields:', { title: !!title, destination: !!destination, durationDays: !!durationDays, description: !!description, netPrice: !!netPrice });
       res.status(400).json({
         error: 'All fields are required: title, destination, durationDays, description, netPrice',
       });
@@ -37,6 +41,7 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
 
     // Validate cover image
     if (!req.file) {
+      console.error('No cover image provided');
       res.status(400).json({ error: 'Cover image is required' });
       return;
     }
@@ -44,15 +49,19 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
     // Upload cover image to Cloud Storage
     let coverImageUrl: string;
     try {
+      console.log('Uploading cover image...');
       const uploadResult = await uploadCoverImage(req.file);
       coverImageUrl = uploadResult.publicUrl;
+      console.log('Cover image uploaded:', coverImageUrl);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Image upload failed';
+      console.error('Image upload error:', error);
       res.status(400).json({ error: message });
       return;
     }
 
     // Create product
+    console.log('Creating product in database...');
     const product = await createProduct({
       supplierId,
       title,
@@ -62,10 +71,13 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
       coverImageUrl,
       netPrice: parseFloat(netPrice),
     });
+    console.log('Product created successfully:', product.id);
 
     res.status(201).json(product);
   } catch (error) {
     console.error('Create product error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    console.error('Error details:', errorMessage);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
