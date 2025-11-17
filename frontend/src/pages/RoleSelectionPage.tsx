@@ -91,8 +91,8 @@ const RoleSelectionPage: React.FC = () => {
       // Update axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // Navigate to appropriate dashboard
-      navigate(getRedirectPath(role));
+      // Force page reload to ensure AuthContext picks up new token
+      window.location.href = getRedirectPath(role);
     } catch (error) {
       console.error('Role selection error:', error);
       showError('角色選擇失敗，請重試');
