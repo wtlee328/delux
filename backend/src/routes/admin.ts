@@ -85,6 +85,8 @@ router.put('/users/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, email, password, roles } = req.body;
 
+    console.log('Update user request:', { id, name, email, hasPassword: !!password, roles });
+
     // Validate at least one field to update
     if (!name && !email && !password && !roles) {
       res.status(400).json({ 

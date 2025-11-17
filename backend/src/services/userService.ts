@@ -252,7 +252,9 @@ export async function updateUser(id: string, updateData: UpdateUserRequest): Pro
           [id, role]
         );
       }
+      console.log(`Successfully updated roles for user ${id}:`, roles);
     } catch (error) {
+      console.error('Error updating user_roles table:', error);
       console.log('user_roles table not found during user update');
     }
   }
