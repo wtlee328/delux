@@ -81,18 +81,34 @@ const RoleSelectionPage: React.FC = () => {
     setIsLoading(true);
 
     try {
+      console.log('Selecting role:', role);
       const response = await axios.post('/api/auth/select-role', { role });
+      console.log('Role selection response:', response.data);
       const { token, user } = response.data;
+
+      console.log('New user role:', user.role);
+      console.log('New token (first 50 chars):', token.substring(0, 50));
+
+      // Clear old data first
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
 
       // Update localStorage with new token and user info
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
+      // Verify it was saved
+      const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Saved user role:', savedUser.role);
+
       // Update axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
+      const redirectPath = getRedirectPath(role);
+      console.log('Redirecting to:', redirectPath);
+
       // Force page reload to ensure AuthContext picks up new token
-      window.location.href = getRedirectPath(role);
+      window.location.href = redirectPath;
     } catch (error) {
       console.error('Role selection error:', error);
       showError('角色選擇失敗，請重試');
