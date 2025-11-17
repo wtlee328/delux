@@ -178,8 +178,41 @@ router.get('/tours', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/admin/tours/pending/count
+ * Get count of products pending review (admin only)
+ * IMPORTANT: This must come BEFORE /tours/pending and /tours/:id
+ */
+router.get('/tours/pending/count', async (req: Request, res: Response) => {
+  try {
+    const { getProductCountByStatus } = await import('../services/productService');
+    const count = await getProductCountByStatus('待審核');
+    res.json({ count });
+  } catch (error) {
+    console.error('Get pending count error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/admin/tours/pending
+ * Get products pending review (admin only)
+ * IMPORTANT: This must come BEFORE /tours/:id
+ */
+router.get('/tours/pending', async (req: Request, res: Response) => {
+  try {
+    const { getProductsByStatus } = await import('../services/productService');
+    const products = await getProductsByStatus('待審核');
+    res.json(products);
+  } catch (error) {
+    console.error('Get pending products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/admin/tours/:id
  * Get tour product details (admin only)
+ * IMPORTANT: This must come AFTER specific routes like /tours/pending
  */
 router.get('/tours/:id', async (req: Request, res: Response) => {
   try {
@@ -196,36 +229,6 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
     }
 
     console.error('Get product error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * GET /api/admin/tours/pending
- * Get products pending review (admin only)
- */
-router.get('/tours/pending', async (req: Request, res: Response) => {
-  try {
-    const { getProductsByStatus } = await import('../services/productService');
-    const products = await getProductsByStatus('待審核');
-    res.json(products);
-  } catch (error) {
-    console.error('Get pending products error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * GET /api/admin/tours/pending/count
- * Get count of products pending review (admin only)
- */
-router.get('/tours/pending/count', async (req: Request, res: Response) => {
-  try {
-    const { getProductCountByStatus } = await import('../services/productService');
-    const count = await getProductCountByStatus('待審核');
-    res.json({ count });
-  } catch (error) {
-    console.error('Get pending count error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
