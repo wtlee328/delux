@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useAuth } from '../../contexts/AuthContext';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
@@ -32,6 +33,7 @@ interface TimelineDay {
 
 const ItineraryPlannerPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -149,7 +151,16 @@ const ItineraryPlannerPage: React.FC = () => {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div style={styles.container}>
         <header style={styles.header}>
-          <h1>行程規劃</h1>
+          <div style={styles.headerLeft}>
+            <button
+              onClick={() => navigate('/agency/dashboard')}
+              style={styles.backButton}
+              title="返回產品列表"
+            >
+              ← 返回
+            </button>
+            <h1 style={styles.headerTitle}>行程規劃</h1>
+          </div>
           <div style={styles.headerActions}>
             {saveStatus && <span style={styles.saveStatus}>{saveStatus}</span>}
             <button
@@ -278,6 +289,25 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     flexShrink: 0,
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  backButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    transition: 'background-color 0.2s',
+  },
+  headerTitle: {
+    margin: 0,
+    fontSize: '1.5rem',
   },
   headerActions: {
     display: 'flex',

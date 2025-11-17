@@ -71,11 +71,19 @@ const AgencyDashboardPage: React.FC = () => {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1>旅行社控制台</h1>
-        <div style={styles.userInfo}>
-          <span>{user?.name} ({user?.role})</span>
-          <button onClick={logout} style={styles.logoutButton}>
-            登出
+        <div style={styles.headerActions}>
+          <button 
+            onClick={() => navigate('/agency/itinerary-planner')} 
+            style={styles.plannerButton}
+          >
+            📋 行程規劃
           </button>
+          <div style={styles.userInfo}>
+            <span>{user?.name} ({user?.role})</span>
+            <button onClick={logout} style={styles.logoutButton}>
+              登出
+            </button>
+          </div>
         </div>
       </header>
       <main style={styles.main}>
@@ -160,6 +168,24 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  plannerButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    transition: 'background-color 0.2s',
   },
   userInfo: {
     display: 'flex',
