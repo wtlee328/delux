@@ -3,11 +3,13 @@ import axios from '../../config/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+
 interface Product {
   id: string;
   title: string;
   supplierName: string;
-  status: 'pending' | 'published';
+  status: ProductStatus;
   createdAt: string;
 }
 
@@ -15,18 +17,22 @@ const AdminToursPage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+    fetchPendingCount();
+  }, [showPendingOnly]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('/api/admin/tours');
+      const endpoint = showPendingOnly ? '/api/admin/tours/pending' : '/api/admin/tours';
+      const response = await axios.get(endpoint);
       setProducts(response.data);
     } catch (err: any) {
       setError('無法載入產品列表');
@@ -36,14 +42,30 @@ const AdminToursPage: React.FC = () => {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    return status === 'pending' ? '待審核' : '已發佈';
+  const fetchPendingCount = async () => {
+    try {
+      const response = await axios.get('/api/admin/tours/pending/count');
+      setPendingCount(response.data.count);
+    } catch (err: any) {
+      console.error('Error fetching pending count:', err);
+    }
   };
 
-  const getStatusStyle = (status: string) => {
-    return status === 'pending' 
-      ? { ...styles.statusBadge, ...styles.statusPending }
-      : { ...styles.statusBadge, ...styles.statusPublished };
+  const getStatusStyle = (status: ProductStatus) => {
+    const statusConfig = {
+      '草稿': { bg: '#6c757d', color: 'white' },
+      '待審核': { bg: '#ffc107', color: '#000' },
+      '已發佈': { bg: '#28a745', color: 'white' },
+      '需要修改': { bg: '#dc3545', color: 'white' },
+    };
+    
+    const config = statusConfig[status] || statusConfig['草稿'];
+    
+    return {
+      ...styles.statusBadge,
+      backgroundColor: config.bg,
+      color: config.color,
+    };
   };
 
   const getRoleLabel = (role: string) => {
@@ -81,6 +103,30 @@ const AdminToursPage: React.FC = () => {
         </div>
       </header>
       <main style={styles.main}>
+        <div style={styles.actionBar}>
+          <h2>產品列表</h2>
+          <div style={styles.filterButtons}>
+            <button
+              onClick={() => setShowPendingOnly(false)}
+              style={{
+                ...styles.filterButton,
+                ...(showPendingOnly ? {} : styles.filterButtonActive),
+              }}
+            >
+              全部產品
+            </button>
+            <button
+              onClick={() => setShowPendingOnly(true)}
+              style={{
+                ...styles.filterButton,
+                ...(showPendingOnly ? styles.filterButtonActive : {}),
+              }}
+            >
+              待審核 {pendingCount > 0 && <span style={styles.badge}>{pendingCount}</span>}
+            </button>
+          </div>
+        </div>
+
         {loading && <p>載入中...</p>}
         {error && <div style={styles.error}>{error}</div>}
         {!loading && !error && (
@@ -104,7 +150,7 @@ const AdminToursPage: React.FC = () => {
                     <td style={styles.td}>{product.supplierName}</td>
                     <td style={styles.td}>
                       <span style={getStatusStyle(product.status)}>
-                        {getStatusLabel(product.status)}
+                        {product.status}
                       </span>
                     </td>
                   </tr>
@@ -166,6 +212,41 @@ const styles = {
   main: {
     padding: '2rem',
   },
+  actionBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.5rem',
+  },
+  filterButtons: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  filterButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: 'white',
+    color: '#495057',
+    border: '1px solid #dee2e6',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.95rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007bff',
+    color: 'white',
+    borderColor: '#007bff',
+  },
+  badge: {
+    backgroundColor: '#dc3545',
+    color: 'white',
+    padding: '0.125rem 0.5rem',
+    borderRadius: '10px',
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+  },
   error: {
     padding: '1rem',
     backgroundColor: '#f8d7da',
@@ -202,16 +283,8 @@ const styles = {
     padding: '0.25rem 0.75rem',
     borderRadius: '12px',
     fontSize: '0.875rem',
-    fontWeight: 500,
+    fontWeight: 'bold',
     display: 'inline-block',
-  },
-  statusPending: {
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-  },
-  statusPublished: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
   },
   emptyMessage: {
     padding: '2rem',

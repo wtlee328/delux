@@ -3,6 +3,8 @@ import axios from '../../config/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+
 interface ProductDetail {
   id: string;
   title: string;
@@ -11,7 +13,7 @@ interface ProductDetail {
   description: string;
   coverImageUrl: string;
   netPrice: number;
-  status: 'pending' | 'published';
+  status: ProductStatus;
   supplierName: string;
   createdAt: string;
 }
@@ -25,6 +27,8 @@ const AdminTourDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [revisionFeedback, setRevisionFeedback] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -46,30 +50,62 @@ const AdminTourDetailPage: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (newStatus: 'pending' | 'published') => {
+  const handleApprove = async () => {
     if (!product) return;
 
     try {
       setUpdating(true);
       setError(null);
-      await axios.put(`/api/admin/tours/${id}/status`, { status: newStatus });
+      await axios.put(`/api/admin/tours/${id}/status`, { status: '已發佈' });
       
       // Update local state
-      setProduct({ ...product, status: newStatus });
+      setProduct({ ...product, status: '已發佈' });
       setUpdateSuccess(true);
       
       // Hide success message after 2 seconds
       setTimeout(() => setUpdateSuccess(false), 2000);
     } catch (err: any) {
-      setError('更新狀態失敗');
-      console.error('Error updating status:', err);
+      setError('核准失敗');
+      console.error('Error approving product:', err);
     } finally {
       setUpdating(false);
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    return status === 'pending' ? '待審核' : '已發佈';
+  const handleRequestRevisions = () => {
+    setShowRevisionModal(true);
+  };
+
+  const handleSubmitRevisionRequest = async () => {
+    if (!product) return;
+    
+    if (!revisionFeedback.trim()) {
+      setError('請輸入修改意見');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      setError(null);
+      await axios.put(`/api/admin/tours/${id}/status`, { 
+        status: '需要修改',
+        feedback: revisionFeedback 
+      });
+      
+      // Update local state
+      setProduct({ ...product, status: '需要修改' });
+      setUpdateSuccess(true);
+      setShowRevisionModal(false);
+      setRevisionFeedback('');
+      
+      // Hide success message after 2 seconds
+      setTimeout(() => setUpdateSuccess(false), 2000);
+    } catch (err: any) {
+      setError('提交修改要求失敗');
+      console.error('Error requesting revisions:', err);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -188,37 +224,58 @@ const AdminTourDetailPage: React.FC = () => {
 
               <div style={styles.infoItem}>
                 <span style={styles.infoLabel}>狀態：</span>
-                <span style={styles.infoValue}>{getStatusLabel(product.status)}</span>
+                <span style={{
+                  ...styles.statusBadge,
+                  backgroundColor: product.status === '草稿' ? '#6c757d' :
+                                  product.status === '待審核' ? '#ffc107' :
+                                  product.status === '已發佈' ? '#28a745' : '#dc3545',
+                  color: product.status === '待審核' ? '#000' : 'white',
+                }}>
+                  {product.status}
+                </span>
               </div>
             </div>
 
-            <div style={styles.statusSection}>
-              <h3 style={styles.sectionTitle}>更新狀態</h3>
-              <div style={styles.statusButtons}>
-                <button
-                  onClick={() => handleStatusChange('pending')}
-                  disabled={updating || product.status === 'pending'}
-                  style={
-                    product.status === 'pending'
-                      ? { ...styles.statusButton, ...styles.statusButtonActive }
-                      : styles.statusButton
-                  }
-                >
-                  待審核
-                </button>
-                <button
-                  onClick={() => handleStatusChange('published')}
-                  disabled={updating || product.status === 'published'}
-                  style={
-                    product.status === 'published'
-                      ? { ...styles.statusButton, ...styles.statusButtonActive }
-                      : styles.statusButton
-                  }
-                >
-                  已發佈
-                </button>
+            {product.status === '待審核' && (
+              <div style={styles.reviewSection}>
+                <h3 style={styles.sectionTitle}>審核操作</h3>
+                <p style={styles.reviewHint}>此產品正在等待審核</p>
+                <div style={styles.reviewButtons}>
+                  <button
+                    onClick={handleApprove}
+                    disabled={updating}
+                    style={styles.approveButton}
+                  >
+                    {updating ? '處理中...' : '核准發佈'}
+                  </button>
+                  <button
+                    onClick={handleRequestRevisions}
+                    disabled={updating}
+                    style={styles.revisionButton}
+                  >
+                    要求修改
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {product.status === '已發佈' && (
+              <div style={styles.statusInfo}>
+                <p style={styles.statusInfoText}>✓ 此產品已發佈，對旅行社可見</p>
+              </div>
+            )}
+
+            {product.status === '需要修改' && (
+              <div style={styles.statusInfo}>
+                <p style={styles.statusInfoText}>此產品需要供應商修改</p>
+              </div>
+            )}
+
+            {product.status === '草稿' && (
+              <div style={styles.statusInfo}>
+                <p style={styles.statusInfoText}>此產品為草稿狀態，尚未提交審核</p>
+              </div>
+            )}
           </div>
 
           <div style={styles.descriptionSection}>
@@ -229,6 +286,41 @@ const AdminTourDetailPage: React.FC = () => {
             />
           </div>
         </div>
+
+        {showRevisionModal && (
+          <div style={styles.modalOverlay} onClick={() => setShowRevisionModal(false)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <h3 style={styles.modalTitle}>要求修改</h3>
+              <p style={styles.modalHint}>請輸入需要供應商修改的內容：</p>
+              <textarea
+                value={revisionFeedback}
+                onChange={(e) => setRevisionFeedback(e.target.value)}
+                style={styles.textarea}
+                placeholder="請詳細說明需要修改的地方..."
+                rows={5}
+              />
+              <div style={styles.modalButtons}>
+                <button
+                  onClick={() => {
+                    setShowRevisionModal(false);
+                    setRevisionFeedback('');
+                  }}
+                  style={styles.modalCancelButton}
+                  disabled={updating}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSubmitRevisionRequest}
+                  style={styles.modalSubmitButton}
+                  disabled={updating || !revisionFeedback.trim()}
+                >
+                  {updating ? '提交中...' : '提交'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -335,35 +427,125 @@ const styles = {
     fontSize: '1rem',
     color: '#212529',
   },
-  statusSection: {
-    marginTop: '2rem',
-  },
   sectionTitle: {
     marginTop: 0,
     marginBottom: '1rem',
     fontSize: '1.25rem',
     color: '#212529',
   },
-  statusButtons: {
+  statusBadge: {
+    padding: '0.25rem 0.75rem',
+    borderRadius: '12px',
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    display: 'inline-block',
+  },
+  reviewSection: {
+    marginTop: '2rem',
+    padding: '1.5rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+  },
+  reviewHint: {
+    marginBottom: '1rem',
+    color: '#6c757d',
+  },
+  reviewButtons: {
     display: 'flex',
     gap: '1rem',
   },
-  statusButton: {
+  approveButton: {
     padding: '0.75rem 1.5rem',
-    backgroundColor: '#e9ecef',
-    color: '#495057',
-    border: '2px solid #dee2e6',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '1rem',
     fontWeight: 500,
-    transition: 'all 0.2s',
   },
-  statusButtonActive: {
-    backgroundColor: '#007bff',
+  revisionButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#dc3545',
     color: 'white',
-    borderColor: '#007bff',
-    cursor: 'default',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: 500,
+  },
+  statusInfo: {
+    marginTop: '2rem',
+    padding: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+  },
+  statusInfoText: {
+    margin: 0,
+    color: '#6c757d',
+  },
+  modalOverlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '2rem',
+    maxWidth: '500px',
+    width: '90%',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  },
+  modalTitle: {
+    marginTop: 0,
+    marginBottom: '1rem',
+    fontSize: '1.5rem',
+    color: '#212529',
+  },
+  modalHint: {
+    marginBottom: '1rem',
+    color: '#6c757d',
+  },
+  textarea: {
+    width: '100%',
+    padding: '0.75rem',
+    border: '1px solid #dee2e6',
+    borderRadius: '4px',
+    fontSize: '1rem',
+    fontFamily: 'inherit',
+    resize: 'vertical' as const,
+    marginBottom: '1rem',
+  },
+  modalButtons: {
+    display: 'flex',
+    gap: '1rem',
+    justifyContent: 'flex-end',
+  },
+  modalCancelButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  modalSubmitButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
   },
   descriptionSection: {
     padding: '2rem',

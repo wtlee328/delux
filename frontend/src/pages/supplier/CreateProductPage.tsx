@@ -81,7 +81,7 @@ const CreateProductPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, status: '草稿' | '待審核' = '待審核') => {
     e.preventDefault();
     
     // Validate form using utility
@@ -119,6 +119,7 @@ const CreateProductPage: React.FC = () => {
       submitData.append('durationDays', formData.天數);
       submitData.append('description', formData.產品描述);
       submitData.append('netPrice', formData.淨價);
+      submitData.append('status', status);
       if (formData.封面圖) {
         submitData.append('coverImage', formData.封面圖);
       }
@@ -134,7 +135,8 @@ const CreateProductPage: React.FC = () => {
         },
       });
 
-      showSuccess('產品創建成功');
+      const message = status === '草稿' ? '產品已儲存為草稿' : '產品已提交審核';
+      showSuccess(message);
       // Redirect to dashboard on success
       setTimeout(() => navigate('/supplier/dashboard'), 1000);
     } catch (error: any) {
@@ -306,11 +308,20 @@ const CreateProductPage: React.FC = () => {
                 取消
               </button>
               <button
+                type="button"
+                onClick={(e) => handleSubmit(e, '草稿')}
+                style={styles.draftButton}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? '儲存中...' : '儲存為草稿'}
+              </button>
+              <button
                 type="submit"
+                onClick={(e) => handleSubmit(e, '待審核')}
                 style={styles.submitButton}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? '提交中...' : '提交產品'}
+                {isSubmitting ? '提交中...' : '提交審核'}
               </button>
             </div>
           </form>
@@ -429,6 +440,15 @@ const styles = {
     marginTop: '1rem',
   },
   cancelButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  draftButton: {
     padding: '0.75rem 1.5rem',
     backgroundColor: '#6c757d',
     color: 'white',

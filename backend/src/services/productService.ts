@@ -19,6 +19,8 @@ export interface UpdateProductRequest {
   netPrice?: number;
 }
 
+export type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+
 export interface Product {
   id: string;
   supplierId: string;
@@ -28,7 +30,7 @@ export interface Product {
   description: string;
   coverImageUrl: string;
   netPrice: number;
-  status: 'pending' | 'published';
+  status: ProductStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,16 +47,20 @@ export interface ProductFilters {
 /**
  * Create a new product with supplier association
  * @param productData - Product data
- * @returns Created product with status 'pending'
+ * @param status - Initial status (defaults to '草稿')
+ * @returns Created product
  */
-export async function createProduct(productData: CreateProductRequest): Promise<Product> {
+export async function createProduct(
+  productData: CreateProductRequest,
+  status: ProductStatus = '草稿'
+): Promise<Product> {
   const { supplierId, title, destination, durationDays, description, coverImageUrl, netPrice } = productData;
 
   const result = await pool.query(
     `INSERT INTO products (supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at`,
-    [supplierId, title, destination, durationDays, description, coverImageUrl, netPrice]
+    [supplierId, title, destination, durationDays, description, coverImageUrl, netPrice, status]
   );
 
   const product = result.rows[0];
@@ -226,7 +232,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
            u.name as supplier_name
     FROM products p
     JOIN users u ON p.supplier_id = u.id
-    WHERE p.status = 'published'
+    WHERE p.status = '已發佈'
   `;
 
   const values: any[] = [];
@@ -302,16 +308,29 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
 }
 
 /**
- * Update product status (admin only)
+ * Update product status
  * @param id - Product ID
  * @param status - New status
+ * @param supplierId - Optional supplier ID for ownership validation (required for supplier updates)
  * @returns Updated product
- * @throws Error if product not found
+ * @throws Error if product not found or access denied
  */
 export async function updateProductStatus(
   id: string,
-  status: 'pending' | 'published'
+  status: ProductStatus,
+  supplierId?: string
 ): Promise<Product> {
+  // If supplierId is provided, verify ownership
+  if (supplierId) {
+    const ownershipCheck = await pool.query(
+      'SELECT id FROM products WHERE id = $1 AND supplier_id = $2',
+      [id, supplierId]
+    );
+
+    if (ownershipCheck.rows.length === 0) {
+      throw new Error('Product not found or access denied');
+    }
+  }
   const result = await pool.query(
     `UPDATE products
      SET status = $1, updated_at = CURRENT_TIMESTAMP
@@ -339,4 +358,51 @@ export async function updateProductStatus(
     createdAt: product.created_at,
     updatedAt: product.updated_at,
   };
+}
+
+/**
+ * Get products by status for admin review
+ * @param status - Product status to filter by
+ * @returns Array of products with the specified status
+ */
+export async function getProductsByStatus(status: ProductStatus): Promise<ProductWithSupplier[]> {
+  const result = await pool.query(
+    `SELECT p.id, p.supplier_id, p.title, p.destination, p.duration_days, p.description, 
+            p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
+            u.name as supplier_name
+     FROM products p
+     JOIN users u ON p.supplier_id = u.id
+     WHERE p.status = $1
+     ORDER BY p.created_at DESC`,
+    [status]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    supplierId: row.supplier_id,
+    title: row.title,
+    destination: row.destination,
+    durationDays: row.duration_days,
+    description: row.description,
+    coverImageUrl: row.cover_image_url,
+    netPrice: parseFloat(row.net_price),
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    supplierName: row.supplier_name,
+  }));
+}
+
+/**
+ * Get count of products by status
+ * @param status - Product status to count
+ * @returns Count of products with the specified status
+ */
+export async function getProductCountByStatus(status: ProductStatus): Promise<number> {
+  const result = await pool.query(
+    'SELECT COUNT(*) as count FROM products WHERE status = $1',
+    [status]
+  );
+
+  return parseInt(result.rows[0].count);
 }

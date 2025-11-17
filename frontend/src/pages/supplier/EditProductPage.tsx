@@ -5,6 +5,8 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from '../../config/axios';
 
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+
 interface FormData {
   產品標題: string;
   目的地: string;
@@ -43,6 +45,7 @@ const EditProductPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<ProductStatus>('草稿');
 
   useEffect(() => {
     fetchProductDetails();
@@ -65,6 +68,7 @@ const EditProductPage: React.FC = () => {
       
       setExistingImageUrl(product.coverImageUrl);
       setImagePreview(product.coverImageUrl);
+      setCurrentStatus(product.status);
     } catch (err: any) {
       setErrors({ submit: err.response?.data?.message || '載入產品失敗' });
     } finally {
@@ -180,6 +184,25 @@ const EditProductPage: React.FC = () => {
     }
   };
 
+  const handleStatusChange = async (newStatus: ProductStatus) => {
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      await axios.put(`/api/supplier/tours/${id}/status`, { status: newStatus });
+      setCurrentStatus(newStatus);
+      alert(`產品狀態已更新為：${newStatus}`);
+    } catch (error: any) {
+      if (error.response?.data?.error) {
+        setErrors({ submit: error.response.data.error });
+      } else {
+        setErrors({ submit: '狀態更新失敗，請稍後再試' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -233,6 +256,19 @@ const EditProductPage: React.FC = () => {
             {errors.submit && (
               <div style={styles.errorAlert}>{errors.submit}</div>
             )}
+
+            <div style={styles.statusSection}>
+              <span style={styles.statusLabel}>目前狀態：</span>
+              <span style={{
+                ...styles.statusBadge,
+                backgroundColor: currentStatus === '草稿' ? '#6c757d' :
+                                currentStatus === '待審核' ? '#ffc107' :
+                                currentStatus === '已發佈' ? '#28a745' : '#dc3545',
+                color: currentStatus === '待審核' ? '#000' : 'white',
+              }}>
+                {currentStatus}
+              </span>
+            </div>
 
             <div style={styles.formGroup}>
               <label htmlFor="產品標題" style={styles.label}>
@@ -365,9 +401,39 @@ const EditProductPage: React.FC = () => {
                 style={styles.submitButton}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? '更新中...' : '更新產品'}
+                {isSubmitting ? '更新中...' : '儲存變更'}
               </button>
             </div>
+
+            {(currentStatus === '草稿' || currentStatus === '需要修改') && (
+              <div style={styles.statusButtonGroup}>
+                <p style={styles.statusHint}>
+                  {currentStatus === '需要修改' ? '此產品需要修改，請更新後重新提交審核' : '此產品為草稿狀態'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange('待審核')}
+                  style={styles.submitForReviewButton}
+                  disabled={isSubmitting}
+                >
+                  提交審核
+                </button>
+              </div>
+            )}
+
+            {currentStatus === '待審核' && (
+              <div style={styles.statusButtonGroup}>
+                <p style={styles.statusHint}>此產品正在審核中</p>
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange('草稿')}
+                  style={styles.draftButton}
+                  disabled={isSubmitting}
+                >
+                  撤回至草稿
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </main>
@@ -495,6 +561,53 @@ const styles = {
   submitButton: {
     padding: '0.75rem 1.5rem',
     backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  statusSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+  },
+  statusLabel: {
+    fontWeight: 'bold',
+  },
+  statusBadge: {
+    padding: '0.25rem 0.75rem',
+    borderRadius: '12px',
+    fontSize: '0.85rem',
+    fontWeight: 'bold',
+    display: 'inline-block',
+  },
+  statusButtonGroup: {
+    marginTop: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+    textAlign: 'center' as const,
+  },
+  statusHint: {
+    marginBottom: '1rem',
+    color: '#6c757d',
+  },
+  submitForReviewButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+  },
+  draftButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#6c757d',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

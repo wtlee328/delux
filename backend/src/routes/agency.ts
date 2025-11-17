@@ -48,7 +48,7 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
     const product = await getProductById(id);
 
     // Verify product is published (agencies should only see published products)
-    if (product.status !== 'published') {
+    if (product.status !== '已發佈') {
       res.status(404).json({ error: 'Product not found' });
       return;
     }

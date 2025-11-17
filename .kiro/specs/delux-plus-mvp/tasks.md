@@ -306,27 +306,27 @@
     - Update JWT payload to include active role
     - _Requirements: 3.1_
 
-- [ ] 17. Implement product submission and review workflow
-  - [ ] 17.1 Update product status system
+- [x] 17. Implement product submission and review workflow
+  - [x] 17.1 Update product status system
     - Add status column to products table with values: 草稿, 待審核, 已發佈, 需要修改
     - Create migration for status column
     - Update product creation to default to 草稿 status
     - _Requirements: 3.2_
   
-  - [ ] 17.2 Enhance supplier product interface
+  - [x] 17.2 Enhance supplier product interface
     - Add "Save as 草稿" and "Submit for Review" buttons to product form
     - Implement status change logic on submission
     - Add colored status badges to supplier dashboard
     - Display status clearly on each product card
     - _Requirements: 3.2_
   
-  - [ ] 17.3 Build admin review queue
+  - [x] 17.3 Build admin review queue
     - Create "Pending Reviews" section on admin dashboard
     - Display count of products with 待審核 status
     - Implement filtered view for pending products
     - _Requirements: 3.2_
   
-  - [ ] 17.4 Create admin product review interface
+  - [x] 17.4 Create admin product review interface
     - Add "Approve" and "Request Revisions" buttons to product detail page
     - Implement approval flow to change status to 已發佈
     - Create revision request modal with mandatory feedback text box

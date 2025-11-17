@@ -201,22 +201,61 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/admin/tours/pending
+ * Get products pending review (admin only)
+ */
+router.get('/tours/pending', async (req: Request, res: Response) => {
+  try {
+    const { getProductsByStatus } = await import('../services/productService');
+    const products = await getProductsByStatus('待審核');
+    res.json(products);
+  } catch (error) {
+    console.error('Get pending products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/admin/tours/pending/count
+ * Get count of products pending review (admin only)
+ */
+router.get('/tours/pending/count', async (req: Request, res: Response) => {
+  try {
+    const { getProductCountByStatus } = await import('../services/productService');
+    const count = await getProductCountByStatus('待審核');
+    res.json({ count });
+  } catch (error) {
+    console.error('Get pending count error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * PUT /api/admin/tours/:id/status
  * Update tour product status (admin only)
  */
 router.put('/tours/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, feedback } = req.body;
 
     // Validate status
-    if (!status || !['pending', 'published'].includes(status)) {
-      res.status(400).json({ error: 'Invalid status. Must be pending or published' });
+    const validStatuses = ['草稿', '待審核', '已發佈', '需要修改'];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ error: 'Invalid status. Must be one of: 草稿, 待審核, 已發佈, 需要修改' });
+      return;
+    }
+
+    // Require feedback for revision requests
+    if (status === '需要修改' && !feedback) {
+      res.status(400).json({ error: 'Feedback is required when requesting revisions' });
       return;
     }
 
     const { updateProductStatus } = await import('../services/productService');
     const product = await updateProductStatus(id, status);
+
+    // TODO: In task 17.5, send email notification with feedback if status is '需要修改'
 
     res.json(product);
   } catch (error) {

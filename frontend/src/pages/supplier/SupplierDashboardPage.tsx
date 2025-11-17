@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from '../../config/axios';
 
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+
 interface Product {
   id: string;
   title: string;
-  status: 'pending' | 'published';
+  status: ProductStatus;
   createdAt: string;
 }
 
@@ -34,17 +36,25 @@ const SupplierDashboardPage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const isPublished = status === 'published';
+  const getStatusBadge = (status: ProductStatus) => {
+    const statusConfig = {
+      '草稿': { bg: '#6c757d', color: 'white' },
+      '待審核': { bg: '#ffc107', color: '#000' },
+      '已發佈': { bg: '#28a745', color: 'white' },
+      '需要修改': { bg: '#dc3545', color: 'white' },
+    };
+    
+    const config = statusConfig[status] || statusConfig['草稿'];
+    
     return (
       <span
         style={{
           ...styles.statusBadge,
-          backgroundColor: isPublished ? '#28a745' : '#ffc107',
-          color: isPublished ? 'white' : '#000',
+          backgroundColor: config.bg,
+          color: config.color,
         }}
       >
-        {isPublished ? '已發佈' : '待審核'}
+        {status}
       </span>
     );
   };
