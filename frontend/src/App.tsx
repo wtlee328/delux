@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './pages/LoginPage';
+import RoleSelectionPage from './pages/RoleSelectionPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminToursPage from './pages/admin/AdminToursPage';
 import AdminTourDetailPage from './pages/admin/AdminTourDetailPage';
@@ -42,6 +43,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/select-role" element={<RoleSelectionPage />} />
               
               {/* Root redirect based on authentication */}
               <Route path="/" element={<RoleBasedRedirect />} />

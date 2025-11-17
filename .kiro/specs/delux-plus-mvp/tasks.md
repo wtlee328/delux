@@ -279,3 +279,155 @@
   - Document admin credentials securely
   - Create seed data script for testing (optional sample products)
   - _Requirements: 2.1, 2.2_
+
+- [x] 16. Implement unified entry point and multi-role login
+  - [x] 16.1 Update database schema for multi-role support
+    - Modify users table to support multiple roles per email (consider role junction table or role array)
+    - Create migration script for schema changes
+    - Update authentication queries to handle multi-role accounts
+    - _Requirements: 3.1_
+  
+  - [x] 16.2 Create unified login page
+    - Design single entry point at /login with professional branding
+    - Add contextual text links for "Are you a Supplier?" and "Admin Login"
+    - Implement responsive form layout
+    - _Requirements: 3.1_
+  
+  - [x] 16.3 Implement role selection screen
+    - Create "Choose Your Role" component for multi-role users
+    - Display role selection buttons with clear labels
+    - Implement session tagging with active role
+    - Add automatic bypass for single-role users
+    - _Requirements: 3.1_
+  
+  - [x] 16.4 Update authentication flow backend
+    - Modify login endpoint to return all user roles
+    - Create role selection endpoint to set active role in session
+    - Update JWT payload to include active role
+    - _Requirements: 3.1_
+
+- [ ] 17. Implement product submission and review workflow
+  - [ ] 17.1 Update product status system
+    - Add status column to products table with values: 草稿, 待審核, 已發佈, 需要修改
+    - Create migration for status column
+    - Update product creation to default to 草稿 status
+    - _Requirements: 3.2_
+  
+  - [ ] 17.2 Enhance supplier product interface
+    - Add "Save as 草稿" and "Submit for Review" buttons to product form
+    - Implement status change logic on submission
+    - Add colored status badges to supplier dashboard
+    - Display status clearly on each product card
+    - _Requirements: 3.2_
+  
+  - [ ] 17.3 Build admin review queue
+    - Create "Pending Reviews" section on admin dashboard
+    - Display count of products with 待審核 status
+    - Implement filtered view for pending products
+    - _Requirements: 3.2_
+  
+  - [ ] 17.4 Create admin product review interface
+    - Add "Approve" and "Request Revisions" buttons to product detail page
+    - Implement approval flow to change status to 已發佈
+    - Create revision request modal with mandatory feedback text box
+    - Update status to 需要修改 on revision request
+    - _Requirements: 3.2_
+  
+  - [ ]* 17.5 Implement email notifications
+    - Set up email service integration (SendGrid, AWS SES, or similar)
+    - Create email templates for approval and revision notifications
+    - Send notification to supplier on product approval
+    - Send notification to supplier on revision request with feedback
+    - _Requirements: 3.2_
+
+- [ ] 18. Implement admin account deletion functionality
+  - [ ] 18.1 Add user search to admin interface
+    - Create search bar component on /admin/users page
+    - Implement search by email and name
+    - Add real-time search filtering
+    - _Requirements: 3.3_
+  
+  - [ ] 18.2 Create delete account feature
+    - Add "Delete" button to each user row
+    - Implement confirmation modal with warning message
+    - Require explicit confirmation before deletion
+    - _Requirements: 3.3_
+  
+  - [ ] 18.3 Implement soft delete backend
+    - Add is_deleted or status column to users table
+    - Create soft delete endpoint that sets inactive flag
+    - Update user queries to exclude soft-deleted users
+    - Preserve user data for historical records
+    - _Requirements: 3.3_
+
+- [ ] 19. Build itinerary planning interface (行程規劃主介面)
+  - [ ] 19.1 Create three-column layout structure
+    - Design responsive three-column layout (30% - 45% - 25%)
+    - Implement collapsible panels for mobile view
+    - Set up component structure for Resource Library, Timeline Builder, and Map
+    - _Requirements: 3.4_
+  
+  - [ ] 19.2 Build Resource Library (景點與住宿選擇)
+    - Create product card component with key info display
+    - Implement search and filter controls for published products
+    - Add product type filtering (activities vs accommodations)
+    - Make cards draggable using drag-and-drop library
+    - _Requirements: 3.4_
+  
+  - [ ] 19.3 Implement Timeline Builder (時間軸視覺化介面)
+    - Create vertical timeline with day separators
+    - Implement drop zones for each day
+    - Create Activity Card and Accommodation Card components
+    - Style accommodation cards distinctly with different color/icon
+    - Add drag-and-drop functionality for cards
+    - _Requirements: 3.4_
+  
+  - [ ] 19.4 Add itinerary editing features
+    - Implement drag-to-reorder within days
+    - Enable drag-to-move between days
+    - Add edit icon to each card for detail modification
+    - Create edit modal for adding private notes
+    - Implement card deletion from timeline
+    - _Requirements: 3.4_
+  
+  - [ ] 19.5 Integrate Google Maps API
+    - Set up Google Maps API key and configuration
+    - Initialize map component in right column
+    - Add location pins for products in Resource Library
+    - Implement pin highlighting on card hover
+    - _Requirements: 3.4_
+  
+  - [ ] 19.6 Implement route visualization
+    - Add location pins to map when cards are dropped in timeline
+    - Draw polyline connecting pins for each day's route
+    - Update map view automatically when timeline changes
+    - Color-code routes by day
+    - Add map controls for zoom and pan
+    - _Requirements: 3.4_
+  
+  - [ ] 19.7 Create itinerary save and export functionality
+    - Implement save itinerary endpoint in backend
+    - Create itinerary data model in database
+    - Add "Save Itinerary" button with name input
+    - Store timeline configuration and product associations
+    - _Requirements: 3.4_
+  
+  - [ ]* 19.8 Write tests for itinerary planning interface
+    - Test drag-and-drop functionality
+    - Test timeline day management
+    - Test map pin updates
+    - Test itinerary save and load
+    - _Requirements: 3.4_
+
+- [ ] 20. Update product visibility based on status
+  - [ ] 20.1 Filter products in agency view
+    - Update GET /api/agency/tours to only return 已發佈 products
+    - Add status filter to product queries
+    - Update frontend to handle status-based visibility
+    - _Requirements: 3.2_
+  
+  - [ ] 20.2 Update product cards with status indicators
+    - Add status badge to all product cards
+    - Use color coding for different statuses
+    - Hide non-published products from agency Resource Library
+    - _Requirements: 3.2, 3.4_

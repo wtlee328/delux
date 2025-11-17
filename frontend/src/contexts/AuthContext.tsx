@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string;
   role: 'admin' | 'supplier' | 'agency';
+  roles: ('admin' | 'supplier' | 'agency')[];
 }
 
 interface AuthContextType {

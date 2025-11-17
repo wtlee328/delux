@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { login } from '../services/authService';
+import { login, setActiveRole } from '../services/authService';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -37,3 +38,43 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 export default router;
+
+/**
+ * POST /api/auth/select-role
+ * Set active role for multi-role users
+ */
+router.post('/select-role', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { role } = req.body;
+    const userId = (req as any).user.userId;
+
+    // Validate request body
+    if (!role) {
+      res.status(400).json({ error: 'Role is required' });
+      return;
+    }
+
+    // Validate role value
+    if (!['admin', 'supplier', 'agency'].includes(role)) {
+      res.status(400).json({ error: 'Invalid role' });
+      return;
+    }
+
+    // Set active role
+    const result = await setActiveRole(userId, role);
+
+    res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Role selection failed';
+    
+    // Return 403 for invalid role
+    if (message === 'User does not have this role') {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    // Return 500 for other errors
+    console.error('Role selection error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
