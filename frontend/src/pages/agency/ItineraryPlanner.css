@@ -1,0 +1,17 @@
+/* Mobile responsive styles for Itinerary Planner */
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Stack columns vertically on mobile */
+  .mainLayout {
+    flex-direction: column !important;
+  }
+
+  .leftColumn,
+  .middleColumn,
+  .rightColumn {
+    width: 100% !important;
+  }
+}

@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import supplierRoutes from './routes/supplier';
 import agencyRoutes from './routes/agency';
+import itineraryRoutes from './routes/itinerary';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/supplier', supplierRoutes);
 app.use('/api/agency', agencyRoutes);
+app.use('/api/itinerary', itineraryRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFoundHandler);

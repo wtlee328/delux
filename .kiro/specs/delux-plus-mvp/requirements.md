@@ -115,3 +115,23 @@ The MVP follows a "No Frills, Just Value" philosophy, focusing exclusively on th
 3. WHEN a 封面圖 is uploaded, THE Delux+ Platform SHALL store the image file and maintain a reference to it in the product record
 4. THE Delux+ Platform SHALL associate each 旅遊產品 with the 當地供應商 who created it
 5. WHEN data is retrieved from the database, THE Delux+ Platform SHALL ensure data consistency and accuracy
+
+### Requirement 9: Agency Itinerary Planning Interface (行程規劃主介面)
+
+**User Story:** As a 台灣旅行社, I want a powerful and intuitive tool to browse supplier products and visually build multi-day itineraries for my clients, complete with map visualization and a clear timeline, so that I can efficiently create customized travel plans.
+
+#### Acceptance Criteria
+
+1. WHEN a 台灣旅行社 navigates to the itinerary planning interface, THE Delux+ Platform SHALL display a three-column layout with Resource Library (30%), Timeline Builder (45%), and Interactive Map (25%)
+2. WHEN the Resource Library displays products, THE Delux+ Platform SHALL show all 已發佈 products as draggable cards with name, supplier, type, and price information
+3. WHEN a 台灣旅行社 applies search or filter controls in the Resource Library, THE Delux+ Platform SHALL display only products matching the search and filter criteria
+4. WHEN a 台灣旅行社 drags a product card from the Resource Library, THE Delux+ Platform SHALL enable dropping the card onto any day in the Timeline Builder
+5. WHEN a product card is dropped onto a day in the Timeline Builder, THE Delux+ Platform SHALL display the card as either an Activity Card or Accommodation Card based on product type
+6. WHILE displaying Accommodation Cards in the Timeline Builder, THE Delux+ Platform SHALL render them with distinct visual styling including different color and icon
+7. WHEN a 台灣旅行社 drags a card within the Timeline Builder, THE Delux+ Platform SHALL enable reordering cards within the same day or moving cards between different days
+8. WHEN a 台灣旅行社 clicks the edit icon on a timeline card, THE Delux+ Platform SHALL display a modal allowing modification of card details and addition of private notes
+9. WHEN a 台灣旅行社 hovers over a product card in the Resource Library, THE Delux+ Platform SHALL highlight the corresponding location pin on the Interactive Map
+10. WHEN a product card is dropped into the Timeline Builder, THE Delux+ Platform SHALL add a location pin to the Interactive Map for that product
+11. WHEN multiple products are added to a single day in the Timeline Builder, THE Delux+ Platform SHALL draw a polyline on the Interactive Map connecting the location pins in sequence
+12. WHEN the Timeline Builder content changes, THE Delux+ Platform SHALL automatically update the Interactive Map view and route visualization
+13. WHEN a 台灣旅行社 saves an itinerary, THE Delux+ Platform SHALL store the timeline configuration, product associations, and any private notes in the database

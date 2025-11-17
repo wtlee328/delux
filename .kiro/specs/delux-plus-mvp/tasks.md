@@ -360,21 +360,21 @@
     - Preserve user data for historical records
     - _Requirements: 3.3_
 
-- [ ] 19. Build itinerary planning interface (行程規劃主介面)
-  - [ ] 19.1 Create three-column layout structure
+- [x] 19. Build itinerary planning interface (行程規劃主介面)
+  - [x] 19.1 Create three-column layout structure
     - Design responsive three-column layout (30% - 45% - 25%)
     - Implement collapsible panels for mobile view
     - Set up component structure for Resource Library, Timeline Builder, and Map
     - _Requirements: 3.4_
   
-  - [ ] 19.2 Build Resource Library (景點與住宿選擇)
+  - [x] 19.2 Build Resource Library (景點與住宿選擇)
     - Create product card component with key info display
     - Implement search and filter controls for published products
     - Add product type filtering (activities vs accommodations)
     - Make cards draggable using drag-and-drop library
     - _Requirements: 3.4_
   
-  - [ ] 19.3 Implement Timeline Builder (時間軸視覺化介面)
+  - [x] 19.3 Implement Timeline Builder (時間軸視覺化介面)
     - Create vertical timeline with day separators
     - Implement drop zones for each day
     - Create Activity Card and Accommodation Card components
@@ -382,7 +382,7 @@
     - Add drag-and-drop functionality for cards
     - _Requirements: 3.4_
   
-  - [ ] 19.4 Add itinerary editing features
+  - [x] 19.4 Add itinerary editing features
     - Implement drag-to-reorder within days
     - Enable drag-to-move between days
     - Add edit icon to each card for detail modification
@@ -390,14 +390,14 @@
     - Implement card deletion from timeline
     - _Requirements: 3.4_
   
-  - [ ] 19.5 Integrate Google Maps API
+  - [x] 19.5 Integrate Google Maps API
     - Set up Google Maps API key and configuration
     - Initialize map component in right column
     - Add location pins for products in Resource Library
     - Implement pin highlighting on card hover
     - _Requirements: 3.4_
   
-  - [ ] 19.6 Implement route visualization
+  - [x] 19.6 Implement route visualization
     - Add location pins to map when cards are dropped in timeline
     - Draw polyline connecting pins for each day's route
     - Update map view automatically when timeline changes
@@ -405,7 +405,7 @@
     - Add map controls for zoom and pan
     - _Requirements: 3.4_
   
-  - [ ] 19.7 Create itinerary save and export functionality
+  - [x] 19.7 Create itinerary save and export functionality
     - Implement save itinerary endpoint in backend
     - Create itinerary data model in database
     - Add "Save Itinerary" button with name input
