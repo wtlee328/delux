@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { validateUserForm } from '../../utils/validation';
 
@@ -15,6 +16,7 @@ interface User {
 
 const AdminUsersPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,8 +200,8 @@ const AdminUsersPage: React.FC = () => {
         <div style={styles.headerLeft}>
           <h1>用戶管理</h1>
           <nav style={styles.nav}>
-            <a href="/admin/users" style={styles.navLink}>用戶管理</a>
-            <a href="/admin/tours" style={styles.navLink}>產品管理</a>
+            <button onClick={() => navigate('/admin/users')} style={styles.navLink}>用戶管理</button>
+            <button onClick={() => navigate('/admin/tours')} style={styles.navLink}>產品管理</button>
           </nav>
         </div>
         <div style={styles.userInfo}>
@@ -427,6 +429,10 @@ const styles = {
     color: '#495057',
     borderRadius: '4px',
     transition: 'background-color 0.2s',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
   },
   userInfo: {
     display: 'flex',

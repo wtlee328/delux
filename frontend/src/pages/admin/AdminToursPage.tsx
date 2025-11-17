@@ -91,8 +91,8 @@ const AdminToursPage: React.FC = () => {
         <div style={styles.headerLeft}>
           <h1>產品管理</h1>
           <nav style={styles.nav}>
-            <a href="/admin/users" style={styles.navLink}>用戶管理</a>
-            <a href="/admin/tours" style={styles.navLink}>產品管理</a>
+            <button onClick={() => navigate('/admin/users')} style={styles.navLink}>用戶管理</button>
+            <button onClick={() => navigate('/admin/tours')} style={styles.navLink}>產品管理</button>
           </nav>
         </div>
         <div style={styles.userInfo}>
@@ -195,6 +195,10 @@ const styles = {
     color: '#495057',
     borderRadius: '4px',
     transition: 'background-color 0.2s',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
   },
   userInfo: {
     display: 'flex',
