@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../config/axios';
 import { useToast } from '../components/Toast';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LocationState {
   roles: ('admin' | 'supplier' | 'agency')[];
@@ -12,6 +13,7 @@ const RoleSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showError } = useToast();
+  const { updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const state = location.state as LocationState;
@@ -89,32 +91,14 @@ const RoleSelectionPage: React.FC = () => {
       console.log('New user role:', user.role);
       console.log('New token (first 50 chars):', token.substring(0, 50));
 
-      // Clear old data first
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      // Small delay to ensure removal completes
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Update localStorage with new token and user info
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Verify it was saved
-      const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Saved user role:', savedUser.role);
-
-      // Update axios default header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Update AuthContext directly (no page reload needed)
+      updateUser(token, user);
 
       const redirectPath = getRedirectPath(role);
       console.log('Redirecting to:', redirectPath);
 
-      // Small delay to ensure localStorage write completes
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Force page reload to ensure AuthContext picks up new token
-      window.location.href = redirectPath;
+      // Navigate without reloading - AuthContext is already updated
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       console.error('Role selection error:', error);
       showError('角色選擇失敗，請重試');

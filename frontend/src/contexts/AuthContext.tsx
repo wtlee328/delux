@@ -14,6 +14,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (newToken: string, newUser: User) => void;
   isAuthenticated: boolean;
 }
 
@@ -89,11 +90,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  const updateUser = (newToken: string, newUser: User) => {
+    // Update state
+    setToken(newToken);
+    setUser(newUser);
+    
+    // Update localStorage
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    
+    // Update axios header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+  };
+
   const value: AuthContextType = {
     user,
     token,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!token && !!user,
   };
 
