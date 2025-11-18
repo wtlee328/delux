@@ -80,16 +80,17 @@ const ItineraryPlannerPage: React.FC = () => {
       const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
       const productCopy = { ...product, timelineId: uniqueId };
 
-      const newTimeline = timeline.map(day => {
-        if (day.dayNumber === destDayNum) {
-          const newItems = [...day.items];
-          newItems.splice(destination.index, 0, productCopy);
-          return { ...day, items: newItems };
-        }
-        return day;
+      // Use functional update to avoid stale closure
+      setTimeline(prevTimeline => {
+        return prevTimeline.map(day => {
+          if (day.dayNumber === destDayNum) {
+            const newItems = [...day.items];
+            newItems.splice(destination.index, 0, productCopy);
+            return { ...day, items: newItems };
+          }
+          return day;
+        });
       });
-
-      setTimeline(newTimeline);
       return;
     }
 
@@ -98,72 +99,83 @@ const ItineraryPlannerPage: React.FC = () => {
       const sourceDayNum = parseInt(source.droppableId.replace('day-', ''));
       const destDayNum = parseInt(destination.droppableId.replace('day-', ''));
 
-      const newTimeline = [...timeline];
-      const sourceDay = newTimeline.find(d => d.dayNumber === sourceDayNum);
-      const destDay = newTimeline.find(d => d.dayNumber === destDayNum);
+      // Use functional update to avoid stale closure
+      setTimeline(prevTimeline => {
+        const newTimeline = [...prevTimeline];
+        const sourceDay = newTimeline.find(d => d.dayNumber === sourceDayNum);
+        const destDay = newTimeline.find(d => d.dayNumber === destDayNum);
 
-      if (!sourceDay || !destDay) return;
+        if (!sourceDay || !destDay) return prevTimeline;
 
-      const [movedItem] = sourceDay.items.splice(source.index, 1);
-      destDay.items.splice(destination.index, 0, movedItem);
+        const [movedItem] = sourceDay.items.splice(source.index, 1);
+        destDay.items.splice(destination.index, 0, movedItem);
 
-      setTimeline(newTimeline);
+        return newTimeline;
+      });
     }
-  }, [availableProducts, timeline]);
+  }, [availableProducts]);
 
   const handleEditCard = useCallback((dayNumber: number, uniqueId: string) => {
-    const day = timeline.find(d => d.dayNumber === dayNumber);
-    const product = day?.items.find(item => (item.timelineId || item.id) === uniqueId);
-    if (product) {
-      setEditingProduct(product);
-      setIsEditModalOpen(true);
-    }
-  }, [timeline]);
+    setTimeline(prevTimeline => {
+      const day = prevTimeline.find(d => d.dayNumber === dayNumber);
+      const product = day?.items.find(item => (item.timelineId || item.id) === uniqueId);
+      if (product) {
+        setEditingProduct(product);
+        setIsEditModalOpen(true);
+      }
+      return prevTimeline;
+    });
+  }, []);
 
   const handleDeleteCard = useCallback((dayNumber: number, uniqueId: string) => {
-    const newTimeline = timeline.map(day => {
-      if (day.dayNumber === dayNumber) {
-        return {
-          ...day,
-          items: day.items.filter(item => (item.timelineId || item.id) !== uniqueId),
-        };
-      }
-      return day;
+    setTimeline(prevTimeline => {
+      return prevTimeline.map(day => {
+        if (day.dayNumber === dayNumber) {
+          return {
+            ...day,
+            items: day.items.filter(item => (item.timelineId || item.id) !== uniqueId),
+          };
+        }
+        return day;
+      });
     });
-    setTimeline(newTimeline);
-  }, [timeline]);
+  }, []);
 
   const handleSaveNotes = useCallback((productId: string, notes: string) => {
-    const newTimeline = timeline.map(day => ({
-      ...day,
-      items: day.items.map(item =>
-        (item.timelineId || item.id) === productId ? { ...item, notes } : item
-      ),
-    }));
-    setTimeline(newTimeline);
-  }, [timeline]);
+    setTimeline(prevTimeline => {
+      return prevTimeline.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          (item.timelineId || item.id) === productId ? { ...item, notes } : item
+        ),
+      }));
+    });
+  }, []);
 
   const handleAddDay = useCallback(() => {
-    const newDayNumber = timeline.length + 1;
-    setTimeline([...timeline, { dayNumber: newDayNumber, items: [] }]);
-  }, [timeline]);
+    setTimeline(prevTimeline => {
+      const newDayNumber = prevTimeline.length + 1;
+      return [...prevTimeline, { dayNumber: newDayNumber, items: [] }];
+    });
+  }, []);
 
   const handleUpdateTime = useCallback((dayNumber: number, uniqueId: string, startTime: string, duration: number) => {
-    const newTimeline = timeline.map(day => {
-      if (day.dayNumber === dayNumber) {
-        return {
-          ...day,
-          items: day.items.map(item =>
-            (item.timelineId || item.id) === uniqueId
-              ? { ...item, startTime, duration }
-              : item
-          ),
-        };
-      }
-      return day;
+    setTimeline(prevTimeline => {
+      return prevTimeline.map(day => {
+        if (day.dayNumber === dayNumber) {
+          return {
+            ...day,
+            items: day.items.map(item =>
+              (item.timelineId || item.id) === uniqueId
+                ? { ...item, startTime, duration }
+                : item
+            ),
+          };
+        }
+        return day;
+      });
     });
-    setTimeline(newTimeline);
-  }, [timeline]);
+  }, []);
 
   const handleSaveItinerary = async (name: string) => {
     try {
