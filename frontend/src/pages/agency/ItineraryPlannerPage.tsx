@@ -99,21 +99,44 @@ const ItineraryPlannerPage: React.FC = () => {
       const sourceDayNum = parseInt(source.droppableId.replace('day-', ''));
       const destDayNum = parseInt(destination.droppableId.replace('day-', ''));
 
-      // Use functional update to avoid stale closure
       setTimeline(prevTimeline => {
-        const newTimeline = [...prevTimeline];
-        const sourceDay = newTimeline.find(d => d.dayNumber === sourceDayNum);
-        const destDay = newTimeline.find(d => d.dayNumber === destDayNum);
+        const sourceDay = prevTimeline.find(d => d.dayNumber === sourceDayNum);
+        if (!sourceDay) return prevTimeline;
 
-        if (!sourceDay || !destDay) return prevTimeline;
+        // Item is moved within the same day
+        if (sourceDayNum === destDayNum) {
+          if (source.index === destination.index) return prevTimeline;
+          const newItems = [...sourceDay.items];
+          const [movedItem] = newItems.splice(source.index, 1);
+          newItems.splice(destination.index, 0, movedItem);
 
-        const [movedItem] = sourceDay.items.splice(source.index, 1);
-        destDay.items.splice(destination.index, 0, movedItem);
+          return prevTimeline.map(d => 
+            d.dayNumber === sourceDayNum ? { ...d, items: newItems } : d
+          );
+        }
 
-        return newTimeline;
+        // Item is moved to a different day
+        const destDay = prevTimeline.find(d => d.dayNumber === destDayNum);
+        if (!destDay) return prevTimeline;
+
+        const sourceItems = [...sourceDay.items];
+        const [movedItem] = sourceItems.splice(source.index, 1);
+
+        const destItems = [...destDay.items];
+        destItems.splice(destination.index, 0, movedItem);
+
+        return prevTimeline.map(d => {
+          if (d.dayNumber === sourceDayNum) {
+            return { ...d, items: sourceItems };
+          }
+          if (d.dayNumber === destDayNum) {
+            return { ...d, items: destItems };
+          }
+          return d;
+        });
       });
     }
-  }, [availableProducts]);
+  }, [availableProducts, timeline]);
 
   const handleEditCard = useCallback((dayNumber: number, uniqueId: string) => {
     setTimeline(prevTimeline => {
