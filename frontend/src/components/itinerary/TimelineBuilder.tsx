@@ -145,13 +145,17 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                           </div>
                         ) : (
                           day.items.map((item, index) => {
-                            const uniqueKey = item.timelineId || `${item.id}-${index}`;
-                            const draggableId = `timeline-${uniqueKey}`;
+                            if (!item.timelineId) {
+                              console.error("Timeline item is missing a timelineId and will not be rendered.", item);
+                              return null;
+                            }
+                            
+                            const draggableId = `timeline-item-${item.timelineId}`;
                             const isEditing = editingTime?.dayNumber === day.dayNumber && 
-                                            editingTime?.itemId === uniqueKey;
+                                            editingTime?.itemId === item.timelineId;
 
                             return (
-                              <Draggable key={uniqueKey} draggableId={draggableId} index={index}>
+                              <Draggable key={draggableId} draggableId={draggableId} index={index}>
                                 {(provided, snapshot) => (
                                   <div
                                     ref={provided.innerRef}
@@ -179,7 +183,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                               type="time"
                                               defaultValue={item.startTime || '09:00'}
                                               style={styles.timeInput}
-                                              onBlur={(e) => handleTimeSave(day.dayNumber, uniqueKey, e.target.value, item.duration || 60)}
+                                              onBlur={(e) => handleTimeSave(day.dayNumber, item.timelineId!, e.target.value, item.duration || 60)}
                                               autoFocus
                                             />
                                             <input
@@ -189,19 +193,19 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                               step="15"
                                               style={styles.durationInput}
                                               placeholder="分鐘"
-                                              onBlur={(e) => handleTimeSave(day.dayNumber, uniqueKey, item.startTime || '09:00', parseInt(e.target.value) || 60)}
+                                              onBlur={(e) => handleTimeSave(day.dayNumber, item.timelineId!, item.startTime || '09:00', parseInt(e.target.value) || 60)}
                                             />
                                           </div>
                                         ) : (
-                                          <p style={styles.activityTime} onClick={() => handleTimeEdit(day.dayNumber, uniqueKey)}>
+                                          <p style={styles.activityTime} onClick={() => handleTimeEdit(day.dayNumber, item.timelineId!)}>
                                             {item.startTime || '點擊設定時間'}
                                             {item.duration && ` (${item.duration}分鐘)`}
                                           </p>
                                         )}
                                       </div>
                                       <div style={styles.activityActions}>
-                                        <button style={styles.actionBtn} onClick={() => onEditCard?.(day.dayNumber, uniqueKey)} title="編輯備註">✏️</button>
-                                        <button style={styles.actionBtn} onClick={() => onDeleteCard?.(day.dayNumber, uniqueKey)} title="刪除">🗑️</button>
+                                        <button style={styles.actionBtn} onClick={() => onEditCard?.(day.dayNumber, item.timelineId!)} title="編輯備註">✏️</button>
+                                        <button style={styles.actionBtn} onClick={() => onDeleteCard?.(day.dayNumber, item.timelineId!)} title="刪除">🗑️</button>
                                       </div>
                                     </div>
                                   </div>
