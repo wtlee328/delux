@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { Droppable, Draggable } from 'react-beautiful-dnd';
 
 interface Product {
@@ -31,9 +31,8 @@ interface TimelineBuilderProps {
   onUpdateTime?: (dayNumber: number, itemId: string, startTime: string, duration: number) => void;
 }
 
-// Pastel color themes for each day (cycling through 9 colors)
 const dayColorThemes = [
-  { primary: '#FFB6C1', light: '#FFE4E9', dot: '#FF69B4' }, // Pink
+  { primary: '#FFB6C1', light: '#FFF0F2', dot: '#FF69B4' }, // Pink
   { primary: '#98D8C8', light: '#E8F5F1', dot: '#5FD3B3' }, // Mint Green
   { primary: '#FFD4A3', light: '#FFF4E6', dot: '#FFB347' }, // Peach
   { primary: '#B4A7D6', light: '#E8E4F3', dot: '#9370DB' }, // Lavender
@@ -62,21 +61,9 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
   onUpdateTime,
 }) => {
   const [editingTime, setEditingTime] = useState<{ dayNumber: number; itemId: string } | null>(null);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const timelineGridRef = useRef<HTMLDivElement>(null);
 
-  // Calculate which 3 days to show based on scroll position
-  const visibleDayStart = Math.floor(scrollPosition / 3);
-  const visibleDays = timeline.slice(visibleDayStart, visibleDayStart + 3);
-
-  const handleScrollLeft = useCallback(() => {
-    setScrollPosition(Math.max(0, scrollPosition - 1));
-  }, [scrollPosition]);
-
-  const handleScrollRight = useCallback(() => {
-    setScrollPosition(Math.min(timeline.length - 3, scrollPosition + 1));
-  }, [scrollPosition, timeline.length]);
-
-  const handleTimeEdit = useCallback((dayNumber: number, itemId: string) => {
+  const handleTimeEdit = useCallback((dayNumber: number, itemId:string) => {
     setEditingTime({ dayNumber, itemId });
   }, []);
 
@@ -96,6 +83,16 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
     return '';
   };
 
+  useLayoutEffect(() => {
+    if (timelineGridRef.current) {
+      const grid = timelineGridRef.current;
+      const lastDay = grid.children[grid.children.length - 1];
+      if (lastDay) {
+        lastDay.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+      }
+    }
+  }, [timeline.length]);
+
   return (
     <div style={styles.container}>
       {timeline.length === 0 ? (
@@ -106,90 +103,41 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
           </button>
         </div>
       ) : (
-        <>
-          {/* Navigation Controls */}
-          <div style={styles.navigationBar}>
-            <button
-              style={{
-                ...styles.navButton,
-                ...(scrollPosition === 0 ? styles.navButtonDisabled : {}),
-              }}
-              onClick={handleScrollLeft}
-              disabled={scrollPosition === 0}
-            >
-              ← 前一天
-            </button>
-            <span style={styles.dayIndicator}>
-              顯示第 {visibleDayStart + 1} - {Math.min(visibleDayStart + 3, timeline.length)} 天
-              （共 {timeline.length} 天）
-            </span>
-            <button
-              style={{
-                ...styles.navButton,
-                ...(scrollPosition >= timeline.length - 3 ? styles.navButtonDisabled : {}),
-              }}
-              onClick={handleScrollRight}
-              disabled={scrollPosition >= timeline.length - 3}
-            >
-              下一天 →
-            </button>
-          </div>
-
-          {/* Timeline Columns */}
-          <div style={styles.timelineGrid}>
-            {visibleDays.map((day) => {
+        <div style={styles.timelineWrapper}>
+          <div style={styles.timelineGrid} ref={timelineGridRef}>
+            {timeline.map((day) => {
               const colorTheme = getColorTheme(day.dayNumber);
               
               return (
                 <div key={day.dayNumber} style={styles.dayColumn}>
-                  {/* Day Header */}
                   <div
                     style={{
                       ...styles.dayHeader,
                       backgroundColor: colorTheme.light,
-                      borderLeftColor: colorTheme.primary,
+                      borderTopColor: colorTheme.primary,
                     }}
                   >
-                    <h3
-                      style={{
-                        ...styles.dayTitle,
-                        color: colorTheme.primary,
-                      }}
-                    >
+                    <h3 style={{ ...styles.dayTitle, color: colorTheme.primary }}>
                       Day {day.dayNumber}
                     </h3>
                     {formatDate(day) && (
-                      <p
-                        style={{
-                          ...styles.dayDate,
-                          color: colorTheme.primary,
-                        }}
-                      >
+                      <p style={{ ...styles.dayDate, color: colorTheme.primary }}>
                         {formatDate(day)}
                       </p>
                     )}
                   </div>
 
-                  {/* Timeline Content */}
                   <Droppable droppableId={`day-${day.dayNumber}`}>
-                    {(provided: any, snapshot: any) => (
+                    {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         style={{
                           ...styles.timelineContent,
-                          ...(snapshot.isDraggingOver ? {
-                            backgroundColor: colorTheme.light,
-                          } : {}),
+                          backgroundColor: snapshot.isDraggingOver ? colorTheme.light : 'transparent',
                         }}
                       >
-                        {/* Vertical Timeline Line */}
-                        <div
-                          style={{
-                            ...styles.timelineLine,
-                            backgroundColor: colorTheme.primary,
-                          }}
-                        />
+                        <div style={{ ...styles.timelineLine, backgroundColor: colorTheme.primary }} />
 
                         {day.items.length === 0 ? (
                           <div style={styles.emptyDayPlaceholder}>
@@ -204,7 +152,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
 
                             return (
                               <Draggable key={uniqueKey} draggableId={draggableId} index={index}>
-                                {(provided: any, snapshot: any) => (
+                                {(provided, snapshot) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
@@ -215,47 +163,23 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                       ...(snapshot.isDragging ? styles.activityDragging : {}),
                                     }}
                                   >
-                                    {/* Timeline Dot */}
-                                    <div
-                                      style={{
-                                        ...styles.timelineDot,
-                                        backgroundColor: colorTheme.dot,
-                                      }}
-                                    />
-
-                                    {/* Activity Card */}
+                                    <div style={{ ...styles.timelineDot, backgroundColor: colorTheme.dot }} />
                                     <div style={styles.activityCard}>
-                                      {/* Icon */}
-                                      <div
-                                        style={{
-                                          ...styles.activityIcon,
-                                          backgroundColor: colorTheme.light,
-                                        }}
-                                      >
+                                      <div style={{ ...styles.activityIcon, backgroundColor: colorTheme.light }}>
                                         <span style={styles.iconEmoji}>
                                           {getActivityIcon(item.productType)}
                                         </span>
                                       </div>
-
-                                      {/* Content */}
                                       <div style={styles.activityContent}>
                                         <h4 style={styles.activityTitle}>{item.title}</h4>
                                         
-                                        {/* Time Display/Edit */}
                                         {isEditing ? (
                                           <div style={styles.timeEditContainer}>
                                             <input
                                               type="time"
                                               defaultValue={item.startTime || '09:00'}
                                               style={styles.timeInput}
-                                              onBlur={(e) => {
-                                                handleTimeSave(
-                                                  day.dayNumber,
-                                                  uniqueKey,
-                                                  e.target.value,
-                                                  item.duration || 60
-                                                );
-                                              }}
+                                              onBlur={(e) => handleTimeSave(day.dayNumber, uniqueKey, e.target.value, item.duration || 60)}
                                               autoFocus
                                             />
                                             <input
@@ -265,43 +189,19 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                               step="15"
                                               style={styles.durationInput}
                                               placeholder="分鐘"
-                                              onBlur={(e) => {
-                                                handleTimeSave(
-                                                  day.dayNumber,
-                                                  uniqueKey,
-                                                  item.startTime || '09:00',
-                                                  parseInt(e.target.value) || 60
-                                                );
-                                              }}
+                                              onBlur={(e) => handleTimeSave(day.dayNumber, uniqueKey, item.startTime || '09:00', parseInt(e.target.value) || 60)}
                                             />
                                           </div>
                                         ) : (
-                                          <p
-                                            style={styles.activityTime}
-                                            onClick={() => handleTimeEdit(day.dayNumber, uniqueKey)}
-                                          >
+                                          <p style={styles.activityTime} onClick={() => handleTimeEdit(day.dayNumber, uniqueKey)}>
                                             {item.startTime || '點擊設定時間'}
                                             {item.duration && ` (${item.duration}分鐘)`}
                                           </p>
                                         )}
-
-                                        {/* Action Buttons */}
-                                        <div style={styles.activityActions}>
-                                          <button
-                                            style={styles.actionBtn}
-                                            onClick={() => onEditCard?.(day.dayNumber, uniqueKey)}
-                                            title="編輯備註"
-                                          >
-                                            ✏️
-                                          </button>
-                                          <button
-                                            style={styles.actionBtn}
-                                            onClick={() => onDeleteCard?.(day.dayNumber, uniqueKey)}
-                                            title="刪除"
-                                          >
-                                            🗑️
-                                          </button>
-                                        </div>
+                                      </div>
+                                      <div style={styles.activityActions}>
+                                        <button style={styles.actionBtn} onClick={() => onEditCard?.(day.dayNumber, uniqueKey)} title="編輯備註">✏️</button>
+                                        <button style={styles.actionBtn} onClick={() => onDeleteCard?.(day.dayNumber, uniqueKey)} title="刪除">🗑️</button>
                                       </div>
                                     </div>
                                   </div>
@@ -317,15 +217,13 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                 </div>
               );
             })}
+            <div style={styles.addDayContainer}>
+              <button style={styles.addDayButton} onClick={onAddDay}>
+                + 新增一天
+              </button>
+            </div>
           </div>
-
-          {/* Add Day Button */}
-          <div style={styles.addDayContainer}>
-            <button style={styles.addDayButton} onClick={onAddDay}>
-              + 新增一天
-            </button>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -346,11 +244,7 @@ const styles = {
     height: '100%',
     padding: '3rem',
   },
-  emptyText: {
-    color: '#999',
-    fontSize: '1rem',
-    marginBottom: '1.5rem',
-  },
+  emptyText: { color: '#999', fontSize: '1rem', marginBottom: '1.5rem' },
   addFirstDayButton: {
     padding: '0.75rem 1.5rem',
     backgroundColor: '#007bff',
@@ -360,77 +254,46 @@ const styles = {
     cursor: 'pointer',
     fontSize: '0.95rem',
     fontWeight: '500',
-    transition: 'all 0.2s',
   },
-  navigationBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  timelineWrapper: {
+    flex: 1,
+    overflowX: 'auto' as const,
+    overflowY: 'hidden' as const,
     padding: '1rem',
-    backgroundColor: 'white',
-    borderBottom: '1px solid #e0e0e0',
-  },
-  navButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#f5f5f5',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-    transition: 'all 0.2s',
-  },
-  navButtonDisabled: {
-    opacity: 0.4,
-    cursor: 'not-allowed',
-  },
-  dayIndicator: {
-    fontSize: '0.9rem',
-    color: '#666',
-    fontWeight: '500',
   },
   timelineGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    display: 'flex',
+    flexDirection: 'row' as const,
     gap: '1.5rem',
-    padding: '1.5rem',
-    flex: 1,
-    overflow: 'auto',
+    minHeight: '100%',
   },
   dayColumn: {
+    width: '350px',
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column' as const,
     backgroundColor: 'white',
     borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
     overflow: 'hidden',
-    minHeight: '500px',
   },
   dayHeader: {
-    padding: '1.25rem',
-    borderLeft: '4px solid',
+    padding: '1rem',
+    borderTop: '4px solid',
     textAlign: 'center' as const,
   },
-  dayTitle: {
-    margin: 0,
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '0.25rem',
-  },
-  dayDate: {
-    margin: 0,
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    opacity: 0.8,
-  },
+  dayTitle: { margin: 0, fontSize: '1.25rem', fontWeight: '600' },
+  dayDate: { margin: 0, fontSize: '0.9rem', fontWeight: '500', opacity: 0.8 },
   timelineContent: {
     flex: 1,
     padding: '1.5rem 1rem',
     position: 'relative' as const,
     transition: 'background-color 0.2s',
+    overflowY: 'auto' as const,
   },
-  timelineLine: {
+timelineLine: {
     position: 'absolute' as const,
-    left: '2.5rem',
+    left: '2.25rem',
     top: '1.5rem',
     bottom: '1.5rem',
     width: '2px',
@@ -441,28 +304,21 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    minHeight: '200px',
+    minHeight: '150px',
   },
-  placeholderText: {
-    color: '#bbb',
-    fontSize: '0.9rem',
-  },
+  placeholderText: { color: '#bbb', fontSize: '0.9rem' },
   activityItem: {
     position: 'relative' as const,
     marginBottom: '1.5rem',
-    paddingLeft: '3rem',
-    transition: 'all 0.2s',
+    paddingLeft: '3.5rem',
   },
-  activityDragging: {
-    opacity: 0.8,
-    transform: 'scale(1.02)',
-  },
+  activityDragging: { opacity: 0.9, transform: 'scale(1.02)' },
   timelineDot: {
     position: 'absolute' as const,
     left: '1.75rem',
-    top: '1rem',
-    width: '14px',
-    height: '14px',
+    top: '0.5rem',
+    width: '16px',
+    height: '16px',
     borderRadius: '50%',
     border: '3px solid white',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -475,47 +331,35 @@ const styles = {
     backgroundColor: 'white',
     borderRadius: '8px',
     border: '1px solid #f0f0f0',
-    transition: 'all 0.2s',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     cursor: 'grab',
+    position: 'relative' as const,
   },
   activityIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  iconEmoji: {
-    fontSize: '1.25rem',
-  },
-  activityContent: {
-    flex: 1,
-    minWidth: 0,
-  },
+  iconEmoji: { fontSize: '1.1rem' },
+  activityContent: { flex: 1, minWidth: 0 },
   activityTitle: {
     margin: 0,
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     fontWeight: '600',
     color: '#333',
     marginBottom: '0.25rem',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
   },
   activityTime: {
     margin: 0,
     fontSize: '0.8rem',
     color: '#999',
     cursor: 'pointer',
-    transition: 'color 0.2s',
   },
-  timeEditContainer: {
-    display: 'flex',
-    gap: '0.5rem',
-    marginTop: '0.25rem',
-  },
+  timeEditContainer: { display: 'flex', gap: '0.5rem', marginTop: '0.25rem' },
   timeInput: {
     padding: '0.25rem 0.5rem',
     fontSize: '0.8rem',
@@ -531,35 +375,45 @@ const styles = {
     width: '60px',
   },
   activityActions: {
+    position: 'absolute' as const,
+    top: '0.5rem',
+    right: '0.5rem',
     display: 'flex',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
+    gap: '0.25rem',
+    backgroundColor: 'white',
+    borderRadius: '4px',
+    padding: '0.1rem',
+    opacity: 0,
+    transition: 'opacity 0.2s',
   },
   actionBtn: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '0.9rem',
+    fontSize: '0.8rem',
     padding: '0.25rem',
     opacity: 0.6,
-    transition: 'opacity 0.2s',
   },
   addDayContainer: {
-    padding: '1rem',
-    borderTop: '1px solid #e0e0e0',
-    backgroundColor: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 1rem',
   },
   addDayButton: {
-    width: '100%',
+    width: '100px',
+    height: '100px',
     padding: '0.75rem',
     backgroundColor: '#f8f9fa',
     border: '2px dashed #ddd',
-    borderRadius: '8px',
+    borderRadius: '12px',
     cursor: 'pointer',
     fontSize: '0.9rem',
     color: '#666',
     fontWeight: '500',
-    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
 

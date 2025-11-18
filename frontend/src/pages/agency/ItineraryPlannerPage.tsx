@@ -285,7 +285,7 @@ const ItineraryPlannerPage: React.FC = () => {
             )}
           </div>
 
-          {/* Middle Column: Timeline Builder (45%) */}
+          {/* Middle Column: Timeline Builder (50%) */}
           <div style={styles.middleColumn} className="middleColumn">
             <div style={styles.panelHeader}>
               <h2 style={styles.panelTitle}>時間軸視覺化介面</h2>
@@ -298,7 +298,7 @@ const ItineraryPlannerPage: React.FC = () => {
               </button>
             </div>
             {isMobileMenuOpen.timeline && (
-              <div style={styles.panelContent}>
+              <div style={{...styles.panelContent, padding: 0}}>
                 <TimelineBuilder
                   timeline={timeline}
                   onEditCard={handleEditCard}
@@ -432,7 +432,7 @@ const styles = {
     padding: '1rem',
   },
   leftColumn: {
-    width: '30%',
+    width: '25%',
     backgroundColor: 'white',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -441,7 +441,7 @@ const styles = {
     overflow: 'hidden',
   },
   middleColumn: {
-    width: '45%',
+    width: '50%',
     backgroundColor: 'white',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
