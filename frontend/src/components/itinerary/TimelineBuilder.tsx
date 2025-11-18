@@ -563,4 +563,4 @@ const styles = {
   },
 };
 
-export default React.memo(TimelineBuilder);
+export default TimelineBuilder;

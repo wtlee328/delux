@@ -241,4 +241,4 @@ const styles = {
   },
 };
 
-export default React.memo(ResourceLibrary);
+export default ResourceLibrary;
