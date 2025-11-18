@@ -18,18 +18,22 @@ interface Product {
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
-  productType: 'activity' | 'accommodation';
+  productType: 'activity' | 'accommodation' | 'food' | 'transportation';
   notes?: string;
   location?: {
     lat: number;
     lng: number;
   };
   timelineId?: string; // Unique ID for timeline items
+  startTime?: string; // Format: "HH:mm"
+  duration?: number; // Duration in minutes
 }
 
 interface TimelineDay {
   dayNumber: number;
   items: Product[];
+  date?: string; // Format: "MM/DD"
+  dayOfWeek?: string; // e.g., "Mon", "Tue"
 }
 
 const ItineraryPlannerPage: React.FC = () => {
@@ -144,6 +148,23 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline([...timeline, { dayNumber: newDayNumber, items: [] }]);
   }, [timeline]);
 
+  const handleUpdateTime = useCallback((dayNumber: number, uniqueId: string, startTime: string, duration: number) => {
+    const newTimeline = timeline.map(day => {
+      if (day.dayNumber === dayNumber) {
+        return {
+          ...day,
+          items: day.items.map(item =>
+            (item.timelineId || item.id) === uniqueId
+              ? { ...item, startTime, duration }
+              : item
+          ),
+        };
+      }
+      return day;
+    });
+    setTimeline(newTimeline);
+  }, [timeline]);
+
   const handleSaveItinerary = async (name: string) => {
     try {
       setSaveStatus('儲存中...');
@@ -248,6 +269,7 @@ const ItineraryPlannerPage: React.FC = () => {
                   onEditCard={handleEditCard}
                   onDeleteCard={handleDeleteCard}
                   onAddDay={handleAddDay}
+                  onUpdateTime={handleUpdateTime}
                 />
               </div>
             )}
