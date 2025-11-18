@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,7 @@ interface Product {
     lat: number;
     lng: number;
   };
+  timelineId?: string; // Unique ID for timeline items
 }
 
 interface TimelineDay {
@@ -56,7 +57,7 @@ const ItineraryPlannerPage: React.FC = () => {
     }));
   };
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
     const { source, destination, draggableId } = result;
 
     if (!destination) {
@@ -71,8 +72,9 @@ const ItineraryPlannerPage: React.FC = () => {
       const product = availableProducts.find(p => p.id === draggableId);
       if (!product) return;
 
-      // Create a copy of the product for the timeline
-      const productCopy = { ...product };
+      // Create a copy with a unique ID for the timeline
+      const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
+      const productCopy = { ...product, timelineId: uniqueId };
 
       const newTimeline = timeline.map(day => {
         if (day.dayNumber === destDayNum) {
@@ -103,44 +105,44 @@ const ItineraryPlannerPage: React.FC = () => {
 
       setTimeline(newTimeline);
     }
-  };
+  }, [availableProducts, timeline]);
 
-  const handleEditCard = (dayNumber: number, itemId: string) => {
+  const handleEditCard = useCallback((dayNumber: number, uniqueId: string) => {
     const day = timeline.find(d => d.dayNumber === dayNumber);
-    const product = day?.items.find(item => item.id === itemId);
+    const product = day?.items.find(item => (item.timelineId || item.id) === uniqueId);
     if (product) {
       setEditingProduct(product);
       setIsEditModalOpen(true);
     }
-  };
+  }, [timeline]);
 
-  const handleDeleteCard = (dayNumber: number, itemId: string) => {
+  const handleDeleteCard = useCallback((dayNumber: number, uniqueId: string) => {
     const newTimeline = timeline.map(day => {
       if (day.dayNumber === dayNumber) {
         return {
           ...day,
-          items: day.items.filter(item => item.id !== itemId),
+          items: day.items.filter(item => (item.timelineId || item.id) !== uniqueId),
         };
       }
       return day;
     });
     setTimeline(newTimeline);
-  };
+  }, [timeline]);
 
-  const handleSaveNotes = (productId: string, notes: string) => {
+  const handleSaveNotes = useCallback((productId: string, notes: string) => {
     const newTimeline = timeline.map(day => ({
       ...day,
       items: day.items.map(item =>
-        item.id === productId ? { ...item, notes } : item
+        (item.timelineId || item.id) === productId ? { ...item, notes } : item
       ),
     }));
     setTimeline(newTimeline);
-  };
+  }, [timeline]);
 
-  const handleAddDay = () => {
+  const handleAddDay = useCallback(() => {
     const newDayNumber = timeline.length + 1;
     setTimeline([...timeline, { dayNumber: newDayNumber, items: [] }]);
-  };
+  }, [timeline]);
 
   const handleSaveItinerary = async (name: string) => {
     try {

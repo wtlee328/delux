@@ -11,6 +11,7 @@ interface Product {
   supplierName: string;
   productType: 'activity' | 'accommodation';
   notes?: string;
+  timelineId?: string;
 }
 
 interface TimelineDay {
@@ -60,57 +61,62 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                 {day.items.length === 0 && (
                   <p style={styles.dropZonePlaceholder}>拖曳產品到這裡</p>
                 )}
-                {day.items.map((item, index) => (
-                  <Draggable key={item.id} draggableId={`timeline-${item.id}`} index={index}>
-                    {(provided: any, snapshot: any) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={{
-                          ...styles.card,
-                          ...(item.productType === 'accommodation' ? styles.accommodationCard : styles.activityCard),
-                          ...provided.draggableProps.style,
-                          ...(snapshot.isDragging ? styles.cardDragging : {}),
-                        }}
-                      >
-                        <div style={styles.cardHeader}>
-                          <span style={styles.cardIcon}>
-                            {item.productType === 'accommodation' ? '🏨' : '🎯'}
-                          </span>
-                          <span style={styles.cardType}>
-                            {item.productType === 'accommodation' ? '住宿' : '活動'}
-                          </span>
-                          <div style={styles.cardActions}>
-                            <button
-                              style={styles.actionButton}
-                              onClick={() => onEditCard?.(day.dayNumber, item.id)}
-                              title="編輯"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              style={styles.actionButton}
-                              onClick={() => onDeleteCard?.(day.dayNumber, item.id)}
-                              title="刪除"
-                            >
-                              🗑️
-                            </button>
+                {day.items.map((item, index) => {
+                  const uniqueKey = item.timelineId || `${item.id}-${index}`;
+                  const draggableId = `timeline-${uniqueKey}`;
+                  
+                  return (
+                    <Draggable key={uniqueKey} draggableId={draggableId} index={index}>
+                      {(provided: any, snapshot: any) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{
+                            ...styles.card,
+                            ...(item.productType === 'accommodation' ? styles.accommodationCard : styles.activityCard),
+                            ...provided.draggableProps.style,
+                            ...(snapshot.isDragging ? styles.cardDragging : {}),
+                          }}
+                        >
+                          <div style={styles.cardHeader}>
+                            <span style={styles.cardIcon}>
+                              {item.productType === 'accommodation' ? '🏨' : '🎯'}
+                            </span>
+                            <span style={styles.cardType}>
+                              {item.productType === 'accommodation' ? '住宿' : '活動'}
+                            </span>
+                            <div style={styles.cardActions}>
+                              <button
+                                style={styles.actionButton}
+                                onClick={() => onEditCard?.(day.dayNumber, uniqueKey)}
+                                title="編輯"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                style={styles.actionButton}
+                                onClick={() => onDeleteCard?.(day.dayNumber, uniqueKey)}
+                                title="刪除"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
+                          <h4 style={styles.cardTitle}>{item.title}</h4>
+                          <p style={styles.cardDetail}>供應商：{item.supplierName}</p>
+                          <p style={styles.cardPrice}>{formatPrice(item.netPrice)}</p>
+                          {item.notes && (
+                            <div style={styles.notesSection}>
+                              <p style={styles.notesLabel}>備註：</p>
+                              <p style={styles.notesText}>{item.notes}</p>
+                            </div>
+                          )}
                         </div>
-                        <h4 style={styles.cardTitle}>{item.title}</h4>
-                        <p style={styles.cardDetail}>供應商：{item.supplierName}</p>
-                        <p style={styles.cardPrice}>{formatPrice(item.netPrice)}</p>
-                        {item.notes && (
-                          <div style={styles.notesSection}>
-                            <p style={styles.notesLabel}>備註：</p>
-                            <p style={styles.notesText}>{item.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
+                      )}
+                    </Draggable>
+                  );
+                })}
                 {provided.placeholder}
               </div>
             )}
@@ -260,4 +266,4 @@ const styles = {
   },
 };
 
-export default TimelineBuilder;
+export default React.memo(TimelineBuilder);
