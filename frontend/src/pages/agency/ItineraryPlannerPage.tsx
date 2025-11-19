@@ -324,15 +324,13 @@ const ItineraryPlannerPage: React.FC = () => {
               </button>
             </div>
             {isMobileMenuOpen.timeline && (
-              <div style={{ ...styles.panelContent, padding: 0 }}>
-                <div style={{ ...styles.panelContent, padding: 0 }}>
-                  <TimelineContainer
-                    timeline={timeline}
-                    onTimeUpdate={handleUpdateTime}
-                    onDelete={handleDeleteCard}
-                    onAddDay={handleAddDay}
-                  />
-                </div>
+              <div style={{ ...styles.panelContent, padding: 0, overflow: 'hidden' }}>
+                <TimelineContainer
+                  timeline={timeline}
+                  onTimeUpdate={handleUpdateTime}
+                  onDelete={handleDeleteCard}
+                  onAddDay={handleAddDay}
+                />
               </div>
             )}
           </div>
