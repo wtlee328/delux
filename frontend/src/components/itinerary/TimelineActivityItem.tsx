@@ -5,10 +5,21 @@ import { CSS } from '@dnd-kit/utilities';
 interface Product {
     id: string;
     title: string;
+    destination: string;
+    durationDays: number;
+    coverImageUrl: string;
+    netPrice: number;
+    supplierName: string;
     productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    notes?: string;
+    location?: {
+        lat: number;
+        lng: number;
+    };
     timelineId?: string;
     startTime?: string;
     duration?: number;
+    description?: string;
 }
 
 interface TimelineActivityItemProps {
@@ -17,6 +28,7 @@ interface TimelineActivityItemProps {
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
     isStartTimeEditable: boolean;
+    onPreview: (product: Product) => void;
 }
 
 
@@ -27,6 +39,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     onTimeUpdate,
     onDelete,
     isStartTimeEditable,
+    onPreview,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editTime, setEditTime] = useState(item.startTime || '09:00');
@@ -126,14 +139,38 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                 <div style={styles.cardContent}>
                     <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
-                        <button
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
-                            style={styles.deleteBtn}
-                            title="Remove"
-                        >
-                            ×
-                        </button>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); onPreview(item); }}
+                                style={{
+                                    ...styles.deleteBtn,
+                                    color: '#b2bec3',
+                                    fontSize: '1rem',
+                                    marginTop: 0,
+                                    marginRight: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '24px',
+                                    height: '24px',
+                                }}
+                                title="預覽"
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                            <button
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
+                                style={styles.deleteBtn}
+                                title="Remove"
+                            >
+                                ×
+                            </button>
+                        </div>
                     </div>
 
                     {isEditing ? (

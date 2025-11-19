@@ -6,10 +6,21 @@ import { TimelineActivityItem } from './TimelineActivityItem';
 interface Product {
     id: string;
     title: string;
+    destination: string;
+    durationDays: number;
+    coverImageUrl: string;
+    netPrice: number;
+    supplierName: string;
     productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    notes?: string;
+    location?: {
+        lat: number;
+        lng: number;
+    };
     timelineId?: string;
     startTime?: string;
     duration?: number;
+    description?: string;
 }
 
 interface TimelineDay {
@@ -24,6 +35,7 @@ interface TimelineDayColumnProps {
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
+    onPreview: (product: Product) => void;
 }
 
 export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
@@ -31,6 +43,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
     colorTheme,
     onTimeUpdate,
     onDelete,
+    onPreview,
 }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `day-${day.dayNumber}`,
@@ -75,6 +88,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                                     onTimeUpdate={onTimeUpdate}
                                     onDelete={onDelete}
                                     isStartTimeEditable={index === 0}
+                                    onPreview={onPreview}
                                 />
                             ))
                         )}

@@ -4,10 +4,21 @@ import { TimelineDayColumn } from './TimelineDayColumn';
 interface Product {
     id: string;
     title: string;
+    destination: string;
+    durationDays: number;
+    coverImageUrl: string;
+    netPrice: number;
+    supplierName: string;
     productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    notes?: string;
+    location?: {
+        lat: number;
+        lng: number;
+    };
     timelineId?: string;
     startTime?: string;
     duration?: number;
+    description?: string;
 }
 
 interface TimelineDay {
