@@ -76,6 +76,14 @@ export async function uploadCoverImage(file: Express.Multer.File): Promise<Uploa
     blobStream.end(file.buffer);
   });
 
+  // Make the file public
+  try {
+    await blob.makePublic();
+  } catch (error) {
+    console.error('Error making file public:', error);
+    // Continue anyway, as the bucket might be public by default
+  }
+
   // Get public URL (bucket must have uniform bucket-level access with allUsers read permission)
   const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
 
