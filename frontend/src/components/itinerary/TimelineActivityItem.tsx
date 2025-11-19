@@ -141,19 +141,17 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                             </div>
                             <div style={styles.editRow}>
                                 <span style={styles.label}>停留:</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <input
-                                        type="number"
-                                        value={editDuration}
-                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                        onBlur={handleSave}
-                                        onKeyDown={handleKeyDown}
-                                        style={styles.durationInput}
-                                        min="15"
-                                        step="15"
-                                    />
-                                    <span style={styles.unit}>分鐘</span>
-                                </div>
+                                <input
+                                    type="number"
+                                    value={editDuration}
+                                    onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                    onBlur={handleSave}
+                                    onKeyDown={handleKeyDown}
+                                    style={styles.durationInput}
+                                    min="15"
+                                    step="15"
+                                />
+                                <span style={styles.unit}>分鐘</span>
                             </div>
                         </div>
                     ) : (
@@ -311,53 +309,59 @@ const styles = {
     editContainer: {
         display: 'flex',
         flexDirection: 'column' as const,
-        gap: '0.5rem',
+        gap: '0.75rem',
         marginTop: '0.5rem',
         backgroundColor: '#f8f9fa',
-        padding: '8px',
-        borderRadius: '8px',
+        padding: '12px',
+        borderRadius: '12px',
         width: '100%',
         boxSizing: 'border-box' as const,
+        border: '1px solid #f1f2f6',
     },
     editRow: {
         display: 'flex',
         alignItems: 'center',
         width: '100%',
+        gap: '8px',
     },
     label: {
         fontSize: '0.85rem',
         color: '#636e72',
-        fontWeight: '500',
-        width: '48px', // Fixed width for alignment
-        flexShrink: 0,
+        fontWeight: '600',
+        whiteSpace: 'nowrap' as const,
+        minWidth: '40px',
     },
     timeInput: {
+        flex: 1,
         border: '1px solid #dfe6e9',
-        borderRadius: '6px',
-        padding: '6px 8px',
-        fontSize: '0.9rem',
+        borderRadius: '8px',
+        padding: '8px 12px',
+        fontSize: '0.95rem',
         color: '#2d3436',
         outline: 'none',
         fontFamily: 'monospace',
         backgroundColor: 'white',
-        width: '100%',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        minWidth: 0, // Allow flex shrinking
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     durationInput: {
+        flex: 1,
         border: '1px solid #dfe6e9',
-        borderRadius: '6px',
-        padding: '6px 8px',
-        fontSize: '0.9rem',
+        borderRadius: '8px',
+        padding: '8px 12px',
+        fontSize: '0.95rem',
         color: '#2d3436',
         outline: 'none',
-        width: '60px',
         textAlign: 'center' as const,
         backgroundColor: 'white',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        minWidth: 0,
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     unit: {
         fontSize: '0.85rem',
         color: '#636e72',
-        marginLeft: '4px',
+        whiteSpace: 'nowrap' as const,
     },
 };
