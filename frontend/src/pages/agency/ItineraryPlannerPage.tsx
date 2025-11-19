@@ -5,8 +5,7 @@ import { StrictModeDroppable } from '../../components/itinerary/StrictModeDroppa
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
-import TimelineBuilder from '../../components/itinerary/TimelineBuilder';
-import EditCardModal from '../../components/itinerary/EditCardModal';
+import { TimelineContainer } from '../../components/itinerary/TimelineContainer';
 import SaveItineraryModal from '../../components/itinerary/SaveItineraryModal';
 import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
@@ -51,8 +50,6 @@ const ItineraryPlannerPage: React.FC = () => {
     { dayNumber: 1, items: [] },
   ]);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
@@ -62,6 +59,26 @@ const ItineraryPlannerPage: React.FC = () => {
       ...prev,
       [panel]: !prev[panel],
     }));
+  };
+
+  // Helper to add minutes to a time string "HH:mm"
+  const addMinutes = (time: string, minutes: number): string => {
+    const [h, m] = time.split(':').map(Number);
+    const date = new Date();
+    date.setHours(h, m, 0, 0);
+    date.setMinutes(date.getMinutes() + minutes);
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  // Helper to recalculate times for a list of products
+  const recalculateTimes = (items: Product[]): Product[] => {
+    let currentTime = '09:00';
+    return items.map(item => {
+      const startTime = currentTime;
+      const duration = item.duration || 60;
+      currentTime = addMinutes(startTime, duration);
+      return { ...item, startTime, duration };
+    });
   };
 
   const handleDragEnd = useCallback((result: DropResult) => {
@@ -81,7 +98,7 @@ const ItineraryPlannerPage: React.FC = () => {
 
       // Create a copy with a unique ID for the timeline
       const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
-      const productCopy = { ...product, timelineId: uniqueId };
+      const productCopy = { ...product, timelineId: uniqueId, duration: product.duration || 60 };
 
       // Use functional update to avoid stale closure
       setTimeline(prevTimeline => {
@@ -89,7 +106,7 @@ const ItineraryPlannerPage: React.FC = () => {
           if (day.dayNumber === destDayNum) {
             const newItems = [...day.items];
             newItems.splice(destination.index, 0, productCopy);
-            return { ...day, items: newItems };
+            return { ...day, items: recalculateTimes(newItems) };
           }
           return day;
         });
@@ -115,7 +132,7 @@ const ItineraryPlannerPage: React.FC = () => {
           newItems.splice(destination.index, 0, movedItem);
 
           return prevTimeline.map(d =>
-            d.dayNumber === sourceDayNum ? { ...d, items: newItems } : d
+            d.dayNumber === sourceDayNum ? { ...d, items: recalculateTimes(newItems) } : d
           );
         }
 
@@ -131,10 +148,10 @@ const ItineraryPlannerPage: React.FC = () => {
 
         return prevTimeline.map(d => {
           if (d.dayNumber === sourceDayNum) {
-            return { ...d, items: sourceItems };
+            return { ...d, items: recalculateTimes(sourceItems) };
           }
           if (d.dayNumber === destDayNum) {
-            return { ...d, items: destItems };
+            return { ...d, items: recalculateTimes(destItems) };
           }
           return d;
         });
@@ -142,25 +159,15 @@ const ItineraryPlannerPage: React.FC = () => {
     }
   }, [availableProducts, timeline]);
 
-  const handleEditCard = useCallback((dayNumber: number, uniqueId: string) => {
-    setTimeline(prevTimeline => {
-      const day = prevTimeline.find(d => d.dayNumber === dayNumber);
-      const product = day?.items.find(item => (item.timelineId || item.id) === uniqueId);
-      if (product) {
-        setEditingProduct(product);
-        setIsEditModalOpen(true);
-      }
-      return prevTimeline;
-    });
-  }, []);
 
   const handleDeleteCard = useCallback((dayNumber: number, uniqueId: string) => {
     setTimeline(prevTimeline => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
+          const newItems = day.items.filter(item => (item.timelineId || item.id) !== uniqueId);
           return {
             ...day,
-            items: day.items.filter(item => (item.timelineId || item.id) !== uniqueId),
+            items: recalculateTimes(newItems),
           };
         }
         return day;
@@ -168,16 +175,6 @@ const ItineraryPlannerPage: React.FC = () => {
     });
   }, []);
 
-  const handleSaveNotes = useCallback((productId: string, notes: string) => {
-    setTimeline(prevTimeline => {
-      return prevTimeline.map(day => ({
-        ...day,
-        items: day.items.map(item =>
-          (item.timelineId || item.id) === productId ? { ...item, notes } : item
-        ),
-      }));
-    });
-  }, []);
 
   const handleAddDay = useCallback(() => {
     setTimeline(prevTimeline => {
@@ -190,14 +187,40 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prevTimeline => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
-          return {
-            ...day,
-            items: day.items.map(item =>
-              (item.timelineId || item.id) === uniqueId
-                ? { ...item, startTime, duration }
-                : item
-            ),
-          };
+          // First update the specific item
+          const updatedItems = day.items.map(item =>
+            (item.timelineId || item.id) === uniqueId
+              ? { ...item, startTime, duration }
+              : item
+          );
+          // Then recalculate all times to ensure consistency
+          // Note: If we want to allow manual override that breaks sequence, we should skip recalculateTimes here.
+          // But requirement says "recalculates ordering and time sequence".
+          // Let's assume changing duration shifts subsequent items, but changing start time might be a manual override?
+          // For simplicity and consistency with "timeline" concept, let's enforce sequence.
+          // Actually, if user manually sets start time, maybe they want to shift everything from there?
+          // Let's stick to the simple logic: sequence is determined by order.
+          // So if I change duration, everything shifts. If I change start time... it might be overwritten by recalculateTimes if we enforce 09:00 start.
+          // Let's make recalculateTimes smarter: if it's the first item, use its time.
+
+          // Improved logic inside recalculateTimes for this case?
+          // For now, let's just update the item and NOT force recalculate everything to 09:00, 
+          // BUT we should probably shift subsequent items.
+
+          // Let's try a hybrid: Find the index of the updated item. Recalculate subsequent items.
+          const index = updatedItems.findIndex(item => (item.timelineId || item.id) === uniqueId);
+          if (index === -1) return { ...day, items: updatedItems };
+
+          let currentTime = addMinutes(startTime, duration);
+
+          const finalItems = updatedItems.map((item, i) => {
+            if (i <= index) return item; // Keep previous items and the updated item as is
+            const start = currentTime;
+            currentTime = addMinutes(start, item.duration || 60);
+            return { ...item, startTime: start };
+          });
+
+          return { ...day, items: finalItems };
         }
         return day;
       });
@@ -303,13 +326,14 @@ const ItineraryPlannerPage: React.FC = () => {
             </div>
             {isMobileMenuOpen.timeline && (
               <div style={{ ...styles.panelContent, padding: 0 }}>
-                <TimelineBuilder
-                  timeline={timeline}
-                  onEditCard={handleEditCard}
-                  onDeleteCard={handleDeleteCard}
-                  onAddDay={handleAddDay}
-                  onUpdateTime={handleUpdateTime}
-                />
+                <div style={{ ...styles.panelContent, padding: 0 }}>
+                  <TimelineContainer
+                    timeline={timeline}
+                    onTimeUpdate={handleUpdateTime}
+                    onDelete={handleDeleteCard}
+                    onAddDay={handleAddDay}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -341,12 +365,7 @@ const ItineraryPlannerPage: React.FC = () => {
           </div>
         </div>
 
-        <EditCardModal
-          isOpen={isEditModalOpen}
-          product={editingProduct}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveNotes}
-        />
+
 
         <SaveItineraryModal
           isOpen={isSaveModalOpen}

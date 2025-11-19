@@ -1,0 +1,265 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
+
+interface Product {
+    id: string;
+    title: string;
+    productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    timelineId?: string;
+    startTime?: string;
+    duration?: number;
+}
+
+interface TimelineActivityItemProps {
+    item: Product;
+    index: number;
+    colorTheme: { primary: string; light: string; dot: string };
+    onTimeUpdate: (id: string, startTime: string, duration: number) => void;
+    onDelete: (id: string) => void;
+}
+
+const getActivityIcon = (type: string) => {
+    const icons: Record<string, string> = {
+        accommodation: '🏨',
+        food: '🍽️',
+        activity: '🎯',
+        transportation: '🚗',
+    };
+    return icons[type] || '📍';
+};
+
+export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
+    item,
+    index,
+    colorTheme,
+    onTimeUpdate,
+    onDelete,
+}) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTime, setEditTime] = useState(item.startTime || '09:00');
+    const [editDuration, setEditDuration] = useState(item.duration || 60);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isEditing && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isEditing]);
+
+    const handleSave = () => {
+        onTimeUpdate(item.timelineId!, editTime, editDuration);
+        setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSave();
+        } else if (e.key === 'Escape') {
+            setIsEditing(false);
+            setEditTime(item.startTime || '09:00');
+            setEditDuration(item.duration || 60);
+        }
+    };
+
+    if (!item.timelineId) return null;
+
+    return (
+        <Draggable draggableId={`timeline-item-${item.timelineId}`} index={index}>
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    style={{
+                        ...styles.container,
+                        ...provided.draggableProps.style,
+                        opacity: snapshot.isDragging ? 0.8 : 1,
+                        transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
+                    }}
+                >
+                    {/* Connection Line Segment (Top half) */}
+                    <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '50%' }} />
+                    {/* Connection Line Segment (Bottom half - only if not last, handled by parent usually, but here we just draw full line bg in parent) */}
+
+                    {/* Dot Marker */}
+                    <div style={{ ...styles.dot, backgroundColor: colorTheme.dot, borderColor: 'white' }} />
+
+                    {/* Card */}
+                    <div style={styles.card}>
+                        <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
+                            {getActivityIcon(item.productType)}
+                        </div>
+
+                        <div style={styles.content}>
+                            <div style={styles.header}>
+                                <h4 style={styles.title}>{item.title}</h4>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
+                                    style={styles.deleteBtn}
+                                    title="Remove"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {isEditing ? (
+                                <div style={styles.editContainer}>
+                                    <input
+                                        ref={inputRef}
+                                        type="time"
+                                        value={editTime}
+                                        onChange={(e) => setEditTime(e.target.value)}
+                                        onBlur={handleSave}
+                                        onKeyDown={handleKeyDown}
+                                        style={styles.input}
+                                    />
+                                    <span style={styles.separator}>for</span>
+                                    <input
+                                        type="number"
+                                        value={editDuration}
+                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                        onBlur={handleSave}
+                                        onKeyDown={handleKeyDown}
+                                        style={{ ...styles.input, width: '60px' }}
+                                        min="15"
+                                        step="15"
+                                    />
+                                    <span style={styles.unit}>min</span>
+                                </div>
+                            ) : (
+                                <div
+                                    style={styles.timeDisplay}
+                                    onClick={() => setIsEditing(true)}
+                                    title="Click to edit time"
+                                >
+                                    <span style={styles.timeText}>{item.startTime || '09:00'}</span>
+                                    <span style={styles.durationText}>({item.duration || 60} min)</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </Draggable>
+    );
+};
+
+const styles = {
+    container: {
+        position: 'relative' as const,
+        paddingLeft: '2rem',
+        marginBottom: '1rem',
+        userSelect: 'none' as const,
+    },
+    lineSegment: {
+        position: 'absolute' as const,
+        left: '11px', // Center of 24px dot area roughly
+        width: '2px',
+        zIndex: 0,
+    },
+    dot: {
+        position: 'absolute' as const,
+        left: '4px',
+        top: '1.25rem', // Align with card center roughly
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        border: '3px solid',
+        zIndex: 1,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    },
+    card: {
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '0.75rem',
+        display: 'flex',
+        gap: '0.75rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        border: '1px solid rgba(0,0,0,0.04)',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        cursor: 'grab',
+    },
+    iconBox: {
+        width: '40px',
+        height: '40px',
+        borderRadius: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '1.2rem',
+        flexShrink: 0,
+    },
+    content: {
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column' as const,
+        justifyContent: 'center',
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: '0.25rem',
+    },
+    title: {
+        margin: 0,
+        fontSize: '0.95rem',
+        fontWeight: '600',
+        color: '#2d3436',
+        lineHeight: 1.3,
+    },
+    deleteBtn: {
+        background: 'none',
+        border: 'none',
+        color: '#b2bec3',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        padding: '0 0.25rem',
+        lineHeight: 1,
+        marginTop: '-4px',
+        marginRight: '-4px',
+        transition: 'color 0.2s',
+    },
+    timeDisplay: {
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: '0.5rem',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        marginLeft: '-4px',
+        borderRadius: '4px',
+        transition: 'background-color 0.2s',
+        width: 'fit-content',
+    },
+    timeText: {
+        fontSize: '0.85rem',
+        fontWeight: '500',
+        color: '#636e72',
+    },
+    durationText: {
+        fontSize: '0.75rem',
+        color: '#b2bec3',
+    },
+    editContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+    },
+    input: {
+        border: '1px solid #dfe6e9',
+        borderRadius: '4px',
+        padding: '2px 4px',
+        fontSize: '0.85rem',
+        color: '#2d3436',
+        outline: 'none',
+    },
+    separator: {
+        fontSize: '0.75rem',
+        color: '#b2bec3',
+    },
+    unit: {
+        fontSize: '0.75rem',
+        color: '#b2bec3',
+    },
+};
