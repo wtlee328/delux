@@ -70,6 +70,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        e.stopPropagation();
         if (e.key === 'Enter') {
             handleSave();
         } else if (e.key === 'Escape') {
