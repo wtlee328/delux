@@ -73,19 +73,23 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                     style={{
                         ...styles.container,
                         ...provided.draggableProps.style,
-                        opacity: snapshot.isDragging ? 0.8 : 1,
-                        transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
+                        zIndex: snapshot.isDragging ? 1000 : 1,
                     }}
                 >
                     {/* Connection Line Segment (Top half) */}
-                    <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '50%' }} />
-                    {/* Connection Line Segment (Bottom half - only if not last, handled by parent usually, but here we just draw full line bg in parent) */}
+                    <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
 
                     {/* Dot Marker */}
-                    <div style={{ ...styles.dot, backgroundColor: colorTheme.dot, borderColor: 'white' }} />
+                    <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
 
                     {/* Card */}
-                    <div style={styles.card}>
+                    <div
+                        style={{
+                            ...styles.card,
+                            transform: snapshot.isDragging ? 'scale(1.02)' : 'scale(1)',
+                            boxShadow: snapshot.isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                        }}
+                    >
                         <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
                             {getActivityIcon(item.productType)}
                         </div>
@@ -111,7 +115,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                         onChange={(e) => setEditTime(e.target.value)}
                                         onBlur={handleSave}
                                         onKeyDown={handleKeyDown}
-                                        style={styles.input}
+                                        style={styles.timeInput}
                                     />
                                     <span style={styles.separator}>for</span>
                                     <input
@@ -120,7 +124,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                         onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
                                         onBlur={handleSave}
                                         onKeyDown={handleKeyDown}
-                                        style={{ ...styles.input, width: '60px' }}
+                                        style={styles.durationInput}
                                         min="15"
                                         step="15"
                                     />
@@ -147,46 +151,46 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
 const styles = {
     container: {
         position: 'relative' as const,
-        paddingLeft: '2rem',
+        paddingLeft: '3rem',
         marginBottom: '1rem',
         userSelect: 'none' as const,
     },
     lineSegment: {
         position: 'absolute' as const,
-        left: '11px', // Center of 24px dot area roughly
+        left: '27px', // Aligned with TimelineDayColumn line
         width: '2px',
         zIndex: 0,
+        opacity: 0.3,
     },
     dot: {
         position: 'absolute' as const,
-        left: '4px',
-        top: '1.25rem', // Align with card center roughly
+        left: '20px',
+        top: '1.5rem',
         width: '16px',
         height: '16px',
         borderRadius: '50%',
-        border: '3px solid',
+        border: '3px solid white',
         zIndex: 1,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     },
     card: {
         backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '0.75rem',
+        borderRadius: '16px',
+        padding: '1rem',
         display: 'flex',
-        gap: '0.75rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(0,0,0,0.04)',
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        gap: '1rem',
+        border: '1px solid rgba(0,0,0,0.03)',
+        transition: 'all 0.2s ease',
         cursor: 'grab',
     },
     iconBox: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '10px',
+        width: '48px',
+        height: '48px',
+        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '1.2rem',
+        fontSize: '1.5rem',
         flexShrink: 0,
     },
     content: {
@@ -204,21 +208,21 @@ const styles = {
     },
     title: {
         margin: 0,
-        fontSize: '0.95rem',
+        fontSize: '1rem',
         fontWeight: '600',
         color: '#2d3436',
-        lineHeight: 1.3,
+        lineHeight: 1.4,
     },
     deleteBtn: {
         background: 'none',
         border: 'none',
-        color: '#b2bec3',
+        color: '#dfe6e9',
         cursor: 'pointer',
-        fontSize: '1.2rem',
+        fontSize: '1.5rem',
         padding: '0 0.25rem',
-        lineHeight: 1,
+        lineHeight: 0.5,
         marginTop: '-4px',
-        marginRight: '-4px',
+        marginRight: '-8px',
         transition: 'color 0.2s',
     },
     timeDisplay: {
@@ -226,40 +230,60 @@ const styles = {
         alignItems: 'baseline',
         gap: '0.5rem',
         cursor: 'pointer',
-        padding: '2px 4px',
-        marginLeft: '-4px',
-        borderRadius: '4px',
+        padding: '4px 8px',
+        marginLeft: '-8px',
+        borderRadius: '8px',
         transition: 'background-color 0.2s',
         width: 'fit-content',
     },
     timeText: {
-        fontSize: '0.85rem',
-        fontWeight: '500',
-        color: '#636e72',
+        fontSize: '0.9rem',
+        fontWeight: '600',
+        color: '#2d3436',
+        fontFamily: 'monospace',
     },
     durationText: {
-        fontSize: '0.75rem',
+        fontSize: '0.85rem',
         color: '#b2bec3',
     },
     editContainer: {
         display: 'flex',
         alignItems: 'center',
-        gap: '0.25rem',
+        gap: '0.5rem',
+        marginTop: '0.25rem',
+        backgroundColor: '#f8f9fa',
+        padding: '4px 8px',
+        borderRadius: '8px',
+        width: 'fit-content',
     },
-    input: {
+    timeInput: {
         border: '1px solid #dfe6e9',
-        borderRadius: '4px',
-        padding: '2px 4px',
-        fontSize: '0.85rem',
+        borderRadius: '6px',
+        padding: '2px 6px',
+        fontSize: '0.9rem',
         color: '#2d3436',
         outline: 'none',
+        fontFamily: 'monospace',
+        backgroundColor: 'white',
+    },
+    durationInput: {
+        border: '1px solid #dfe6e9',
+        borderRadius: '6px',
+        padding: '2px 6px',
+        fontSize: '0.9rem',
+        color: '#2d3436',
+        outline: 'none',
+        width: '50px',
+        textAlign: 'center' as const,
+        backgroundColor: 'white',
     },
     separator: {
-        fontSize: '0.75rem',
+        fontSize: '0.8rem',
         color: '#b2bec3',
+        fontWeight: '500',
     },
     unit: {
-        fontSize: '0.75rem',
+        fontSize: '0.8rem',
         color: '#b2bec3',
     },
 };

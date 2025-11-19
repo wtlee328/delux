@@ -34,13 +34,9 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
     return (
         <div style={styles.column}>
             {/* Header */}
-            <div style={{ ...styles.header, borderTopColor: colorTheme.primary }}>
+            <div style={styles.header}>
                 <div style={{ ...styles.dayBadge, backgroundColor: colorTheme.light, color: colorTheme.primary }}>
                     Day {day.dayNumber}
-                </div>
-                <div style={styles.dateInfo}>
-                    {day.date && <span style={styles.date}>{day.date}</span>}
-                    {day.dayOfWeek && <span style={styles.dayOfWeek}>{day.dayOfWeek}</span>}
                 </div>
             </div>
 
@@ -56,7 +52,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                             {...provided.droppableProps}
                             style={{
                                 ...styles.dropZone,
-                                backgroundColor: snapshot.isDraggingOver ? colorTheme.light + '40' : 'transparent', // 40 is hex opacity
+                                backgroundColor: snapshot.isDraggingOver ? colorTheme.light + '20' : 'transparent',
                             }}
                         >
                             {day.items.length === 0 ? (
@@ -86,47 +82,30 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
 
 const styles = {
     column: {
-        minWidth: '320px',
-        maxWidth: '320px',
+        minWidth: '340px',
+        maxWidth: '340px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column' as const,
         backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        borderRadius: '24px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
         overflow: 'hidden',
         flexShrink: 0,
+        border: '1px solid #f1f2f6',
     },
     header: {
-        padding: '1.25rem 1.5rem',
-        borderTop: '4px solid',
+        padding: '1.5rem',
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'white',
-        borderBottom: '1px solid #f1f2f6',
     },
     dayBadge: {
-        padding: '0.25rem 0.75rem',
+        padding: '0.5rem 1rem',
         borderRadius: '20px',
-        fontSize: '0.9rem',
+        fontSize: '1rem',
         fontWeight: '700',
         letterSpacing: '0.5px',
-    },
-    dateInfo: {
-        display: 'flex',
-        gap: '0.5rem',
-        alignItems: 'baseline',
-    },
-    date: {
-        fontSize: '1.1rem',
-        fontWeight: '600',
-        color: '#2d3436',
-    },
-    dayOfWeek: {
-        fontSize: '0.9rem',
-        color: '#b2bec3',
-        fontWeight: '500',
     },
     timelineArea: {
         flex: 1,
@@ -136,7 +115,7 @@ const styles = {
     },
     centralLine: {
         position: 'absolute' as const,
-        left: '27px', // 1.5rem padding + 11px offset roughly
+        left: '27px', // Matches TimelineActivityItem line position
         top: 0,
         bottom: 0,
         width: '2px',
@@ -145,22 +124,23 @@ const styles = {
     },
     dropZone: {
         minHeight: '100%',
-        padding: '1.5rem 1rem',
+        padding: '0 1rem 2rem 0', // Right padding for scrollbar space
         position: 'relative' as const,
         zIndex: 1,
     },
     emptyState: {
-        height: '150px',
+        height: '200px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         border: '2px dashed #f1f2f6',
-        borderRadius: '12px',
-        margin: '0 0.5rem',
+        borderRadius: '16px',
+        margin: '1rem 1rem 1rem 3rem', // Left margin to clear the timeline line
+        backgroundColor: '#fafafa',
     },
     emptyText: {
         color: '#b2bec3',
-        fontSize: '0.9rem',
+        fontSize: '1rem',
         fontWeight: '500',
     },
 };
