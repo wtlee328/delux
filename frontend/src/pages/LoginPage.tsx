@@ -9,7 +9,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
@@ -72,16 +72,20 @@ const LoginPage: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Delux+ 帝樂旅遊平台</h1>
-          <p style={styles.subtitle}>B2B2B Travel Supply Chain Platform</p>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 border border-slate-200">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            Delux+ 帝樂旅遊平台
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            B2B2B Travel Supply Chain Platform
+          </p>
         </div>
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-semibold text-slate-700 block">
               電子郵件
             </label>
             <input
@@ -94,20 +98,22 @@ const LoginPage: React.FC = () => {
                   setErrors(prev => ({ ...prev, email: '' }));
                 }
               }}
-              style={{
-                ...styles.input,
-                ...(errors.email ? styles.inputError : {})
-              }}
+              className={`w-full px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${errors.email
+                ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                : 'border-slate-300 bg-white hover:border-slate-400'
+                }`}
               disabled={isLoading}
               placeholder="請輸入您的電子郵件"
             />
             {errors.email && (
-              <span style={styles.errorText}>{errors.email}</span>
+              <span className="text-xs text-red-600 font-medium block mt-1">
+                {errors.email}
+              </span>
             )}
           </div>
 
-          <div style={styles.formGroup}>
-            <label htmlFor="password" style={styles.label}>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-semibold text-slate-700 block">
               密碼
             </label>
             <input
@@ -120,34 +126,36 @@ const LoginPage: React.FC = () => {
                   setErrors(prev => ({ ...prev, password: '' }));
                 }
               }}
-              style={{
-                ...styles.input,
-                ...(errors.password ? styles.inputError : {})
-              }}
+              className={`w-full px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${errors.password
+                ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                : 'border-slate-300 bg-white hover:border-slate-400'
+                }`}
               disabled={isLoading}
               placeholder="請輸入您的密碼"
             />
             {errors.password && (
-              <span style={styles.errorText}>{errors.password}</span>
+              <span className="text-xs text-red-600 font-medium block mt-1">
+                {errors.password}
+              </span>
             )}
           </div>
 
           <button
             type="submit"
-            style={styles.button}
+            className="w-full py-3.5 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-800 hover:to-slate-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             disabled={isLoading}
           >
             {isLoading ? '登入中...' : '登入'}
           </button>
         </form>
 
-        <div style={styles.footer}>
-          <p style={styles.footerText}>
-            <span style={styles.contextLinkDisabled}>您是供應商嗎？</span>
+        <div className="mt-8 pt-6 border-t border-slate-200 text-center">
+          <p className="text-sm text-slate-600 mb-2">
+            <span className="text-slate-400 font-medium">您是供應商嗎？</span>
             {' · '}
-            <span style={styles.contextLinkDisabled}>管理員登入</span>
+            <span className="text-slate-400 font-medium">管理員登入</span>
           </p>
-          <p style={styles.helpText}>
+          <p className="text-xs text-slate-400 mt-2">
             使用您的帳號登入以存取平台功能
           </p>
         </div>
@@ -156,101 +164,5 @@ const LoginPage: React.FC = () => {
   );
 };
 
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-    padding: '1rem',
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '2.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    width: '100%',
-    maxWidth: '440px',
-  },
-  header: {
-    marginBottom: '2rem',
-  },
-  title: {
-    fontSize: '1.75rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-    textAlign: 'center' as const,
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: '0.875rem',
-    color: '#666',
-    textAlign: 'center' as const,
-    fontWeight: '400',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1.25rem',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.5rem',
-  },
-  label: {
-    fontSize: '0.875rem',
-    fontWeight: '600',
-    color: '#333',
-  },
-  input: {
-    padding: '0.75rem',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    transition: 'border-color 0.2s',
-  },
-  inputError: {
-    borderColor: '#f44336',
-  },
-  errorText: {
-    color: '#f44336',
-    fontSize: '0.75rem',
-    marginTop: '0.25rem',
-  },
-  button: {
-    padding: '0.875rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-    transition: 'background-color 0.2s',
-  },
-  footer: {
-    marginTop: '2rem',
-    paddingTop: '1.5rem',
-    borderTop: '1px solid #eee',
-    textAlign: 'center' as const,
-  },
-  footerText: {
-    fontSize: '0.875rem',
-    color: '#666',
-    marginBottom: '0.5rem',
-  },
-  contextLinkDisabled: {
-    color: '#999',
-    fontWeight: '500',
-  },
-  helpText: {
-    fontSize: '0.75rem',
-    color: '#999',
-    marginTop: '0.5rem',
-  },
-};
-
 export default LoginPage;
+
