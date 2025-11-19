@@ -16,6 +16,7 @@ import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useToast } from '../../components/Toast';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
 import { TimelineContainer } from '../../components/itinerary/TimelineContainer';
+import { TimelineActivityItemPreview } from '../../components/itinerary/TimelineActivityItem';
 import SaveItineraryModal from '../../components/itinerary/SaveItineraryModal';
 import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
@@ -365,16 +366,7 @@ const ItineraryPlannerPage: React.FC = () => {
 
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.5' } } }) }}>
           {activeProduct ? (
-            <div style={{
-              padding: '1rem',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
-              width: '280px',
-              border: '1px solid #f1f2f6',
-            }}>
-              <h4 style={{ margin: 0 }}>{activeProduct.title}</h4>
-            </div>
+            <TimelineActivityItemPreview item={activeProduct} />
           ) : null}
         </DragOverlay>
       </div>

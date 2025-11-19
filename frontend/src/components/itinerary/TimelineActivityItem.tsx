@@ -158,6 +158,46 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     );
 };
 
+export const TimelineActivityItemPreview: React.FC<{ item: Product; colorTheme?: { primary: string; light: string; dot: string } }> = ({
+    item,
+    colorTheme = { primary: '#b2bec3', light: '#f1f2f6', dot: '#636e72' } // Default muted theme
+}) => {
+    return (
+        <div style={styles.container}>
+            {/* Connection Line Segment (Top half) */}
+            <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
+
+            {/* Dot Marker */}
+            <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
+
+            {/* Card */}
+            <div
+                style={{
+                    ...styles.card,
+                    transform: 'scale(1.02)',
+                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                    opacity: 0.9,
+                }}
+            >
+                <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
+                    {getActivityIcon(item.productType)}
+                </div>
+
+                <div style={styles.content}>
+                    <div style={styles.header}>
+                        <h4 style={styles.title}>{item.title}</h4>
+                    </div>
+
+                    <div style={styles.timeDisplay}>
+                        <span style={styles.timeText}>{item.startTime || '09:00'}</span>
+                        <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const styles = {
     container: {
         paddingLeft: '3rem',
