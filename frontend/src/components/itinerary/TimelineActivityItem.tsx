@@ -139,7 +139,19 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                 <div style={styles.cardContent}>
                     <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
-                        <div style={{ display: 'flex', gap: '4px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', marginRight: '-8px', marginTop: '-4px' }}>
+                            <button
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
+                                style={{
+                                    ...styles.deleteBtn,
+                                    marginTop: 0,
+                                    marginRight: 0,
+                                }}
+                                title="Remove"
+                            >
+                                ×
+                            </button>
                             <button
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={(e) => { e.stopPropagation(); onPreview(item); }}
@@ -161,14 +173,6 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
-                            </button>
-                            <button
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
-                                style={styles.deleteBtn}
-                                title="Remove"
-                            >
-                                ×
                             </button>
                         </div>
                     </div>
