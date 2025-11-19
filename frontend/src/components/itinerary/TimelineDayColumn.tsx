@@ -67,13 +67,14 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                                 <p style={styles.emptyText}>將活動拖曳至此</p>
                             </div>
                         ) : (
-                            day.items.map((item) => (
+                            day.items.map((item, index) => (
                                 <TimelineActivityItem
                                     key={item.timelineId}
                                     item={item}
                                     colorTheme={colorTheme}
                                     onTimeUpdate={onTimeUpdate}
                                     onDelete={onDelete}
+                                    isEditable={index === 0}
                                 />
                             ))
                         )}

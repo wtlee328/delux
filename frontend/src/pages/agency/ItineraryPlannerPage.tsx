@@ -93,12 +93,22 @@ const ItineraryPlannerPage: React.FC = () => {
   };
 
   // Helper to recalculate times for a list of products
-  const recalculateTimes = (items: Product[]): Product[] => {
-    let currentTime = '09:00';
-    return items.map(item => {
+  const recalculateTimes = (items: Product[], dayStartTime: string = '09:00'): Product[] => {
+    if (items.length === 0) return [];
+
+    let currentTime = items[0].startTime || dayStartTime;
+
+    return items.map((item, index) => {
+      // First item keeps its time (or gets the day start time if undefined)
+      // Subsequent items get calculated based on previous item's end time
+      // All items except maybe the first one get default 60 mins duration if not set?
+      // Request says: "All subsequent activity cards... should have a default stay duration of 60 minutes."
+
+      const duration = index === 0 ? (item.duration || 60) : 60;
       const startTime = currentTime;
-      const duration = item.duration || 60;
+
       currentTime = addMinutes(startTime, duration);
+
       return { ...item, startTime, duration };
     });
   };
@@ -143,11 +153,12 @@ const ItineraryPlannerPage: React.FC = () => {
       const dayNumber = over.data.current.dayNumber;
 
       const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
-      const productCopy = { ...product, timelineId: uniqueId, duration: product.duration || 60 };
+      const productCopy = { ...product, timelineId: uniqueId, duration: 60 }; // Default 60
 
       setTimeline(prev => prev.map(day => {
         if (day.dayNumber === dayNumber) {
           const newItems = [...day.items, productCopy];
+          // If it's the first item, it might default to 09:00 via recalculateTimes
           return { ...day, items: recalculateTimes(newItems) };
         }
         return day;
@@ -196,10 +207,28 @@ const ItineraryPlannerPage: React.FC = () => {
           // Move within same day
           if (sourceDayIndex === destDayIndex) {
             const newItems = arrayMove(sourceDay.items, sourceItemIndex, destItemIndex);
+            // If moved to index 0, it keeps its time or inherits? 
+            // "If an activity card is moved into the first position... It inherits the original first activity’s start time."
+            // recalculateTimes handles this because it uses the first item's time as anchor. 
+            // BUT if we just moved it, the first item is now the moved item. 
+            // We need to ensure the NEW first item has the OLD first item's start time (or a default).
+
+            const oldFirstTime = sourceDay.items[0]?.startTime || '09:00';
+            if (destItemIndex === 0) {
+              newItems[0].startTime = oldFirstTime;
+            }
+
             newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(newItems) };
           } else {
             // Move to different day
             const [movedItem] = sourceDay.items.splice(sourceItemIndex, 1);
+
+            // If dropping into first position of new day
+            if (destItemIndex === 0) {
+              const destFirstTime = destDay.items[0]?.startTime || '09:00';
+              movedItem.startTime = destFirstTime;
+            }
+
             destDay.items.splice(destItemIndex, 0, movedItem);
 
             newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(sourceDay.items) };
@@ -237,26 +266,16 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prevTimeline => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
+          // Only update the specific item
           const updatedItems = day.items.map(item =>
             (item.timelineId || item.id) === uniqueId
               ? { ...item, startTime, duration }
               : item
           );
 
-          // Recalculate times starting from the updated item
-          const index = updatedItems.findIndex(item => (item.timelineId || item.id) === uniqueId);
-          if (index === -1) return { ...day, items: updatedItems };
-
-          let currentTime = addMinutes(startTime, duration);
-
-          const finalItems = updatedItems.map((item, i) => {
-            if (i <= index) return item;
-            const start = currentTime;
-            currentTime = addMinutes(start, item.duration || 60);
-            return { ...item, startTime: start };
-          });
-
-          return { ...day, items: finalItems };
+          // Then recalculate everything. 
+          // Since only the first item is editable, recalculateTimes will propagate the change.
+          return { ...day, items: recalculateTimes(updatedItems) };
         }
         return day;
       });
