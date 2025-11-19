@@ -163,13 +163,7 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product; colorTheme?:
     colorTheme = { primary: '#b2bec3', light: '#f1f2f6', dot: '#636e72' } // Default muted theme
 }) => {
     return (
-        <div style={styles.container}>
-            {/* Connection Line Segment (Top half) */}
-            <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
-
-            {/* Dot Marker */}
-            <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
-
+        <div style={{ ...styles.container, paddingLeft: 0 }}>
             {/* Card */}
             <div
                 style={{
