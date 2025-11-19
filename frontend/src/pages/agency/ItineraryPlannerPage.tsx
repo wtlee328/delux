@@ -331,11 +331,23 @@ const ItineraryPlannerPage: React.FC = () => {
         </header>
 
         <div style={styles.content}>
+          {/* Left Expand Button */}
+          {!isMobileMenuOpen.library && (
+            <button
+              onClick={() => togglePanel('library')}
+              style={styles.expandButtonLeft}
+              title="展開資源庫"
+            >
+              ›
+            </button>
+          )}
+
           {/* Resource Library Panel */}
           <div style={{
             ...styles.panel,
             width: isMobileMenuOpen.library ? '450px' : '0',
             opacity: isMobileMenuOpen.library ? 1 : 0,
+            borderRight: isMobileMenuOpen.library ? '1px solid #e0e0e0' : 'none',
           }}>
             <div style={styles.panelHeader}>
               <h3>資源庫</h3>
@@ -366,6 +378,7 @@ const ItineraryPlannerPage: React.FC = () => {
             ...styles.panel,
             width: isMobileMenuOpen.map ? '350px' : '0',
             opacity: isMobileMenuOpen.map ? 1 : 0,
+            borderLeft: isMobileMenuOpen.map ? '1px solid #e0e0e0' : 'none',
           }}>
             <div style={styles.panelHeader}>
               <h3>地圖預覽</h3>
@@ -376,6 +389,17 @@ const ItineraryPlannerPage: React.FC = () => {
               highlightedProductId={hoveredProduct?.id}
             />
           </div>
+
+          {/* Right Expand Button */}
+          {!isMobileMenuOpen.map && (
+            <button
+              onClick={() => togglePanel('map')}
+              style={styles.expandButtonRight}
+              title="展開地圖"
+            >
+              ‹
+            </button>
+          )}
         </div>
 
         <SaveItineraryModal
@@ -483,6 +507,42 @@ const styles = {
     alignItems: 'center',
     fontWeight: '600',
     color: '#2d3436',
+  },
+  expandButtonLeft: {
+    width: '24px',
+    backgroundColor: 'white',
+    border: 'none',
+    borderRight: '1px solid #e0e0e0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#b2bec3',
+    fontSize: '1.2rem',
+    transition: 'all 0.2s',
+    zIndex: 10,
+    ':hover': {
+      backgroundColor: '#f8f9fa',
+      color: '#2d3436',
+    },
+  },
+  expandButtonRight: {
+    width: '24px',
+    backgroundColor: 'white',
+    border: 'none',
+    borderLeft: '1px solid #e0e0e0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#b2bec3',
+    fontSize: '1.2rem',
+    transition: 'all 0.2s',
+    zIndex: 10,
+    ':hover': {
+      backgroundColor: '#f8f9fa',
+      color: '#2d3436',
+    },
   },
 };
 
