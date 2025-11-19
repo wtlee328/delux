@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { StrictModeDroppable } from '../../components/itinerary/StrictModeDroppable';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../components/Toast';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
 import TimelineBuilder from '../../components/itinerary/TimelineBuilder';
 import EditCardModal from '../../components/itinerary/EditCardModal';
@@ -38,6 +40,7 @@ interface TimelineDay {
 
 const ItineraryPlannerPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { showSuccess } = useToast();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
@@ -71,7 +74,7 @@ const ItineraryPlannerPage: React.FC = () => {
     // Handle drag from library to timeline
     if (source.droppableId === 'resource-library' && destination.droppableId.startsWith('day-')) {
       const destDayNum = parseInt(destination.droppableId.replace('day-', ''));
-      
+
       // Find the product being dragged
       const product = availableProducts.find(p => p.id === draggableId);
       if (!product) return;
@@ -91,6 +94,7 @@ const ItineraryPlannerPage: React.FC = () => {
           return day;
         });
       });
+      showSuccess(`已將 ${product.title} 加入 Day ${destDayNum}`);
       return;
     }
 
@@ -110,7 +114,7 @@ const ItineraryPlannerPage: React.FC = () => {
           const [movedItem] = newItems.splice(source.index, 1);
           newItems.splice(destination.index, 0, movedItem);
 
-          return prevTimeline.map(d => 
+          return prevTimeline.map(d =>
             d.dayNumber === sourceDayNum ? { ...d, items: newItems } : d
           );
         }
@@ -270,17 +274,17 @@ const ItineraryPlannerPage: React.FC = () => {
             </div>
             {isMobileMenuOpen.library && (
               <div style={styles.panelContent}>
-                <Droppable droppableId="resource-library" isDropDisabled={true}>
+                <StrictModeDroppable droppableId="resource-library" isDropDisabled={true}>
                   {(provided: any) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
-                      <ResourceLibrary 
+                      <ResourceLibrary
                         onProductHover={setHoveredProduct}
                         onProductsLoaded={setAvailableProducts}
                       />
                       {provided.placeholder}
                     </div>
                   )}
-                </Droppable>
+                </StrictModeDroppable>
               </div>
             )}
           </div>
@@ -298,7 +302,7 @@ const ItineraryPlannerPage: React.FC = () => {
               </button>
             </div>
             {isMobileMenuOpen.timeline && (
-              <div style={{...styles.panelContent, padding: 0}}>
+              <div style={{ ...styles.panelContent, padding: 0 }}>
                 <TimelineBuilder
                   timeline={timeline}
                   onEditCard={handleEditCard}

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useLayoutEffect } from 'react';
-import { Droppable, Draggable } from 'react-beautiful-dnd';
+import { Draggable } from 'react-beautiful-dnd';
+import { StrictModeDroppable } from './StrictModeDroppable';
 
 interface Product {
   id: string;
@@ -63,7 +64,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
   const [editingTime, setEditingTime] = useState<{ dayNumber: number; itemId: string } | null>(null);
   const timelineGridRef = useRef<HTMLDivElement>(null);
 
-  const handleTimeEdit = useCallback((dayNumber: number, itemId:string) => {
+  const handleTimeEdit = useCallback((dayNumber: number, itemId: string) => {
     setEditingTime({ dayNumber, itemId });
   }, []);
 
@@ -107,7 +108,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
           <div style={styles.timelineGrid} ref={timelineGridRef}>
             {timeline.map((day) => {
               const colorTheme = getColorTheme(day.dayNumber);
-              
+
               return (
                 <div key={day.dayNumber} style={styles.dayColumn}>
                   <div
@@ -127,7 +128,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                     )}
                   </div>
 
-                  <Droppable droppableId={`day-${day.dayNumber}`}>
+                  <StrictModeDroppable droppableId={`day-${day.dayNumber}`}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
@@ -149,10 +150,10 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                               console.error("Timeline item is missing a timelineId and will not be rendered.", item);
                               return null;
                             }
-                            
+
                             const draggableId = `timeline-item-${item.timelineId}`;
-                            const isEditing = editingTime?.dayNumber === day.dayNumber && 
-                                            editingTime?.itemId === item.timelineId;
+                            const isEditing = editingTime?.dayNumber === day.dayNumber &&
+                              editingTime?.itemId === item.timelineId;
 
                             return (
                               <Draggable key={draggableId} draggableId={draggableId} index={index}>
@@ -176,7 +177,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                       </div>
                                       <div style={styles.activityContent}>
                                         <h4 style={styles.activityTitle}>{item.title}</h4>
-                                        
+
                                         {isEditing ? (
                                           <div style={styles.timeEditContainer}>
                                             <input
@@ -217,7 +218,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                         {provided.placeholder}
                       </div>
                     )}
-                  </Droppable>
+                  </StrictModeDroppable>
                 </div>
               );
             })}
@@ -295,7 +296,7 @@ const styles = {
     transition: 'background-color 0.2s',
     overflowY: 'auto' as const,
   },
-timelineLine: {
+  timelineLine: {
     position: 'absolute' as const,
     left: '2.25rem',
     top: '1.5rem',
