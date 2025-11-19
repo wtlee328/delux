@@ -10,7 +10,6 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
-  defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useToast } from '../../components/Toast';
@@ -364,7 +363,7 @@ const ItineraryPlannerPage: React.FC = () => {
           onSave={handleSaveItinerary}
         />
 
-        <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.5' } } }) }}>
+        <DragOverlay dropAnimation={null}>
           {activeProduct ? (
             <TimelineActivityItemPreview item={activeProduct} />
           ) : null}
