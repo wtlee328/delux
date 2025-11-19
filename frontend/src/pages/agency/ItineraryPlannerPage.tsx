@@ -332,7 +332,7 @@ const ItineraryPlannerPage: React.FC = () => {
           {/* Resource Library Panel */}
           <div style={{
             ...styles.panel,
-            width: isMobileMenuOpen.library ? '400px' : '0',
+            width: isMobileMenuOpen.library ? '450px' : '0',
             opacity: isMobileMenuOpen.library ? 1 : 0,
           }}>
             <div style={styles.panelHeader}>

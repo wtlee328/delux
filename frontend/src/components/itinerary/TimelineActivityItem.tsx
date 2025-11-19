@@ -123,7 +123,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                             onPointerDown={(e) => e.stopPropagation()}
                         >
                             <div style={styles.editRow}>
-                                <span style={styles.label}>開始:</span>
+                                <span style={styles.label}>開始</span>
                                 <input
                                     ref={inputRef}
                                     type="time"
@@ -140,18 +140,20 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                 />
                             </div>
                             <div style={styles.editRow}>
-                                <span style={styles.label}>停留:</span>
-                                <input
-                                    type="number"
-                                    value={editDuration}
-                                    onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                    onBlur={handleSave}
-                                    onKeyDown={handleKeyDown}
-                                    style={styles.durationInput}
-                                    min="15"
-                                    step="15"
-                                />
-                                <span style={styles.unit}>分鐘</span>
+                                <span style={styles.label}>停留</span>
+                                <div style={{ position: 'relative', width: '100%' }}>
+                                    <input
+                                        type="number"
+                                        value={editDuration}
+                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                        onBlur={handleSave}
+                                        onKeyDown={handleKeyDown}
+                                        style={{ ...styles.durationInput, paddingRight: '40px' }}
+                                        min="15"
+                                        step="15"
+                                    />
+                                    <span style={styles.unit}>分鐘</span>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -307,10 +309,10 @@ const styles = {
         color: '#b2bec3',
     },
     editContainer: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0.75rem',
-        marginTop: '0.5rem',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px',
+        marginTop: '0.75rem',
         backgroundColor: '#f8f9fa',
         padding: '12px',
         borderRadius: '12px',
@@ -320,19 +322,19 @@ const styles = {
     },
     editRow: {
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column' as const,
+        gap: '6px',
         width: '100%',
-        gap: '8px',
     },
     label: {
-        fontSize: '0.85rem',
+        fontSize: '0.75rem',
         color: '#636e72',
-        fontWeight: '600',
-        whiteSpace: 'nowrap' as const,
-        minWidth: '40px',
+        fontWeight: '700',
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.5px',
     },
     timeInput: {
-        flex: 1,
+        width: '100%',
         border: '1px solid #dfe6e9',
         borderRadius: '8px',
         padding: '8px 12px',
@@ -341,12 +343,12 @@ const styles = {
         outline: 'none',
         fontFamily: 'monospace',
         backgroundColor: 'white',
-        minWidth: 0, // Allow flex shrinking
+        boxSizing: 'border-box' as const,
         transition: 'all 0.2s ease',
         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     durationInput: {
-        flex: 1,
+        width: '100%',
         border: '1px solid #dfe6e9',
         borderRadius: '8px',
         padding: '8px 12px',
@@ -355,13 +357,17 @@ const styles = {
         outline: 'none',
         textAlign: 'center' as const,
         backgroundColor: 'white',
-        minWidth: 0,
+        boxSizing: 'border-box' as const,
         transition: 'all 0.2s ease',
         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     unit: {
         fontSize: '0.85rem',
         color: '#636e72',
-        whiteSpace: 'nowrap' as const,
+        position: 'absolute' as const,
+        right: '12px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        pointerEvents: 'none' as const,
     },
 };
