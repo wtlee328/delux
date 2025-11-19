@@ -173,7 +173,6 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>資源庫</h2>
         <div style={styles.searchContainer}>
           <input
             type="text"
@@ -233,15 +232,9 @@ const styles = {
     borderRight: '1px solid #e0e0e0',
   },
   header: {
-    padding: '1.5rem',
+    padding: '1rem',
     borderBottom: '1px solid #f0f0f0',
     backgroundColor: '#fff',
-  },
-  title: {
-    margin: '0 0 1rem 0',
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#2d3436',
   },
   searchContainer: {
     marginBottom: '1rem',
