@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-
 import axios from '../../config/axios';
+import ResourceDetailModal from './ResourceDetailModal';
 
 interface Product {
   id: string;
@@ -12,6 +12,7 @@ interface Product {
   netPrice: number;
   supplierName: string;
   productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+  description?: string;
   notes?: string;
   location?: {
     lat: number;
@@ -27,14 +28,21 @@ interface ResourceLibraryProps {
   setAvailableProducts: (products: Product[]) => void;
 }
 
-const DraggableProduct = ({ product, onHover }: { product: Product; onHover: (p: Product | null) => void }) => {
+const DraggableProduct = ({
+  product,
+  onHover,
+  onPreview
+}: {
+  product: Product;
+  onHover: (p: Product | null) => void;
+  onPreview: (p: Product) => void;
+}) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: product.id,
     data: { type: 'resource', product },
   });
 
   const style = {
-    // transform: CSS.Translate.toString(transform), // Removed to keep original item stationary
     zIndex: isDragging ? 1000 : 1,
     position: 'relative' as const,
     touchAction: 'none',
@@ -49,83 +57,94 @@ const DraggableProduct = ({ product, onHover }: { product: Product; onHover: (p:
     >
       <div
         style={{
-          marginBottom: '1rem',
+          marginBottom: '0.75rem',
           backgroundColor: 'white',
           borderRadius: '12px',
-          overflow: 'hidden',
+          padding: '1rem',
           boxShadow: isDragging
             ? '0 12px 24px rgba(0,0,0,0.15)'
-            : '0 2px 8px rgba(0,0,0,0.06)',
+            : '0 2px 4px rgba(0,0,0,0.04)',
           cursor: 'grab',
           border: '1px solid #f1f2f6',
-          transition: 'transform 0.2s, box-shadow 0.2s',
+          transition: 'all 0.2s',
           opacity: isDragging ? 0.8 : 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
         }}
         onMouseEnter={() => onHover(product)}
         onMouseLeave={() => onHover(null)}
       >
-        <div style={{ position: 'relative', height: '140px' }}>
-          <img
-            src={product.coverImageUrl}
-            alt={product.title}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: '0.5rem',
-              right: '0.5rem',
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              color: '#2d3436',
-            }}
-          >
-            {product.productType}
-          </div>
-        </div>
-        <div style={{ padding: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
           <h3
             style={{
-              margin: '0 0 0.5rem 0',
-              fontSize: '1rem',
+              margin: 0,
+              fontSize: '0.95rem',
               fontWeight: '600',
               color: '#2d3436',
+              lineHeight: '1.4',
+              flex: 1,
             }}
           >
             {product.title}
           </h3>
-          <div
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview(product);
+            }}
             style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              color: '#b2bec3',
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              transition: 'color 0.2s, background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#0984e3';
+              e.currentTarget.style.backgroundColor = '#f1f2f6';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#b2bec3';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title="預覽詳情"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{
+              backgroundColor: '#f1f2f6',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              color: '#636e72',
+              fontWeight: '500'
+            }}>
+              {product.productType}
+            </span>
+            <span style={{ color: '#b2bec3' }}>|</span>
+            <span style={{ color: '#636e72' }}>{product.supplierName}</span>
+          </div>
+          <span
+            style={{
+              fontWeight: '600',
+              color: '#00b894',
             }}
           >
-            <span
-              style={{
-                fontSize: '0.85rem',
-                color: '#636e72',
-              }}
-            >
-              供應商 : {product.supplierName}
-            </span>
-            <span
-              style={{
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                color: '#00b894',
-              }}
-            >
-              NT${product.netPrice.toLocaleString()}
-            </span>
-          </div>
+            NT${product.netPrice.toLocaleString()}
+          </span>
         </div>
       </div>
     </div>
@@ -137,13 +156,13 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'activity' | 'accommodation' | 'food' | 'transportation'>('all');
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('/api/agency/tours');
         // Map backend data to frontend Product interface
-        // Backend doesn't return productType or location, so we default them for now
         const mappedProducts = response.data.map((p: any) => ({
           ...p,
           productType: 'activity', // Default to activity as backend doesn't support types yet
@@ -215,10 +234,18 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
               key={product.id}
               product={product}
               onHover={onProductHover || (() => { })}
+              onPreview={setPreviewProduct}
             />
           ))}
         </div>
       </div>
+
+      {previewProduct && (
+        <ResourceDetailModal
+          product={previewProduct}
+          onClose={() => setPreviewProduct(null)}
+        />
+      )}
     </div>
   );
 };
@@ -281,11 +308,6 @@ const styles = {
     padding: '2rem',
     color: '#b2bec3',
   },
-  activeTabStyle: {
-    backgroundColor: '#2d3436',
-    color: 'white',
-    borderColor: '#2d3436',
-  }
 };
 
 export default ResourceLibrary;
