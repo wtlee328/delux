@@ -17,6 +17,7 @@ import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
 import { TimelineContainer } from '../../components/itinerary/TimelineContainer';
 import { TimelineActivityItemPreview } from '../../components/itinerary/TimelineActivityItem';
 import SaveItineraryModal from '../../components/itinerary/SaveItineraryModal';
+import ResourceDetailModal from '../../components/itinerary/ResourceDetailModal';
 import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
 import './ItineraryPlanner.css';
@@ -62,6 +63,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
@@ -355,6 +357,7 @@ const ItineraryPlannerPage: React.FC = () => {
               onAddDay={handleAddDay}
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
+              onPreview={setPreviewProduct}
             />
           </div>
 
@@ -380,6 +383,13 @@ const ItineraryPlannerPage: React.FC = () => {
           onClose={() => setIsSaveModalOpen(false)}
           onSave={handleSaveItinerary}
         />
+
+        {previewProduct && (
+          <ResourceDetailModal
+            product={previewProduct}
+            onClose={() => setPreviewProduct(null)}
+          />
+        )}
 
         <DragOverlay dropAnimation={null}>
           {activeProduct ? (
