@@ -63,6 +63,12 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
         }
     }, [isEditing, isStartTimeEditable]);
 
+    // Sync local state with props when they change (e.g. from parent updates)
+    useEffect(() => {
+        setEditTime(item.startTime || '09:00');
+        setEditDuration(item.duration || 60);
+    }, [item.startTime, item.duration]);
+
     const handleSave = () => {
         onTimeUpdate(item.timelineId!, editTime, editDuration);
         setIsEditing(false);
