@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import axios from '../../config/axios';
 
 interface Product {
@@ -10,141 +11,199 @@ interface Product {
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
-  productType: 'activity' | 'accommodation';
+  productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+  notes?: string;
   location?: {
     lat: number;
     lng: number;
   };
+  timelineId?: string;
+  startTime?: string;
+  duration?: number;
 }
 
 interface ResourceLibraryProps {
   onProductHover?: (product: Product | null) => void;
-  onProductsLoaded?: (products: Product[]) => void;
+  setAvailableProducts: (products: Product[]) => void;
 }
 
-const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, onProductsLoaded }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'activity' | 'accommodation'>('all');
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/agency/tours');
-      // Map products and add productType (for now, we'll default to 'activity')
-      const productsWithType = response.data.map((p: any) => ({
-        ...p,
-        productType: p.productType || 'activity',
-      }));
-      setProducts(productsWithType);
-      // Notify parent component of loaded products
-      if (onProductsLoaded) {
-        onProductsLoaded(productsWithType);
-      }
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.destination.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || product.productType === typeFilter;
-    return matchesSearch && matchesType;
+const DraggableProduct = ({ product, onHover }: { product: Product; onHover: (p: Product | null) => void }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: product.id,
+    data: { type: 'resource', product },
   });
 
-  const formatPrice = (price: number) => {
-    return `NT$${price.toLocaleString('zh-TW')}`;
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 1000 : 1,
+    position: 'relative' as const,
+    touchAction: 'none',
   };
 
   return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+    >
+      <div
+        style={{
+          marginBottom: '1rem',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: isDragging
+            ? '0 12px 24px rgba(0,0,0,0.15)'
+            : '0 2px 8px rgba(0,0,0,0.06)',
+          cursor: 'grab',
+          border: '1px solid #f1f2f6',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          opacity: isDragging ? 0.8 : 1,
+        }}
+        onMouseEnter={() => onHover(product)}
+        onMouseLeave={() => onHover(null)}
+      >
+        <div style={{ position: 'relative', height: '140px' }}>
+          <img
+            src={product.coverImageUrl}
+            alt={product.title}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              color: '#2d3436',
+            }}
+          >
+            {product.productType}
+          </div>
+        </div>
+        <div style={{ padding: '1rem' }}>
+          <h3
+            style={{
+              margin: '0 0 0.5rem 0',
+              fontSize: '1rem',
+              fontWeight: '600',
+              color: '#2d3436',
+            }}
+          >
+            {product.title}
+          </h3>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '0.85rem',
+                color: '#636e72',
+              }}
+            >
+              供應商 : {product.supplierName}
+            </span>
+            <span
+              style={{
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: '#00b894',
+              }}
+            >
+              NT${product.netPrice.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAvailableProducts }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'activity' | 'accommodation' | 'food' | 'transportation'>('all');
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('/api/products');
+        setProducts(response.data);
+        setAvailableProducts(response.data);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [setAvailableProducts]);
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = activeTab === 'all' || product.productType === activeTab;
+    return matchesSearch && matchesType;
+  });
+
+  return (
     <div style={styles.container}>
-      <div style={styles.searchSection}>
-        <input
-          type="text"
-          placeholder="搜尋產品..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={styles.searchInput}
-        />
-        <div style={styles.filterButtons}>
-          <button
-            style={{
-              ...styles.filterButton,
-              ...(typeFilter === 'all' ? styles.filterButtonActive : {}),
-            }}
-            onClick={() => setTypeFilter('all')}
-          >
-            全部
-          </button>
-          <button
-            style={{
-              ...styles.filterButton,
-              ...(typeFilter === 'activity' ? styles.filterButtonActive : {}),
-            }}
-            onClick={() => setTypeFilter('activity')}
-          >
-            活動
-          </button>
-          <button
-            style={{
-              ...styles.filterButton,
-              ...(typeFilter === 'accommodation' ? styles.filterButtonActive : {}),
-            }}
-            onClick={() => setTypeFilter('accommodation')}
-          >
-            住宿
-          </button>
+      <div style={styles.header}>
+        <h2 style={styles.title}>Resource Library</h2>
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search resources..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <div style={styles.tabs}>
+          {(['all', 'activity', 'accommodation', 'food', 'transportation'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                ...styles.tab,
+                ...(activeTab === tab ? styles.activeTab : {}),
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
       <div style={styles.productList}>
-        {loading && <p style={styles.message}>載入中...</p>}
+        {loading && <p style={styles.message}>Loading resources...</p>}
         {!loading && filteredProducts.length === 0 && (
-          <p style={styles.message}>找不到符合條件的產品</p>
+          <p style={styles.message}>No resources found</p>
         )}
-        {!loading && filteredProducts.map((product, index) => (
-          <Draggable key={product.id} draggableId={product.id} index={index}>
-            {(provided: any, snapshot: any) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.draggableProps}
-                {...provided.dragHandleProps}
-                style={{
-                  ...styles.productCard,
-                  ...provided.draggableProps.style,
-                  ...(snapshot.isDragging ? styles.productCardDragging : {}),
-                }}
-                onMouseEnter={() => onProductHover?.(product)}
-                onMouseLeave={() => onProductHover?.(null)}
-              >
-                <img
-                  src={product.coverImageUrl}
-                  alt={product.title}
-                  style={styles.productImage}
-                />
-                <div style={styles.productInfo}>
-                  <h4 style={styles.productTitle}>{product.title}</h4>
-                  <p style={styles.productDetail}>
-                    <span style={styles.icon}>
-                      {product.productType === 'accommodation' ? '🏨' : '🎯'}
-                    </span>
-                    {product.productType === 'accommodation' ? '住宿' : '活動'}
-                  </p>
-                  <p style={styles.productDetail}>供應商：{product.supplierName}</p>
-                  <p style={styles.productPrice}>{formatPrice(product.netPrice)}</p>
-                </div>
-              </div>
-            )}
-          </Draggable>
-        ))}
+        <div style={{ padding: '1rem' }}>
+          {!loading && filteredProducts.map((product) => (
+            <DraggableProduct
+              key={product.id}
+              product={product}
+              onHover={onProductHover || (() => { })}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -152,93 +211,73 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, onPro
 
 const styles = {
   container: {
+    height: '100%',
     display: 'flex',
     flexDirection: 'column' as const,
-    height: '100%',
+    backgroundColor: '#ffffff',
+    borderRight: '1px solid #e0e0e0',
   },
-  searchSection: {
-    padding: '0.5rem 0',
-    borderBottom: '1px solid #e0e0e0',
+  header: {
+    padding: '1.5rem',
+    borderBottom: '1px solid #f0f0f0',
+    backgroundColor: '#fff',
+  },
+  title: {
+    margin: '0 0 1rem 0',
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#2d3436',
+  },
+  searchContainer: {
     marginBottom: '1rem',
   },
   searchInput: {
     width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid #dfe6e9',
     fontSize: '0.9rem',
-    marginBottom: '0.5rem',
+    outline: 'none',
+    transition: 'border-color 0.2s',
   },
-  filterButtons: {
+  tabs: {
     display: 'flex',
     gap: '0.5rem',
+    overflowX: 'auto' as const,
+    paddingBottom: '0.5rem',
+    scrollbarWidth: 'none' as const,
   },
-  filterButton: {
-    flex: 1,
-    padding: '0.4rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    backgroundColor: 'white',
-    cursor: 'pointer',
+  tab: {
+    padding: '0.5rem 1rem',
+    borderRadius: '20px',
+    border: '1px solid #dfe6e9',
+    backgroundColor: 'transparent',
     fontSize: '0.85rem',
+    color: '#636e72',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
     transition: 'all 0.2s',
   },
-  filterButtonActive: {
-    backgroundColor: '#007bff',
+  activeTab: {
+    backgroundColor: '#2d3436',
     color: 'white',
-    borderColor: '#007bff',
+    borderColor: '#2d3436',
   },
   productList: {
     flex: 1,
-    overflow: 'auto',
+    overflowY: 'auto' as const,
+    backgroundColor: '#f8f9fa',
   },
   message: {
     textAlign: 'center' as const,
-    color: '#999',
-    padding: '2rem 1rem',
-    fontSize: '0.9rem',
+    padding: '2rem',
+    color: '#b2bec3',
   },
-  productCard: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: '6px',
-    marginBottom: '0.75rem',
-    overflow: 'hidden',
-    cursor: 'grab',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    border: '1px solid #e0e0e0',
-  },
-  productCardDragging: {
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-    transform: 'rotate(2deg)',
-  },
-  productImage: {
-    width: '100%',
-    height: '100px',
-    objectFit: 'cover' as const,
-  },
-  productInfo: {
-    padding: '0.75rem',
-  },
-  productTitle: {
-    fontSize: '0.95rem',
-    fontWeight: 'bold',
-    margin: '0 0 0.5rem 0',
-    color: '#333',
-  },
-  productDetail: {
-    fontSize: '0.8rem',
-    color: '#666',
-    margin: '0.25rem 0',
-  },
-  icon: {
-    marginRight: '0.25rem',
-  },
-  productPrice: {
-    fontSize: '0.9rem',
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginTop: '0.5rem',
-  },
+  activeTabStyle: {
+    backgroundColor: '#2d3436',
+    color: 'white',
+    borderColor: '#2d3436',
+  }
 };
 
 export default ResourceLibrary;

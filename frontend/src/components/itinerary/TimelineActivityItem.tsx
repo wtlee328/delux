@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Product {
     id: string;
@@ -12,7 +13,6 @@ interface Product {
 
 interface TimelineActivityItemProps {
     item: Product;
-    index: number;
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
@@ -30,7 +30,6 @@ const getActivityIcon = (type: string) => {
 
 export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     item,
-    index,
     colorTheme,
     onTimeUpdate,
     onDelete,
@@ -39,6 +38,25 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     const [editTime, setEditTime] = useState(item.startTime || '09:00');
     const [editDuration, setEditDuration] = useState(item.duration || 60);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.timelineId! });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        ...styles.container,
+        zIndex: isDragging ? 1000 : 1,
+        opacity: isDragging ? 0.5 : 1,
+        position: 'relative' as const,
+        touchAction: 'none',
+    };
 
     useEffect(() => {
         if (isEditing && inputRef.current) {
@@ -64,100 +82,91 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     if (!item.timelineId) return null;
 
     return (
-        <Draggable draggableId={`timeline-item-${item.timelineId}`} index={index}>
-            {(provided, snapshot) => (
-                <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{
-                        ...styles.container,
-                        ...provided.draggableProps.style,
-                        zIndex: snapshot.isDragging ? 1000 : 1,
-                    }}
-                >
-                    {/* Connection Line Segment (Top half) */}
-                    <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {/* Connection Line Segment (Top half) */}
+            <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
 
-                    {/* Dot Marker */}
-                    <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
+            {/* Dot Marker */}
+            <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
 
-                    {/* Card */}
-                    <div
-                        style={{
-                            ...styles.card,
-                            transform: snapshot.isDragging ? 'scale(1.02)' : 'scale(1)',
-                            boxShadow: snapshot.isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
-                        }}
-                    >
-                        <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
-                            {getActivityIcon(item.productType)}
-                        </div>
-
-                        <div style={styles.content}>
-                            <div style={styles.header}>
-                                <h4 style={styles.title}>{item.title}</h4>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
-                                    style={styles.deleteBtn}
-                                    title="Remove"
-                                >
-                                    ×
-                                </button>
-                            </div>
-
-                            {isEditing ? (
-                                <div style={styles.editContainer}>
-                                    <input
-                                        ref={inputRef}
-                                        type="time"
-                                        value={editTime}
-                                        onChange={(e) => setEditTime(e.target.value)}
-                                        onBlur={handleSave}
-                                        onKeyDown={handleKeyDown}
-                                        style={styles.timeInput}
-                                    />
-                                    <span style={styles.separator}>for</span>
-                                    <input
-                                        type="number"
-                                        value={editDuration}
-                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                        onBlur={handleSave}
-                                        onKeyDown={handleKeyDown}
-                                        style={styles.durationInput}
-                                        min="15"
-                                        step="15"
-                                    />
-                                    <span style={styles.unit}>min</span>
-                                </div>
-                            ) : (
-                                <div
-                                    style={styles.timeDisplay}
-                                    onClick={() => setIsEditing(true)}
-                                    title="Click to edit time"
-                                >
-                                    <span style={styles.timeText}>{item.startTime || '09:00'}</span>
-                                    <span style={styles.durationText}>({item.duration || 60} min)</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+            {/* Card */}
+            <div
+                style={{
+                    ...styles.card,
+                    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                }}
+            >
+                <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
+                    {getActivityIcon(item.productType)}
                 </div>
-            )}
-        </Draggable>
+
+                <div style={styles.content}>
+                    <div style={styles.header}>
+                        <h4 style={styles.title}>{item.title}</h4>
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
+                            style={styles.deleteBtn}
+                            title="Remove"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    {isEditing ? (
+                        <div
+                            style={styles.editContainer}
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
+                            <input
+                                ref={inputRef}
+                                type="time"
+                                value={editTime}
+                                onChange={(e) => setEditTime(e.target.value)}
+                                onBlur={handleSave}
+                                onKeyDown={handleKeyDown}
+                                style={styles.timeInput}
+                            />
+                            <span style={styles.separator}>for</span>
+                            <input
+                                type="number"
+                                value={editDuration}
+                                onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                onBlur={handleSave}
+                                onKeyDown={handleKeyDown}
+                                style={styles.durationInput}
+                                min="15"
+                                step="15"
+                            />
+                            <span style={styles.unit}>min</span>
+                        </div>
+                    ) : (
+                        <div
+                            style={styles.timeDisplay}
+                            onClick={() => setIsEditing(true)}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            title="Click to edit time"
+                        >
+                            <span style={styles.timeText}>{item.startTime || '09:00'}</span>
+                            <span style={styles.durationText}>({item.duration || 60} min)</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 
 const styles = {
     container: {
-        position: 'relative' as const,
         paddingLeft: '3rem',
         marginBottom: '1rem',
         userSelect: 'none' as const,
     },
     lineSegment: {
         position: 'absolute' as const,
-        left: '27px', // Aligned with TimelineDayColumn line
+        left: '27px',
         width: '2px',
         zIndex: 0,
         opacity: 0.3,

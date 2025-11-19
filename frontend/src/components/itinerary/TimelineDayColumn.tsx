@@ -1,5 +1,6 @@
 import React from 'react';
-import { Droppable } from 'react-beautiful-dnd';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { TimelineActivityItem } from './TimelineActivityItem';
 
 interface Product {
@@ -31,6 +32,11 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
     onTimeUpdate,
     onDelete,
 }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `day-${day.dayNumber}`,
+        data: { type: 'day', dayNumber: day.dayNumber },
+    });
+
     return (
         <div style={styles.column}>
             {/* Header */}
@@ -45,36 +51,34 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                 {/* Central Line Background */}
                 <div style={{ ...styles.centralLine, backgroundColor: colorTheme.primary }} />
 
-                <Droppable droppableId={`day-${day.dayNumber}`}>
-                    {(provided, snapshot) => (
-                        <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            style={{
-                                ...styles.dropZone,
-                                backgroundColor: snapshot.isDraggingOver ? colorTheme.light + '20' : 'transparent',
-                            }}
-                        >
-                            {day.items.length === 0 ? (
-                                <div style={styles.emptyState}>
-                                    <p style={styles.emptyText}>Drop activities here</p>
-                                </div>
-                            ) : (
-                                day.items.map((item, index) => (
-                                    <TimelineActivityItem
-                                        key={item.timelineId || item.id}
-                                        item={item}
-                                        index={index}
-                                        colorTheme={colorTheme}
-                                        onTimeUpdate={onTimeUpdate}
-                                        onDelete={onDelete}
-                                    />
-                                ))
-                            )}
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </Droppable>
+                <div
+                    ref={setNodeRef}
+                    style={{
+                        ...styles.dropZone,
+                        backgroundColor: isOver ? colorTheme.light + '20' : 'transparent',
+                    }}
+                >
+                    <SortableContext
+                        items={day.items.map(item => item.timelineId!)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        {day.items.length === 0 ? (
+                            <div style={styles.emptyState}>
+                                <p style={styles.emptyText}>Drop activities here</p>
+                            </div>
+                        ) : (
+                            day.items.map((item) => (
+                                <TimelineActivityItem
+                                    key={item.timelineId}
+                                    item={item}
+                                    colorTheme={colorTheme}
+                                    onTimeUpdate={onTimeUpdate}
+                                    onDelete={onDelete}
+                                />
+                            ))
+                        )}
+                    </SortableContext>
+                </div>
             </div>
         </div>
     );
