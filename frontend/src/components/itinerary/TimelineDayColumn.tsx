@@ -1,5 +1,5 @@
 import React from 'react';
-import { StrictModeDroppable } from './StrictModeDroppable';
+import { Droppable } from 'react-beautiful-dnd';
 import { TimelineActivityItem } from './TimelineActivityItem';
 
 interface Product {
@@ -45,7 +45,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                 {/* Central Line Background */}
                 <div style={{ ...styles.centralLine, backgroundColor: colorTheme.primary }} />
 
-                <StrictModeDroppable droppableId={`day-${day.dayNumber}`}>
+                <Droppable droppableId={`day-${day.dayNumber}`}>
                     {(provided, snapshot) => (
                         <div
                             ref={provided.innerRef}
@@ -74,7 +74,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                             {provided.placeholder}
                         </div>
                     )}
-                </StrictModeDroppable>
+                </Droppable>
             </div>
         </div>
     );

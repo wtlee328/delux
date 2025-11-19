@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
-import { StrictModeDroppable } from '../../components/itinerary/StrictModeDroppable';
+import { DragDropContext, DropResult, Droppable } from 'react-beautiful-dnd';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
@@ -297,7 +296,7 @@ const ItineraryPlannerPage: React.FC = () => {
             </div>
             {isMobileMenuOpen.library && (
               <div style={styles.panelContent}>
-                <StrictModeDroppable droppableId="resource-library" isDropDisabled={true}>
+                <Droppable droppableId="resource-library" isDropDisabled={true}>
                   {(provided: any) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
                       <ResourceLibrary
@@ -307,7 +306,7 @@ const ItineraryPlannerPage: React.FC = () => {
                       {provided.placeholder}
                     </div>
                   )}
-                </StrictModeDroppable>
+                </Droppable>
               </div>
             )}
           </div>
