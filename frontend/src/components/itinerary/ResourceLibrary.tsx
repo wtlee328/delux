@@ -141,9 +141,16 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('/api/products');
-        setProducts(response.data);
-        setAvailableProducts(response.data);
+        const response = await axios.get('/api/agency/tours');
+        // Map backend data to frontend Product interface
+        // Backend doesn't return productType or location, so we default them for now
+        const mappedProducts = response.data.map((p: any) => ({
+          ...p,
+          productType: 'activity', // Default to activity as backend doesn't support types yet
+          location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 }, // Mock location around Taipei
+        }));
+        setProducts(mappedProducts);
+        setAvailableProducts(mappedProducts);
       } catch (error) {
         console.error('Failed to fetch products:', error);
       } finally {
