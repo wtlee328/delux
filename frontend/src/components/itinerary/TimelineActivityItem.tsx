@@ -19,15 +19,7 @@ interface TimelineActivityItemProps {
     isStartTimeEditable: boolean;
 }
 
-const getActivityIcon = (type: string) => {
-    switch (type) {
-        case 'activity': return '🎫';
-        case 'accommodation': return '🏨';
-        case 'food': return '🍽️';
-        case 'transportation': return '🚌';
-        default: return '📍';
-    }
-};
+
 
 export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     item,
@@ -100,12 +92,8 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                     boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
                 }}
             >
-                <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
-                    {getActivityIcon(item.productType)}
-                </div>
-
-                <div style={styles.content}>
-                    <div style={styles.header}>
+                <div style={styles.cardContent}>
+                    <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
                         <button
                             onPointerDown={(e) => e.stopPropagation()}
@@ -185,9 +173,8 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     );
 };
 
-export const TimelineActivityItemPreview: React.FC<{ item: Product; colorTheme?: { primary: string; light: string; dot: string } }> = ({
+export const TimelineActivityItemPreview: React.FC<{ item: Product }> = ({
     item,
-    colorTheme = { primary: '#b2bec3', light: '#f1f2f6', dot: '#636e72' } // Default muted theme
 }) => {
     return (
         <div style={{ ...styles.container, paddingLeft: 0 }}>
@@ -200,18 +187,12 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product; colorTheme?:
                     opacity: 0.9,
                 }}
             >
-                <div style={{ ...styles.iconBox, backgroundColor: colorTheme.light }}>
-                    {getActivityIcon(item.productType)}
-                </div>
-
-                <div style={styles.content}>
-                    <div style={styles.header}>
+                <div style={styles.cardContent}>
+                    <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
                     </div>
-
-                    <div style={styles.timeDisplay}>
-                        <span style={styles.timeText}>{item.startTime || '09:00'}</span>
-                        <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>
+                    <div style={styles.timeInfo}>
+                        {item.startTime || '09:00'} • {item.duration || 60} 分鐘
                     </div>
                 </div>
             </div>
@@ -253,35 +234,16 @@ const styles = {
         transition: 'all 0.2s ease',
         cursor: 'grab',
     },
-    iconBox: {
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.5rem',
-        flexShrink: 0,
-    },
-    content: {
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column' as const,
-        justifyContent: 'center',
-    },
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '0.25rem',
-    },
     title: {
         margin: 0,
         fontSize: '1rem',
         fontWeight: '600',
         color: '#2d3436',
         lineHeight: 1.4,
+    },
+    timeInfo: {
+        fontSize: '0.85rem',
+        color: '#b2bec3',
     },
     deleteBtn: {
         background: 'none',
@@ -294,6 +256,17 @@ const styles = {
         marginTop: '-4px',
         marginRight: '-8px',
         transition: 'color 0.2s',
+    },
+    cardContent: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: '0.5rem',
+    },
+    headerRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        width: '100%',
     },
     timeDisplay: {
         display: 'flex',
@@ -345,7 +318,7 @@ const styles = {
         width: '100%',
         border: '1px solid #dfe6e9',
         borderRadius: '8px',
-        padding: '6px 8px',
+        padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
         outline: 'none',
@@ -359,7 +332,7 @@ const styles = {
         width: '100%',
         border: '1px solid #dfe6e9',
         borderRadius: '8px',
-        padding: '6px 8px',
+        padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
         outline: 'none',
