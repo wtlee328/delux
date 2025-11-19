@@ -128,7 +128,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                 onKeyDown={handleKeyDown}
                                 style={styles.timeInput}
                             />
-                            <span style={styles.separator}>for</span>
+                            <span style={styles.separator}>停留</span>
                             <input
                                 type="number"
                                 value={editDuration}
@@ -139,17 +139,17 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                 min="15"
                                 step="15"
                             />
-                            <span style={styles.unit}>min</span>
+                            <span style={styles.unit}>分鐘</span>
                         </div>
                     ) : (
                         <div
                             style={styles.timeDisplay}
                             onClick={() => setIsEditing(true)}
                             onPointerDown={(e) => e.stopPropagation()}
-                            title="Click to edit time"
+                            title="點擊編輯時間"
                         >
                             <span style={styles.timeText}>{item.startTime || '09:00'}</span>
-                            <span style={styles.durationText}>({item.duration || 60} min)</span>
+                            <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>
                         </div>
                     )}
                 </div>

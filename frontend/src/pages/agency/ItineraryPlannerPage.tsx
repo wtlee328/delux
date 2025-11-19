@@ -152,7 +152,7 @@ const ItineraryPlannerPage: React.FC = () => {
         }
         return day;
       }));
-      showSuccess(`Added ${product.title} to Day ${dayNumber}`);
+      showSuccess(`已將 ${product.title} 加入第 ${dayNumber} 天`);
       return;
     }
 
@@ -297,7 +297,7 @@ const ItineraryPlannerPage: React.FC = () => {
         <header style={styles.header}>
           <div style={styles.headerLeft}>
             <button onClick={() => navigate('/')} style={styles.backButton}>←</button>
-            <h1 style={styles.title}>Itinerary Planner</h1>
+            <h1 style={styles.title}>行程規劃</h1>
           </div>
           <div style={styles.headerRight}>
             <span style={styles.status}>{saveStatus}</span>
@@ -305,7 +305,7 @@ const ItineraryPlannerPage: React.FC = () => {
               onClick={() => setIsSaveModalOpen(true)}
               style={styles.saveButton}
             >
-              Save Itinerary
+              儲存行程
             </button>
           </div>
         </header>
@@ -318,7 +318,7 @@ const ItineraryPlannerPage: React.FC = () => {
             opacity: isMobileMenuOpen.library ? 1 : 0,
           }}>
             <div style={styles.panelHeader}>
-              <h3>Resources</h3>
+              <h3>資源庫</h3>
               <button onClick={() => togglePanel('library')}>×</button>
             </div>
             <ResourceLibrary
@@ -347,7 +347,7 @@ const ItineraryPlannerPage: React.FC = () => {
             opacity: isMobileMenuOpen.map ? 1 : 0,
           }}>
             <div style={styles.panelHeader}>
-              <h3>Map View</h3>
+              <h3>地圖預覽</h3>
               <button onClick={() => togglePanel('map')}>×</button>
             </div>
             <MapView

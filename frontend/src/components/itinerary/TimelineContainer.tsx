@@ -56,7 +56,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
                 <div style={styles.addDayColumn}>
                     <button onClick={onAddDay} style={styles.addDayBtn}>
                         <span style={styles.plusIcon}>+</span>
-                        <span>Add Day</span>
+                        <span>新增天數</span>
                     </button>
                 </div>
             </div>

@@ -42,7 +42,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
             {/* Header */}
             <div style={styles.header}>
                 <div style={{ ...styles.dayBadge, backgroundColor: colorTheme.light, color: colorTheme.primary }}>
-                    Day {day.dayNumber}
+                    第 {day.dayNumber} 天
                 </div>
             </div>
 
@@ -64,7 +64,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                     >
                         {day.items.length === 0 ? (
                             <div style={styles.emptyState}>
-                                <p style={styles.emptyText}>Drop activities here</p>
+                                <p style={styles.emptyText}>將活動拖曳至此</p>
                             </div>
                         ) : (
                             day.items.map((item) => (

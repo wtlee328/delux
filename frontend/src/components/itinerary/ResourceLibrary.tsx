@@ -155,8 +155,10 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
   }, [setAvailableProducts]);
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    const title = product.title || '';
+    const destination = product.destination || '';
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      destination.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = activeTab === 'all' || product.productType === activeTab;
     return matchesSearch && matchesType;
   });
@@ -164,36 +166,42 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>Resource Library</h2>
+        <h2 style={styles.title}>資源庫</h2>
         <div style={styles.searchContainer}>
           <input
             type="text"
-            placeholder="Search resources..."
+            placeholder="搜尋資源..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
           />
         </div>
         <div style={styles.tabs}>
-          {(['all', 'activity', 'accommodation', 'food', 'transportation'] as const).map((tab) => (
+          {[
+            { id: 'all', label: '全部' },
+            { id: 'activity', label: '活動' },
+            { id: 'accommodation', label: '住宿' },
+            { id: 'food', label: '餐飲' },
+            { id: 'transportation', label: '交通' }
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
               style={{
                 ...styles.tab,
-                ...(activeTab === tab ? styles.activeTab : {}),
+                ...(activeTab === tab.id ? styles.activeTab : {}),
               }}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab.label}
             </button>
           ))}
         </div>
       </div>
 
       <div style={styles.productList}>
-        {loading && <p style={styles.message}>Loading resources...</p>}
+        {loading && <p style={styles.message}>載入資源中...</p>}
         {!loading && filteredProducts.length === 0 && (
-          <p style={styles.message}>No resources found</p>
+          <p style={styles.message}>找不到相關資源</p>
         )}
         <div style={{ padding: '1rem' }}>
           {!loading && filteredProducts.map((product) => (
