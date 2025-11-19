@@ -32,6 +32,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     const [editTime, setEditTime] = useState(item.startTime || '09:00');
     const [editDuration, setEditDuration] = useState(item.duration || 60);
     const inputRef = useRef<HTMLInputElement>(null);
+    const durationInputRef = useRef<HTMLInputElement>(null);
 
     const {
         attributes,
@@ -53,10 +54,14 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     };
 
     useEffect(() => {
-        if (isEditing && inputRef.current) {
-            inputRef.current.focus();
+        if (isEditing) {
+            if (isStartTimeEditable && inputRef.current) {
+                inputRef.current.focus();
+            } else if (!isStartTimeEditable && durationInputRef.current) {
+                durationInputRef.current.focus();
+            }
         }
-    }, [isEditing]);
+    }, [isEditing, isStartTimeEditable]);
 
     const handleSave = () => {
         onTimeUpdate(item.timelineId!, editTime, editDuration);
@@ -139,6 +144,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                 <span style={styles.label}>停留</span>
                                 <div style={{ position: 'relative', width: '100%' }}>
                                     <input
+                                        ref={durationInputRef}
                                         type="number"
                                         value={editDuration}
                                         onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
@@ -234,6 +240,19 @@ const styles = {
         transition: 'all 0.2s ease',
         cursor: 'grab',
     },
+    cardContent: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: '0.5rem',
+        flex: 1,
+        minWidth: 0,
+    },
+    headerRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        width: '100%',
+    },
     title: {
         margin: 0,
         fontSize: '1rem',
@@ -256,17 +275,6 @@ const styles = {
         marginTop: '-4px',
         marginRight: '-8px',
         transition: 'color 0.2s',
-    },
-    cardContent: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0.5rem',
-    },
-    headerRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        width: '100%',
     },
     timeDisplay: {
         display: 'flex',
