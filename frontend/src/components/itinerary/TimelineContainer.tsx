@@ -22,6 +22,7 @@ interface TimelineContainerProps {
     onTimeUpdate: (dayNumber: number, itemId: string, startTime: string, duration: number) => void;
     onDelete: (dayNumber: number, itemId: string) => void;
     onAddDay: () => void;
+    onPreview: (product: Product) => void;
 }
 
 const dayColorThemes = [
@@ -38,6 +39,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     onTimeUpdate,
     onDelete,
     onAddDay,
+    onPreview,
 }) => {
     return (
         <div style={styles.container}>
@@ -49,6 +51,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
                         colorTheme={dayColorThemes[index % dayColorThemes.length]}
                         onTimeUpdate={(itemId, startTime, duration) => onTimeUpdate(day.dayNumber, itemId, startTime, duration)}
                         onDelete={(itemId) => onDelete(day.dayNumber, itemId)}
+                        onPreview={onPreview}
                     />
                 ))}
 
