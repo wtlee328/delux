@@ -122,32 +122,39 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                             style={styles.editContainer}
                             onPointerDown={(e) => e.stopPropagation()}
                         >
-                            <input
-                                ref={inputRef}
-                                type="time"
-                                value={editTime}
-                                onChange={(e) => setEditTime(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={handleKeyDown}
-                                style={{
-                                    ...styles.timeInput,
-                                    backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
-                                    color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
-                                }}
-                                disabled={!isStartTimeEditable}
-                            />
-                            <span style={styles.separator}>停留</span>
-                            <input
-                                type="number"
-                                value={editDuration}
-                                onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                onBlur={handleSave}
-                                onKeyDown={handleKeyDown}
-                                style={styles.durationInput}
-                                min="15"
-                                step="15"
-                            />
-                            <span style={styles.unit}>分鐘</span>
+                            <div style={styles.editRow}>
+                                <span style={styles.label}>開始:</span>
+                                <input
+                                    ref={inputRef}
+                                    type="time"
+                                    value={editTime}
+                                    onChange={(e) => setEditTime(e.target.value)}
+                                    onBlur={handleSave}
+                                    onKeyDown={handleKeyDown}
+                                    style={{
+                                        ...styles.timeInput,
+                                        backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
+                                        color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
+                                    }}
+                                    disabled={!isStartTimeEditable}
+                                />
+                            </div>
+                            <div style={styles.editRow}>
+                                <span style={styles.label}>停留:</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                        type="number"
+                                        value={editDuration}
+                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                        onBlur={handleSave}
+                                        onKeyDown={handleKeyDown}
+                                        style={styles.durationInput}
+                                        min="15"
+                                        step="15"
+                                    />
+                                    <span style={styles.unit}>分鐘</span>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div
@@ -303,30 +310,41 @@ const styles = {
     },
     editContainer: {
         display: 'flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        marginTop: '0.25rem',
+        flexDirection: 'column' as const,
+        gap: '0.5rem',
+        marginTop: '0.5rem',
         backgroundColor: '#f8f9fa',
-        padding: '4px 8px',
+        padding: '8px',
         borderRadius: '8px',
-        width: 'fit-content',
-        maxWidth: '100%',
+        width: '100%',
         boxSizing: 'border-box' as const,
+    },
+    editRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    label: {
+        fontSize: '0.85rem',
+        color: '#636e72',
+        fontWeight: '500',
     },
     timeInput: {
         border: '1px solid #dfe6e9',
         borderRadius: '6px',
-        padding: '2px 6px',
+        padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
         outline: 'none',
         fontFamily: 'monospace',
         backgroundColor: 'white',
+        width: '100px',
     },
     durationInput: {
         border: '1px solid #dfe6e9',
         borderRadius: '6px',
-        padding: '2px 6px',
+        padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
         outline: 'none',
@@ -334,13 +352,8 @@ const styles = {
         textAlign: 'center' as const,
         backgroundColor: 'white',
     },
-    separator: {
-        fontSize: '0.8rem',
-        color: '#b2bec3',
-        fontWeight: '500',
-    },
     unit: {
-        fontSize: '0.8rem',
-        color: '#b2bec3',
+        fontSize: '0.85rem',
+        color: '#636e72',
     },
 };
