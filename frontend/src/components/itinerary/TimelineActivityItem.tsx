@@ -124,9 +124,17 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                         >
                             <div style={styles.editRow}>
                                 <span style={styles.label}>開始</span>
+                                <style>
+                                    {`
+                                        .no-clock-icon::-webkit-calendar-picker-indicator {
+                                            display: none !important;
+                                        }
+                                    `}
+                                </style>
                                 <input
                                     ref={inputRef}
                                     type="time"
+                                    className="no-clock-icon"
                                     value={editTime}
                                     onChange={(e) => setEditTime(e.target.value)}
                                     onBlur={handleSave}
