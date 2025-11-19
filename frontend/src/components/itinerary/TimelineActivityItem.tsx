@@ -33,6 +33,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     const [editDuration, setEditDuration] = useState(item.duration || 60);
     const inputRef = useRef<HTMLInputElement>(null);
     const durationInputRef = useRef<HTMLInputElement>(null);
+    const editContainerRef = useRef<HTMLDivElement>(null);
 
     const {
         attributes,
@@ -73,6 +74,25 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
         onTimeUpdate(item.timelineId!, editTime, editDuration);
         setIsEditing(false);
     };
+
+    // Handle click outside to save
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            if (isEditing && editContainerRef.current && !editContainerRef.current.contains(event.target as Node)) {
+                handleSave();
+            }
+        };
+
+        if (isEditing) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [isEditing, editTime, editDuration]); // Dependencies are crucial for handleSave to see current state
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         e.stopPropagation();
@@ -118,6 +138,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
 
                     {isEditing ? (
                         <div
+                            ref={editContainerRef}
                             style={styles.editContainer}
                             onPointerDown={(e) => e.stopPropagation()}
                         >
@@ -136,7 +157,6 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                     className="no-clock-icon"
                                     value={editTime}
                                     onChange={(e) => setEditTime(e.target.value)}
-                                    onBlur={handleSave}
                                     onKeyDown={handleKeyDown}
                                     style={{
                                         ...styles.timeInput,
@@ -154,7 +174,6 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                         type="number"
                                         value={editDuration}
                                         onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                        onBlur={handleSave}
                                         onKeyDown={handleKeyDown}
                                         style={{ ...styles.durationInput, paddingRight: '40px' }}
                                         min="15"
