@@ -16,17 +16,17 @@ interface TimelineActivityItemProps {
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
-    isEditable: boolean;
+    isStartTimeEditable: boolean;
 }
 
 const getActivityIcon = (type: string) => {
-    const icons: Record<string, string> = {
-        accommodation: '🏨',
-        food: '🍽️',
-        activity: '🎯',
-        transportation: '🚗',
-    };
-    return icons[type] || '📍';
+    switch (type) {
+        case 'activity': return '🎫';
+        case 'accommodation': return '🏨';
+        case 'food': return '🍽️';
+        case 'transportation': return '🚌';
+        default: return '📍';
+    }
 };
 
 export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
@@ -34,7 +34,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     colorTheme,
     onTimeUpdate,
     onDelete,
-    isEditable,
+    isStartTimeEditable,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editTime, setEditTime] = useState(item.startTime || '09:00');
@@ -129,7 +129,12 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                 onChange={(e) => setEditTime(e.target.value)}
                                 onBlur={handleSave}
                                 onKeyDown={handleKeyDown}
-                                style={styles.timeInput}
+                                style={{
+                                    ...styles.timeInput,
+                                    backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
+                                    color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
+                                }}
+                                disabled={!isStartTimeEditable}
                             />
                             <span style={styles.separator}>停留</span>
                             <input
@@ -148,12 +153,12 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                         <div
                             style={{
                                 ...styles.timeDisplay,
-                                cursor: isEditable ? 'pointer' : 'default',
-                                opacity: isEditable ? 1 : 0.8,
+                                cursor: 'pointer',
+                                opacity: 1,
                             }}
-                            onClick={() => isEditable && setIsEditing(true)}
+                            onClick={() => setIsEditing(true)}
                             onPointerDown={(e) => e.stopPropagation()}
-                            title={isEditable ? "點擊編輯時間" : "自動計算時間"}
+                            title="點擊編輯時間"
                         >
                             <span style={styles.timeText}>{item.startTime || '09:00'}</span>
                             <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>

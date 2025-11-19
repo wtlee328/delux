@@ -98,13 +98,12 @@ const ItineraryPlannerPage: React.FC = () => {
 
     let currentTime = items[0].startTime || dayStartTime;
 
-    return items.map((item, index) => {
+    return items.map((item) => {
       // First item keeps its time (or gets the day start time if undefined)
       // Subsequent items get calculated based on previous item's end time
-      // All items except maybe the first one get default 60 mins duration if not set?
-      // Request says: "All subsequent activity cards... should have a default stay duration of 60 minutes."
+      // All items keep their own duration (default 60 if not set)
 
-      const duration = index === 0 ? (item.duration || 60) : 60;
+      const duration = item.duration || 60;
       const startTime = currentTime;
 
       currentTime = addMinutes(startTime, duration);

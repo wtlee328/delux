@@ -74,7 +74,7 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                                     colorTheme={colorTheme}
                                     onTimeUpdate={onTimeUpdate}
                                     onDelete={onDelete}
-                                    isEditable={index === 0}
+                                    isStartTimeEditable={index === 0}
                                 />
                             ))
                         )}
