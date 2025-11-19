@@ -52,9 +52,61 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     onAddDay,
     onPreview,
 }) => {
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const [showLeftArrow, setShowLeftArrow] = React.useState(false);
+    const [showRightArrow, setShowRightArrow] = React.useState(false);
+
+    const checkScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+            setShowLeftArrow(scrollLeft > 0);
+            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10); // -10 buffer
+        }
+    };
+
+    React.useEffect(() => {
+        checkScroll();
+        window.addEventListener('resize', checkScroll);
+        return () => window.removeEventListener('resize', checkScroll);
+    }, [timeline]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 340 + 24; // Card width + gap
+            scrollContainerRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth',
+            });
+        }
+    };
+
     return (
         <div style={styles.container}>
-            <div style={styles.scrollArea}>
+            {showLeftArrow && (
+                <button
+                    onClick={() => scroll('left')}
+                    style={{ ...styles.scrollArrow, left: '20px' }}
+                    aria-label="Scroll left"
+                >
+                    ←
+                </button>
+            )}
+
+            {showRightArrow && (
+                <button
+                    onClick={() => scroll('right')}
+                    style={{ ...styles.scrollArrow, right: '20px' }}
+                    aria-label="Scroll right"
+                >
+                    →
+                </button>
+            )}
+
+            <div
+                ref={scrollContainerRef}
+                style={styles.scrollArea}
+                onScroll={checkScroll}
+            >
                 {timeline.map((day, index) => (
                     <TimelineDayColumn
                         key={day.dayNumber}
@@ -85,6 +137,7 @@ const styles = {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column' as const,
+        position: 'relative' as const,
     },
     scrollArea: {
         flex: 1,
@@ -95,6 +148,28 @@ const styles = {
         overflowY: 'hidden' as const,
         scrollSnapType: 'x mandatory',
         alignItems: 'flex-start',
+        scrollbarWidth: 'none' as const, // Hide scrollbar for cleaner look
+        msOverflowStyle: 'none' as const,
+    },
+    scrollArrow: {
+        position: 'absolute' as const,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '48px',
+        height: '48px',
+        borderRadius: '50%',
+        backgroundColor: 'white',
+        border: '1px solid #f1f2f6',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        zIndex: 10,
+        fontSize: '1.2rem',
+        color: '#2d3436',
+        transition: 'all 0.2s ease',
+        outline: 'none',
     },
     addDayColumn: {
         minWidth: '100px',
