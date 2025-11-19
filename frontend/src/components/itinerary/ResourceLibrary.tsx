@@ -241,12 +241,13 @@ const styles = {
   },
   searchInput: {
     width: '100%',
-    padding: '0.75rem 1rem',
+    padding: '0.5rem 1rem',
     borderRadius: '8px',
     border: '1px solid #dfe6e9',
     fontSize: '0.9rem',
     outline: 'none',
     transition: 'border-color 0.2s',
+    boxSizing: 'border-box' as const,
   },
   tabs: {
     display: 'flex',
