@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+
 import axios from '../../config/axios';
 
 interface Product {
@@ -28,13 +28,13 @@ interface ResourceLibraryProps {
 }
 
 const DraggableProduct = ({ product, onHover }: { product: Product; onHover: (p: Product | null) => void }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: product.id,
     data: { type: 'resource', product },
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    // transform: CSS.Translate.toString(transform), // Removed to keep original item stationary
     zIndex: isDragging ? 1000 : 1,
     position: 'relative' as const,
     touchAction: 'none',
