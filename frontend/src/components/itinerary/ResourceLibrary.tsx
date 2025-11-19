@@ -253,6 +253,7 @@ const styles = {
     gap: '0.5rem',
     overflowX: 'auto' as const,
     paddingBottom: '0.5rem',
+    paddingRight: '1rem', // Ensure last item isn't cut off
     scrollbarWidth: 'none' as const,
   },
   tab: {
