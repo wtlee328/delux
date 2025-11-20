@@ -65,6 +65,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [dragSourceType, setDragSourceType] = useState<'resource' | 'timeline' | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -119,12 +120,14 @@ const ItineraryPlannerPage: React.FC = () => {
     // Check if it's a resource or a timeline item
     if (active.data.current?.type === 'resource') {
       setActiveProduct(active.data.current.product);
+      setDragSourceType('resource');
     } else {
       // Find the item in the timeline
       for (const day of timeline) {
         const item = day.items.find(i => i.timelineId === active.id);
         if (item) {
           setActiveProduct(item);
+          setDragSourceType('timeline');
           break;
         }
       }
@@ -144,6 +147,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveProduct(null);
+    setDragSourceType(null);
 
     if (!over) return;
 
@@ -407,7 +411,7 @@ const ItineraryPlannerPage: React.FC = () => {
         )}
 
         <DragOverlay dropAnimation={null}>
-          {activeProduct ? (
+          {activeProduct && dragSourceType === 'resource' ? (
             <TimelineActivityItemPreview item={activeProduct} />
           ) : null}
         </DragOverlay>
