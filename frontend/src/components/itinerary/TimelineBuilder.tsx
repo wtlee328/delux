@@ -169,7 +169,12 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
                                     }}
                                   >
                                     <div style={{ ...styles.timelineDot, backgroundColor: colorTheme.dot }} />
-                                    <div style={styles.activityCard}>
+                                    <div
+                                      style={{
+                                        ...styles.activityCard,
+                                        cursor: snapshot.isDragging ? 'grabbing' : 'grab',
+                                      }}
+                                    >
                                       <div style={{ ...styles.activityIcon, backgroundColor: colorTheme.light }}>
                                         <span style={styles.iconEmoji}>
                                           {getActivityIcon(item.productType)}
@@ -317,7 +322,7 @@ const styles = {
     marginBottom: '1.5rem',
     paddingLeft: '3.5rem',
   },
-  activityDragging: { opacity: 0.9, transform: 'scale(1.02)' },
+  activityDragging: { opacity: 0.9, transform: 'scale(1.02)', cursor: 'grabbing' },
   timelineDot: {
     position: 'absolute' as const,
     left: '1.75rem',

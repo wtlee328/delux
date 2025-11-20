@@ -134,6 +134,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                     ...styles.card,
                     transform: isDragging ? 'scale(1.02)' : 'scale(1)',
                     boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                    cursor: isDragging ? 'grabbing' : 'grab',
                 }}
             >
                 <div style={styles.cardContent}>
@@ -257,6 +258,7 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product }> = ({
                     transform: 'scale(1.02)',
                     boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
                     opacity: 0.9,
+                    cursor: 'grabbing',
                 }}
             >
                 <div style={styles.cardContent}>
