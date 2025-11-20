@@ -7,7 +7,7 @@ interface ProductDetail {
   id: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   description: string;
   coverImageUrl: string;
   netPrice: number;
@@ -47,6 +47,14 @@ const AgencyTourDetailPage: React.FC = () => {
     navigate('/agency/dashboard');
   };
 
+  const categoryLabels: Record<string, string> = {
+    'landmark': '地標',
+    'activity': '活動',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar title="旅行社控制台" />
@@ -77,8 +85,10 @@ const AgencyTourDetailPage: React.FC = () => {
                   <span className="text-lg font-semibold text-slate-800">{product.destination}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm font-medium text-slate-500">天數</span>
-                  <span className="text-lg font-semibold text-slate-800">{product.durationDays} 天</span>
+                  <span className="text-sm font-medium text-slate-500">類別</span>
+                  <span className="text-lg font-semibold text-slate-800">
+                    {categoryLabels[product.category] || product.category}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-slate-500">供應商</span>

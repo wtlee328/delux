@@ -177,7 +177,7 @@ export const validateUserForm = (data: {
 export const validateProductForm = (data: {
   title: string;
   destination: string;
-  durationDays: number | string;
+  category: string;
   description: string;
   netPrice: number | string;
   coverImage?: File | null;
@@ -196,15 +196,10 @@ export const validateProductForm = (data: {
     errors.destination = destinationError;
   }
 
-  // Validate duration
-  const durationError = validateRequired(data.durationDays, '天數');
-  if (durationError) {
-    errors.durationDays = durationError;
-  } else {
-    const positiveError = validatePositiveNumber(data.durationDays, '天數');
-    if (positiveError) {
-      errors.durationDays = positiveError;
-    }
+  // Validate category
+  const categoryError = validateRequired(data.category, '類別');
+  if (categoryError) {
+    errors.category = categoryError;
   }
 
   // Validate description

@@ -4,7 +4,7 @@ export interface CreateProductRequest {
   supplierId: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   description: string;
   coverImageUrl: string;
   netPrice: number;
@@ -13,7 +13,7 @@ export interface CreateProductRequest {
 export interface UpdateProductRequest {
   title?: string;
   destination?: string;
-  durationDays?: number;
+  category?: string;
   description?: string;
   coverImageUrl?: string;
   netPrice?: number;
@@ -26,7 +26,7 @@ export interface Product {
   supplierId: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   description: string;
   coverImageUrl: string;
   netPrice: number;
@@ -41,7 +41,7 @@ export interface ProductWithSupplier extends Product {
 
 export interface ProductFilters {
   destination?: string;
-  durationDays?: number;
+  category?: string;
 }
 
 /**
@@ -54,13 +54,13 @@ export async function createProduct(
   productData: CreateProductRequest,
   status: ProductStatus = '草稿'
 ): Promise<Product> {
-  const { supplierId, title, destination, durationDays, description, coverImageUrl, netPrice } = productData;
+  const { supplierId, title, destination, category, description, coverImageUrl, netPrice } = productData;
 
   const result = await pool.query(
-    `INSERT INTO products (supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status)
+    `INSERT INTO products (supplier_id, title, destination, category, description, cover_image_url, net_price, status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at`,
-    [supplierId, title, destination, durationDays, description, coverImageUrl, netPrice, status]
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
+    [supplierId, title, destination, category, description, coverImageUrl, netPrice, status]
   );
 
   const product = result.rows[0];
@@ -70,7 +70,7 @@ export async function createProduct(
     supplierId: product.supplier_id,
     title: product.title,
     destination: product.destination,
-    durationDays: product.duration_days,
+    category: product.category,
     description: product.description,
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
@@ -116,9 +116,9 @@ export async function updateProduct(
     updates.push(`destination = $${paramCount++}`);
     values.push(productData.destination);
   }
-  if (productData.durationDays !== undefined) {
-    updates.push(`duration_days = $${paramCount++}`);
-    values.push(productData.durationDays);
+  if (productData.category !== undefined) {
+    updates.push(`category = $${paramCount++}`);
+    values.push(productData.category);
   }
   if (productData.description !== undefined) {
     updates.push(`description = $${paramCount++}`);
@@ -140,7 +140,7 @@ export async function updateProduct(
     `UPDATE products
      SET ${updates.join(', ')}
      WHERE id = $${paramCount}
-     RETURNING id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
     values
   );
 
@@ -151,7 +151,7 @@ export async function updateProduct(
     supplierId: product.supplier_id,
     title: product.title,
     destination: product.destination,
-    durationDays: product.duration_days,
+    category: product.category,
     description: product.description,
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
@@ -168,7 +168,7 @@ export async function updateProduct(
  */
 export async function getProductsBySupplier(supplierId: string): Promise<Product[]> {
   const result = await pool.query(
-    `SELECT id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at
+    `SELECT id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at
      FROM products
      WHERE supplier_id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)
      ORDER BY created_at DESC`,
@@ -180,7 +180,7 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
     supplierId: row.supplier_id,
     title: row.title,
     destination: row.destination,
-    durationDays: row.duration_days,
+    category: row.category,
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
@@ -196,7 +196,7 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
  */
 export async function getAllProducts(): Promise<ProductWithSupplier[]> {
   const result = await pool.query(
-    `SELECT p.id, p.supplier_id, p.title, p.destination, p.duration_days, p.description, 
+    `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
@@ -210,7 +210,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
     supplierId: row.supplier_id,
     title: row.title,
     destination: row.destination,
-    durationDays: row.duration_days,
+    category: row.category,
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
@@ -228,7 +228,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
  */
 export async function getPublishedProducts(filters?: ProductFilters): Promise<ProductWithSupplier[]> {
   let query = `
-    SELECT p.id, p.supplier_id, p.title, p.destination, p.duration_days, p.description, 
+    SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
            p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
            u.name as supplier_name
     FROM products p
@@ -244,9 +244,9 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
     values.push(filters.destination);
   }
 
-  if (filters?.durationDays) {
-    query += ` AND p.duration_days = $${paramCount++}`;
-    values.push(filters.durationDays);
+  if (filters?.category) {
+    query += ` AND p.category = $${paramCount++}`;
+    values.push(filters.category);
   }
 
   query += ` ORDER BY p.created_at DESC`;
@@ -258,7 +258,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
     supplierId: row.supplier_id,
     title: row.title,
     destination: row.destination,
-    durationDays: row.duration_days,
+    category: row.category,
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
@@ -277,7 +277,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
  */
 export async function getProductById(id: string): Promise<ProductWithSupplier> {
   const result = await pool.query(
-    `SELECT p.id, p.supplier_id, p.title, p.destination, p.duration_days, p.description, 
+    `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
@@ -297,7 +297,7 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
     supplierId: row.supplier_id,
     title: row.title,
     destination: row.destination,
-    durationDays: row.duration_days,
+    category: row.category,
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
@@ -336,7 +336,7 @@ export async function updateProductStatus(
     `UPDATE products
      SET status = $1, updated_at = CURRENT_TIMESTAMP
      WHERE id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)
-     RETURNING id, supplier_id, title, destination, duration_days, description, cover_image_url, net_price, status, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
     [status, id]
   );
 
@@ -351,7 +351,7 @@ export async function updateProductStatus(
     supplierId: product.supplier_id,
     title: product.title,
     destination: product.destination,
-    durationDays: product.duration_days,
+    category: product.category,
     description: product.description,
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
@@ -368,7 +368,7 @@ export async function updateProductStatus(
  */
 export async function getProductsByStatus(status: ProductStatus): Promise<ProductWithSupplier[]> {
   const result = await pool.query(
-    `SELECT p.id, p.supplier_id, p.title, p.destination, p.duration_days, p.description, 
+    `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
@@ -383,7 +383,7 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
     supplierId: row.supplier_id,
     title: row.title,
     destination: row.destination,
-    durationDays: row.duration_days,
+    category: row.category,
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),

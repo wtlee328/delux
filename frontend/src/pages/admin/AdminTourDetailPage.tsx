@@ -9,7 +9,7 @@ interface ProductDetail {
   id: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   description: string;
   coverImageUrl: string;
   netPrice: number;
@@ -39,7 +39,7 @@ const AdminTourDetailPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`/ api / admin / tours / ${id} `);
+      const response = await axios.get(`/api/admin/tours/${id}`);
       setProduct(response.data);
     } catch (err: any) {
       setError('無法載入產品詳情');
@@ -55,7 +55,7 @@ const AdminTourDetailPage: React.FC = () => {
     try {
       setUpdating(true);
       setError(null);
-      await axios.put(`/ api / admin / tours / ${id}/status`, { status: '已發佈' });
+      await axios.put(`/api/admin/tours/${id}/status`, { status: '已發佈' });
 
       // Update local state
       setProduct({ ...product, status: '已發佈' });
@@ -109,6 +109,14 @@ const AdminTourDetailPage: React.FC = () => {
 
   const formatPrice = (price: number) => {
     return `NT$${price.toLocaleString('zh-TW')}`;
+  };
+
+  const categoryLabels: Record<string, string> = {
+    'landmark': '地標',
+    'activity': '活動',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
   };
 
   if (loading) {
@@ -175,8 +183,10 @@ const AdminTourDetailPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-slate-500">天數：</span>
-                <span className="text-base text-slate-800 font-medium">{product.durationDays} 天</span>
+                <span className="text-sm font-medium text-slate-500">類別：</span>
+                <span className="text-base text-slate-800 font-medium">
+                  {categoryLabels[product.category] || product.category}
+                </span>
               </div>
 
               <div className="flex flex-col gap-1">

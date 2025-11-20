@@ -10,7 +10,7 @@ type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 interface FormData {
   產品標題: string;
   目的地: string;
-  天數: string;
+  類別: string;
   產品描述: string;
   封面圖: File | null;
   淨價: string;
@@ -19,7 +19,7 @@ interface FormData {
 interface FormErrors {
   產品標題?: string;
   目的地?: string;
-  天數?: string;
+  類別?: string;
   產品描述?: string;
   封面圖?: string;
   淨價?: string;
@@ -34,7 +34,7 @@ const EditProductPage: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     產品標題: '',
     目的地: '',
-    天數: '',
+    類別: '地標',
     產品描述: '',
     封面圖: null,
     淨價: '',
@@ -57,10 +57,19 @@ const EditProductPage: React.FC = () => {
       const response = await axios.get(`/api/supplier/tours/${id}`);
       const product = response.data;
 
+      // Map backend category to frontend display value
+      const categoryMap: Record<string, string> = {
+        'landmark': '地標',
+        'activity': '活動',
+        'accommodation': '住宿',
+        'food': '餐飲',
+        'transportation': '交通'
+      };
+
       setFormData({
         產品標題: product.title,
         目的地: product.destination,
-        天數: product.durationDays.toString(),
+        類別: categoryMap[product.category] || '地標',
         產品描述: product.description,
         封面圖: null,
         淨價: product.netPrice.toString(),
@@ -87,8 +96,8 @@ const EditProductPage: React.FC = () => {
       newErrors.目的地 = '目的地為必填欄位';
     }
 
-    if (!formData.天數 || parseInt(formData.天數) <= 0) {
-      newErrors.天數 = '天數必須為正整數';
+    if (!formData.類別) {
+      newErrors.類別 = '類別為必填欄位';
     }
 
     if (!formData.產品描述.trim() || formData.產品描述 === '<p><br></p>') {
@@ -113,7 +122,7 @@ const EditProductPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
@@ -159,7 +168,16 @@ const EditProductPage: React.FC = () => {
       const submitData = new FormData();
       submitData.append('title', formData.產品標題);
       submitData.append('destination', formData.目的地);
-      submitData.append('durationDays', formData.天數);
+
+      const categoryMap: Record<string, string> = {
+        '地標': 'landmark',
+        '活動': 'activity',
+        '住宿': 'accommodation',
+        '餐飲': 'food',
+        '交通': 'transportation'
+      };
+      submitData.append('category', categoryMap[formData.類別] || 'landmark');
+
       submitData.append('description', formData.產品描述);
       submitData.append('netPrice', formData.淨價);
       if (formData.封面圖) {
@@ -288,21 +306,24 @@ const EditProductPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="天數" className="font-bold text-slate-700">
-                天數 <span className="text-red-500">*</span>
+              <label htmlFor="類別" className="font-bold text-slate-700">
+                類別 <span className="text-red-500">*</span>
               </label>
-              <input
-                id="天數"
-                type="number"
-                name="天數"
-                value={formData.天數}
+              <select
+                id="類別"
+                name="類別"
+                value={formData.類別}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="請輸入天數"
-                min="1"
-              />
-              {errors.天數 && (
-                <span className="text-red-500 text-sm">{errors.天數}</span>
+                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+              >
+                <option value="地標">地標</option>
+                <option value="活動">活動</option>
+                <option value="住宿">住宿</option>
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+              </select>
+              {errors.類別 && (
+                <span className="text-red-500 text-sm">{errors.類別}</span>
               )}
             </div>
 

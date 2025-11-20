@@ -14,7 +14,7 @@ router.use(requireRole(['agency']));
  */
 router.get('/tours', async (req: Request, res: Response) => {
   try {
-    const { destination, durationDays } = req.query;
+    const { destination, category } = req.query;
 
     // Build filters
     const filters: any = {};
@@ -23,11 +23,8 @@ router.get('/tours', async (req: Request, res: Response) => {
       filters.destination = destination;
     }
 
-    if (durationDays) {
-      const duration = parseInt(durationDays as string);
-      if (!isNaN(duration)) {
-        filters.durationDays = duration;
-      }
+    if (category && typeof category === 'string') {
+      filters.category = category;
     }
 
     const products = await getPublishedProducts(filters);

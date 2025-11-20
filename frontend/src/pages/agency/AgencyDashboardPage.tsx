@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import { Search, MapPin } from 'lucide-react'; // Added imports for icons
 
 interface Product {
   id: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
@@ -17,140 +18,130 @@ const AgencyDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [destinationFilter, setDestinationFilter] = useState('');
-  const [durationFilter, setDurationFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDestination, setSelectedDestination] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     fetchProducts();
-  }, [destinationFilter, durationFilter]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const params = new URLSearchParams();
-      if (destinationFilter) {
-        params.append('destination', destinationFilter);
-      }
-      if (durationFilter) {
-        params.append('durationDays', durationFilter);
-      }
-
-      const response = await axios.get(`/api/agency/tours?${params.toString()}`);
+      const response = await axios.get('/api/agency/tours');
       setProducts(response.data);
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-      setError('無法載入產品列表');
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPrice = (price: number) => {
-    return `NT$${price.toLocaleString('zh-TW')}`;
+  const destinations = ['all', ...Array.from(new Set(products.map(p => p.destination)))];
+  const categories = ['all', 'landmark', 'activity', 'accommodation', 'food', 'transportation'];
+
+  const categoryLabels: Record<string, string> = {
+    'all': '所有類別',
+    'landmark': '地標',
+    'activity': '活動',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
   };
 
-  const handleCardClick = (productId: string) => {
-    navigate(`/agency/tours/${productId}`);
-  };
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDestination = selectedDestination === 'all' || product.destination === selectedDestination;
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
 
-  const getUniqueDestinations = () => {
-    const destinations = new Set(products.map(p => p.destination));
-    return Array.from(destinations).sort();
-  };
-
-  const getUniqueDurations = () => {
-    const durations = new Set(products.map(p => p.durationDays));
-    return Array.from(durations).sort((a, b) => a - b);
-  };
+    return matchesSearch && matchesDestination && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar title="旅行社控制台" />
+      <TopBar title="產品搜尋" />
+
       <main className="p-8 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-800">探索產品</h2>
-          <button
-            onClick={() => navigate('/agency/itinerary-planner')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
-          >
-            <span>📋</span> 行程規劃
-          </button>
-        </div>
-
+        {/* Search and Filter Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">產品搜尋</h2>
-          <div className="flex gap-6">
-            <div className="flex items-center gap-3">
-              <label htmlFor="destination" className="font-medium text-slate-700">目的地：</label>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="搜尋產品名稱或目的地..."
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-4">
               <select
-                id="destination"
-                value={destinationFilter}
-                onChange={(e) => setDestinationFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[150px]"
+                className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                value={selectedDestination}
+                onChange={(e) => setSelectedDestination(e.target.value)}
               >
-                <option value="">全部</option>
-                {getUniqueDestinations().map(dest => (
-                  <option key={dest} value={dest}>{dest}</option>
+                <option value="all">所有目的地</option>
+                {destinations.filter(d => d !== 'all').map(d => (
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
-            </div>
-            <div className="flex items-center gap-3">
-              <label htmlFor="duration" className="font-medium text-slate-700">天數：</label>
+
               <select
-                id="duration"
-                value={durationFilter}
-                onChange={(e) => setDurationFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[150px]"
+                className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
               >
-                <option value="">全部</option>
-                {getUniqueDurations().map(days => (
-                  <option key={days} value={days}>{days}天</option>
+                {categories.map(c => (
+                  <option key={c} value={c}>{categoryLabels[c]}</option>
                 ))}
               </select>
             </div>
           </div>
         </div>
 
-        {loading && <p className="text-center text-slate-500 py-8">載入中...</p>}
-        {error && <p className="text-center text-red-500 py-8">{error}</p>}
-
-        {!loading && !error && products.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed">
-            <p className="text-slate-500 text-lg">找不到符合條件的產品</p>
-          </div>
-        )}
-
-        {!loading && !error && products.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((product) => (
+        {/* Product Grid */}
+        {loading ? (
+          <div className="text-center py-12 text-slate-500">載入中...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-12 text-slate-500">沒有找到符合的產品</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.map(product => (
               <div
                 key={product.id}
-                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-slate-200 group"
-                onClick={() => handleCardClick(product.id)}
+                onClick={() => navigate(`/agency/tours/${product.id}`)}
+                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
                     src={product.coverImageUrl}
                     alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium">
-                    {product.durationDays} 天
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-slate-700 shadow-sm">
+                    {categoryLabels[product.category] || product.category}
                   </div>
                 </div>
+
                 <div className="p-5">
-                  <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                    <MapPin className="w-4 h-4" />
+                    {product.destination}
+                  </div>
+
+                  <h3 className="font-bold text-lg text-slate-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
                     {product.title}
                   </h3>
-                  <div className="flex justify-between items-end mt-4">
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                     <div className="text-sm text-slate-500">
-                      供應商：{product.supplierName}
+                      供應商: {product.supplierName}
                     </div>
-                    <div className="text-xl font-bold text-green-600">
-                      {formatPrice(product.netPrice)}
+                    <div className="font-bold text-blue-600">
+                      HKD {product.netPrice.toLocaleString()}
                     </div>
                   </div>
                 </div>

@@ -7,7 +7,7 @@ interface Product {
   id: string;
   title: string;
   destination: string;
-  durationDays: number;
+  category: string;
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;

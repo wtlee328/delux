@@ -35,7 +35,7 @@ echo ""
 
 # Start Cloud SQL Proxy in the background
 echo "🔌 Starting Cloud SQL Proxy..."
-cloud-sql-proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
+/opt/homebrew/share/google-cloud-sdk/bin/cloud-sql-proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
 PROXY_PID=$!
 
 # Wait for proxy to be ready
@@ -49,8 +49,8 @@ export DB_PORT="5433"
 echo "✅ Cloud SQL Proxy connected"
 echo ""
 
-# Navigate to backend directory
-cd "$(dirname "$0")/../backend"
+# Navigate to backend directory (script is in backend/src/migrations)
+cd "$(dirname "$0")/../.."
 
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then

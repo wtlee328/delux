@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
-import { validateProductForm } from '../../utils/validation';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from 'axios';
@@ -12,7 +11,7 @@ import TopBar from '../../components/TopBar';
 interface FormData {
   產品標題: string;
   目的地: string;
-  天數: string;
+  類別: string;
   產品描述: string;
   封面圖: File | null;
   淨價: string;
@@ -21,7 +20,7 @@ interface FormData {
 interface FormErrors {
   產品標題?: string;
   目的地?: string;
-  天數?: string;
+  類別?: string;
   產品描述?: string;
   封面圖?: string;
   淨價?: string;
@@ -36,7 +35,7 @@ const CreateProductPage: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     產品標題: '',
     目的地: '',
-    天數: '',
+    類別: '地標',
     產品描述: '',
     封面圖: null,
     淨價: '',
@@ -46,7 +45,7 @@ const CreateProductPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     // Clear error for this field
@@ -85,27 +84,18 @@ const CreateProductPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent, status: '草稿' | '待審核' = '待審核') => {
     e.preventDefault();
 
-    // Validate form using utility
-    const validation = validateProductForm({
-      title: formData.產品標題,
-      destination: formData.目的地,
-      durationDays: formData.天數,
-      description: formData.產品描述,
-      netPrice: formData.淨價,
-      coverImage: formData.封面圖
-    }, false);
+    // Validate form using utility (Note: validation util needs update, doing inline for now or assuming util update)
+    // Simple inline validation for now to match the change
+    const newErrors: FormErrors = {};
+    if (!formData.產品標題) newErrors.產品標題 = '請輸入產品標題';
+    if (!formData.目的地) newErrors.目的地 = '請輸入目的地';
+    if (!formData.類別) newErrors.類別 = '請選擇類別';
+    if (!formData.產品描述) newErrors.產品描述 = '請輸入產品描述';
+    if (!formData.淨價) newErrors.淨價 = '請輸入淨價';
+    if (!formData.封面圖) newErrors.封面圖 = '請上傳封面圖';
 
-    if (!validation.isValid) {
-      // Map validation errors to form field names
-      const mappedErrors: FormErrors = {};
-      if (validation.errors.title) mappedErrors.產品標題 = validation.errors.title;
-      if (validation.errors.destination) mappedErrors.目的地 = validation.errors.destination;
-      if (validation.errors.durationDays) mappedErrors.天數 = validation.errors.durationDays;
-      if (validation.errors.description) mappedErrors.產品描述 = validation.errors.description;
-      if (validation.errors.netPrice) mappedErrors.淨價 = validation.errors.netPrice;
-      if (validation.errors.coverImage) mappedErrors.封面圖 = validation.errors.coverImage;
-
-      setErrors(mappedErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       showError('請修正表單錯誤');
       return;
     }
@@ -117,7 +107,10 @@ const CreateProductPage: React.FC = () => {
       const submitData = new FormData();
       submitData.append('title', formData.產品標題);
       submitData.append('destination', formData.目的地);
-      submitData.append('durationDays', formData.天數);
+      submitData.append('category', formData.類別 === '地標' ? 'landmark' :
+        formData.類別 === '活動' ? 'activity' :
+          formData.類別 === '住宿' ? 'accommodation' :
+            formData.類別 === '餐飲' ? 'food' : 'transportation');
       submitData.append('description', formData.產品描述);
       submitData.append('netPrice', formData.淨價);
       submitData.append('status', status);
@@ -170,7 +163,7 @@ const CreateProductPage: React.FC = () => {
             ← 返回控制台
           </button>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form onSubmit={(e) => handleSubmit(e)} className="flex flex-col gap-6">
             {errors.submit && (
               <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">{errors.submit}</div>
             )}
@@ -212,21 +205,24 @@ const CreateProductPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="天數" className="font-bold text-slate-700">
-                天數 <span className="text-red-500">*</span>
+              <label htmlFor="類別" className="font-bold text-slate-700">
+                類別 <span className="text-red-500">*</span>
               </label>
-              <input
-                id="天數"
-                type="number"
-                name="天數"
-                value={formData.天數}
+              <select
+                id="類別"
+                name="類別"
+                value={formData.類別}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="請輸入天數"
-                min="1"
-              />
-              {errors.天數 && (
-                <span className="text-red-500 text-sm">{errors.天數}</span>
+                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+              >
+                <option value="地標">地標</option>
+                <option value="活動">活動</option>
+                <option value="住宿">住宿</option>
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+              </select>
+              {errors.類別 && (
+                <span className="text-red-500 text-sm">{errors.類別}</span>
               )}
             </div>
 

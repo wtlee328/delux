@@ -4,7 +4,7 @@ interface Product {
     id: string;
     title: string;
     destination: string;
-    durationDays: number;
+    category: string;
     coverImageUrl: string;
     netPrice: number;
     supplierName: string;
@@ -20,6 +20,14 @@ interface ResourceDetailModalProps {
 
 const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({ product, onClose }) => {
     if (!product) return null;
+
+    const categoryLabels: Record<string, string> = {
+        'landmark': '地標',
+        'activity': '活動',
+        'accommodation': '住宿',
+        'food': '餐飲',
+        'transportation': '交通'
+    };
 
     return (
         <div style={styles.overlay} onClick={onClose}>
@@ -46,8 +54,10 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({ product, onCl
                             <span style={styles.value}>{product.destination}</span>
                         </div>
                         <div style={styles.infoItem}>
-                            <span style={styles.label}>天數</span>
-                            <span style={styles.value}>{product.durationDays} 天</span>
+                            <span style={styles.label}>類別</span>
+                            <span style={styles.value}>
+                                {categoryLabels[product.category] || product.category}
+                            </span>
                         </div>
                         <div style={styles.infoItem}>
                             <span style={styles.label}>供應商</span>

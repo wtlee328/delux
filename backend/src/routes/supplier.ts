@@ -26,19 +26,19 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
   try {
     console.log('Request body:', req.body);
     console.log('Request file:', req.file ? { name: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } : 'No file');
-    
-    const { title, destination, durationDays, description, netPrice, status } = req.body;
+
+    const { title, destination, category, description, netPrice, status } = req.body;
     const supplierId = req.user!.userId;
-    
+
     // Validate status if provided
     const validStatuses: ProductStatus[] = ['草稿', '待審核', '已發佈', '需要修改'];
     const productStatus: ProductStatus = status && validStatuses.includes(status) ? status : '草稿';
 
     // Validate required fields
-    if (!title || !destination || !durationDays || !description || !netPrice) {
-      console.error('Missing required fields:', { title: !!title, destination: !!destination, durationDays: !!durationDays, description: !!description, netPrice: !!netPrice });
+    if (!title || !destination || !category || !description || !netPrice) {
+      console.error('Missing required fields:', { title: !!title, destination: !!destination, category: !!category, description: !!description, netPrice: !!netPrice });
       res.status(400).json({
-        error: 'All fields are required: title, destination, durationDays, description, netPrice',
+        error: 'All fields are required: title, destination, category, description, netPrice',
       });
       return;
     }
@@ -70,7 +70,7 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
       supplierId,
       title,
       destination,
-      durationDays: parseInt(durationDays),
+      category,
       description,
       coverImageUrl,
       netPrice: parseFloat(netPrice),
@@ -109,24 +109,24 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const supplierId = req.user!.userId;
-    
+
     const product = await getProductById(id);
-    
+
     // Verify ownership
     if (product.supplierId !== supplierId) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
-    
+
     res.json(product);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch product';
-    
+
     if (message === 'Product not found') {
       res.status(404).json({ error: message });
       return;
     }
-    
+
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -139,7 +139,7 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, destination, durationDays, description, netPrice } = req.body;
+    const { title, destination, category, description, netPrice } = req.body;
     const supplierId = req.user!.userId;
 
     // Build update data
@@ -147,7 +147,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
 
     if (title) updateData.title = title;
     if (destination) updateData.destination = destination;
-    if (durationDays) updateData.durationDays = parseInt(durationDays);
+    if (category) updateData.category = category;
     if (description) updateData.description = description;
     if (netPrice) updateData.netPrice = parseFloat(netPrice);
 
