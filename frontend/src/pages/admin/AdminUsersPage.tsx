@@ -95,7 +95,7 @@ const AdminUsersPage: React.FC = () => {
 
   const handleDelete = async (userId: string, userName: string, userEmail: string) => {
     const confirmMessage = `⚠️ 警告：刪除用戶帳號\n\n您即將刪除用戶：\n姓名：${userName}\n電子郵件：${userEmail}\n\n此操作將永久刪除該用戶的帳號及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
-    
+
     if (!window.confirm(confirmMessage)) {
       return;
     }
@@ -112,14 +112,14 @@ const AdminUsersPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate at least one role is selected
     if (formData.roles.length === 0) {
       setFieldErrors({ role: '請至少選擇一個角色' });
       showError('請至少選擇一個角色');
       return;
     }
-    
+
     // For edit, password is optional
     if (!editingUser) {
       const validation = validateUserForm(formData);
@@ -133,7 +133,7 @@ const AdminUsersPage: React.FC = () => {
     try {
       setSubmitting(true);
       setFieldErrors({});
-      
+
       if (editingUser) {
         // Update existing user
         const updateData: any = {
@@ -141,12 +141,12 @@ const AdminUsersPage: React.FC = () => {
           email: formData.email,
           roles: formData.roles,
         };
-        
+
         // Only include password if it's been changed
         if (formData.password) {
           updateData.password = formData.password;
         }
-        
+
         await axios.put(`/api/admin/users/${editingUser.id}`, updateData);
         showSuccess('用戶更新成功');
       } else {
@@ -154,7 +154,7 @@ const AdminUsersPage: React.FC = () => {
         await axios.post('/api/admin/users', formData);
         showSuccess('用戶創建成功');
       }
-      
+
       setFormData({
         email: '',
         password: '',
@@ -163,10 +163,10 @@ const AdminUsersPage: React.FC = () => {
         roles: [],
       });
       setEditingUser(null);
-      
+
       // Refresh user list
       await fetchUsers();
-      
+
       // Hide form after a short delay
       setTimeout(() => {
         setShowForm(false);
@@ -200,64 +200,64 @@ const AdminUsersPage: React.FC = () => {
   // Filter users based on search query
   const filteredUsers = users.filter((u) => {
     if (!searchQuery) return true;
-    
+
     const query = searchQuery.toLowerCase();
     const nameMatch = u.name.toLowerCase().includes(query);
     const emailMatch = u.email.toLowerCase().includes(query);
-    
+
     return nameMatch || emailMatch;
   });
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <h1>用戶管理</h1>
-          <nav style={styles.nav}>
-            <button onClick={() => navigate('/admin/users')} style={styles.navLink}>用戶管理</button>
-            <button onClick={() => navigate('/admin/tours')} style={styles.navLink}>產品管理</button>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
+        <div className="flex items-center gap-8">
+          <h1 className="text-xl font-bold text-slate-800">用戶管理</h1>
+          <nav className="flex gap-4">
+            <button onClick={() => navigate('/admin/users')} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium">用戶管理</button>
+            <button onClick={() => navigate('/admin/tours')} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium">產品管理</button>
           </nav>
         </div>
-        <div style={styles.userInfo}>
-          <span>{user?.name} ({getRoleLabel(user?.role || '')})</span>
-          <button onClick={logout} style={styles.logoutButton}>
+        <div className="flex items-center gap-4">
+          <span className="text-slate-600 font-medium">{user?.name} ({getRoleLabel(user?.role || '')})</span>
+          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
             登出
           </button>
         </div>
       </header>
-      <main style={styles.main}>
-        <div style={styles.actionBar}>
-          <div style={styles.searchContainer}>
+      <main className="p-8 max-w-7xl mx-auto">
+        <div className="mb-6 flex justify-between items-center gap-4">
+          <div className="flex-1 max-w-md">
             <input
               type="text"
               placeholder="搜尋用戶 (姓名或電子郵件)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={styles.searchInput}
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent shadow-sm"
             />
           </div>
-          <button 
+          <button
             onClick={() => {
               if (showForm) {
                 handleCancelEdit();
               } else {
                 setShowForm(true);
               }
-            }} 
-            style={styles.addButton}
+            }}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors shadow-sm ${showForm ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-800 text-white hover:bg-slate-700'}`}
           >
             {showForm ? '取消' : '新增用戶'}
           </button>
         </div>
 
         {showForm && (
-          <div style={styles.formContainer}>
-            <h2 style={styles.formTitle}>{editingUser ? '編輯用戶' : '新增用戶'}</h2>
-            
-            <form onSubmit={handleSubmit} style={styles.form}>
-              <div style={styles.formGroup}>
-                <label htmlFor="email" style={styles.label}>
-                  電子郵件 <span style={styles.required}>*</span>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-8 animate-in fade-in slide-in-from-top-4 duration-200">
+            <h2 className="text-2xl font-bold mb-6 text-slate-800">{editingUser ? '編輯用戶' : '新增用戶'}</h2>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="email" className="font-semibold text-slate-700 text-sm">
+                  電子郵件 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -266,19 +266,16 @@ const AdminUsersPage: React.FC = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   disabled={submitting}
-                  style={{
-                    ...styles.input,
-                    ...(fieldErrors.email ? styles.inputError : {})
-                  }}
+                  className={`px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all ${fieldErrors.email ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                 />
                 {fieldErrors.email && (
-                  <span style={styles.errorText}>{fieldErrors.email}</span>
+                  <span className="text-red-500 text-sm mt-1">{fieldErrors.email}</span>
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label htmlFor="password" style={styles.label}>
-                  {editingUser ? '新密碼 (留空表示不更改)' : '臨時密碼'} {!editingUser && <span style={styles.required}>*</span>}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="password" className="font-semibold text-slate-700 text-sm">
+                  {editingUser ? '新密碼 (留空表示不更改)' : '臨時密碼'} {!editingUser && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="password"
@@ -288,19 +285,16 @@ const AdminUsersPage: React.FC = () => {
                   onChange={handleInputChange}
                   disabled={submitting}
                   placeholder={editingUser ? '留空表示不更改密碼' : ''}
-                  style={{
-                    ...styles.input,
-                    ...(fieldErrors.password ? styles.inputError : {})
-                  }}
+                  className={`px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all ${fieldErrors.password ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                 />
                 {fieldErrors.password && (
-                  <span style={styles.errorText}>{fieldErrors.password}</span>
+                  <span className="text-red-500 text-sm mt-1">{fieldErrors.password}</span>
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label htmlFor="name" style={styles.label}>
-                  姓名 <span style={styles.required}>*</span>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="name" className="font-semibold text-slate-700 text-sm">
+                  姓名 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -309,62 +303,59 @@ const AdminUsersPage: React.FC = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   disabled={submitting}
-                  style={{
-                    ...styles.input,
-                    ...(fieldErrors.name ? styles.inputError : {})
-                  }}
+                  className={`px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all ${fieldErrors.name ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                 />
                 {fieldErrors.name && (
-                  <span style={styles.errorText}>{fieldErrors.name}</span>
+                  <span className="text-red-500 text-sm mt-1">{fieldErrors.name}</span>
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  角色 <span style={styles.required}>*</span>
-                  <span style={styles.helpText}> (可選擇多個)</span>
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-slate-700 text-sm">
+                  角色 <span className="text-red-500">*</span>
+                  <span className="text-slate-400 font-normal text-xs ml-2">(可選擇多個)</span>
                 </label>
-                <div style={styles.checkboxGroup}>
-                  <label style={styles.checkboxLabel}>
+                <div className="flex flex-col gap-3 py-2">
+                  <label className="flex items-center gap-3 cursor-pointer text-slate-700 hover:text-slate-900 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.roles.includes('supplier')}
                       onChange={() => handleRoleCheckboxChange('supplier')}
                       disabled={submitting}
-                      style={styles.checkbox}
+                      className="w-5 h-5 rounded border-slate-300 text-slate-800 focus:ring-slate-400"
                     />
                     <span>當地供應商</span>
                   </label>
-                  <label style={styles.checkboxLabel}>
+                  <label className="flex items-center gap-3 cursor-pointer text-slate-700 hover:text-slate-900 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.roles.includes('agency')}
                       onChange={() => handleRoleCheckboxChange('agency')}
                       disabled={submitting}
-                      style={styles.checkbox}
+                      className="w-5 h-5 rounded border-slate-300 text-slate-800 focus:ring-slate-400"
                     />
                     <span>台灣旅行社</span>
                   </label>
-                  <label style={styles.checkboxLabel}>
+                  <label className="flex items-center gap-3 cursor-pointer text-slate-700 hover:text-slate-900 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.roles.includes('admin')}
                       onChange={() => handleRoleCheckboxChange('admin')}
                       disabled={submitting}
-                      style={styles.checkbox}
+                      className="w-5 h-5 rounded border-slate-300 text-slate-800 focus:ring-slate-400"
                     />
                     <span>帝樂 Admin</span>
                   </label>
                 </div>
                 {fieldErrors.role && (
-                  <span style={styles.errorText}>{fieldErrors.role}</span>
+                  <span className="text-red-500 text-sm mt-1">{fieldErrors.role}</span>
                 )}
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={submitting}
-                style={submitting ? { ...styles.submitButton, ...styles.submitButtonDisabled } : styles.submitButton}
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-4"
               >
                 {submitting ? (editingUser ? '更新中...' : '創建中...') : (editingUser ? '更新用戶' : '創建用戶')}
               </button>
@@ -372,39 +363,39 @@ const AdminUsersPage: React.FC = () => {
           </div>
         )}
 
-        {loading && <p>載入中...</p>}
+        {loading && <p className="text-center text-slate-500 py-8">載入中...</p>}
         {!loading && (
-          <div style={styles.tableContainer}>
-            <table style={styles.table}>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <table className="w-full border-collapse">
               <thead>
-                <tr>
-                  <th style={styles.th}>姓名</th>
-                  <th style={styles.th}>電子郵件</th>
-                  <th style={styles.th}>角色</th>
-                  <th style={styles.th}>操作</th>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">姓名</th>
+                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">電子郵件</th>
+                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">角色</th>
+                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">操作</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} style={styles.tr}>
-                    <td style={styles.td}>{u.name}</td>
-                    <td style={styles.td}>{u.email}</td>
-                    <td style={styles.td}>
+                  <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-slate-700 font-medium">{u.name}</td>
+                    <td className="px-6 py-4 text-slate-600">{u.email}</td>
+                    <td className="px-6 py-4 text-slate-600">
                       {u.roles && u.roles.length > 0
                         ? u.roles.map(r => getRoleLabel(r)).join(', ')
                         : getRoleLabel(u.role)}
                     </td>
-                    <td style={styles.td}>
-                      <div style={styles.actionButtons}>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-3">
                         <button
                           onClick={() => handleEdit(u)}
-                          style={styles.editButton}
+                          className="px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-sm rounded-md transition-colors font-medium"
                         >
                           編輯
                         </button>
                         <button
                           onClick={() => handleDelete(u.id, u.name, u.email)}
-                          style={styles.deleteButton}
+                          className="px-3 py-1.5 bg-white border border-red-200 hover:border-red-300 text-red-600 hover:bg-red-50 text-sm rounded-md transition-colors font-medium"
                         >
                           刪除
                         </button>
@@ -415,10 +406,10 @@ const AdminUsersPage: React.FC = () => {
               </tbody>
             </table>
             {users.length === 0 && (
-              <p style={styles.emptyMessage}>尚無用戶</p>
+              <p className="p-8 text-center text-slate-500">尚無用戶</p>
             )}
             {users.length > 0 && filteredUsers.length === 0 && (
-              <p style={styles.emptyMessage}>找不到符合搜尋條件的用戶</p>
+              <p className="p-8 text-center text-slate-500">找不到符合搜尋條件的用戶</p>
             )}
           </div>
         )}
@@ -427,225 +418,5 @@ const AdminUsersPage: React.FC = () => {
   );
 };
 
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: 'white',
-    padding: '1rem 2rem',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '2rem',
-  },
-  nav: {
-    display: 'flex',
-    gap: '1rem',
-  },
-  navLink: {
-    padding: '0.5rem 1rem',
-    textDecoration: 'none',
-    color: '#495057',
-    borderRadius: '4px',
-    transition: 'background-color 0.2s',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  logoutButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  main: {
-    padding: '2rem',
-  },
-  actionBar: {
-    marginBottom: '1.5rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  searchContainer: {
-    flex: 1,
-    maxWidth: '400px',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '0.75rem',
-    fontSize: '1rem',
-    border: '1px solid #ced4da',
-    borderRadius: '4px',
-    outline: 'none',
-  },
-  addButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 500,
-  },
-  formContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    padding: '2rem',
-    marginBottom: '2rem',
-  },
-  formTitle: {
-    marginTop: 0,
-    marginBottom: '1.5rem',
-    fontSize: '1.5rem',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1.5rem',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.5rem',
-  },
-  label: {
-    fontWeight: 500,
-    fontSize: '0.95rem',
-  },
-  required: {
-    color: '#dc3545',
-  },
-  input: {
-    padding: '0.75rem',
-    fontSize: '1rem',
-    border: '1px solid #ced4da',
-    borderRadius: '4px',
-    outline: 'none',
-  },
-  select: {
-    padding: '0.75rem',
-    fontSize: '1rem',
-    border: '1px solid #ced4da',
-    borderRadius: '4px',
-    outline: 'none',
-    backgroundColor: 'white',
-  },
-  checkboxGroup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.75rem',
-    padding: '0.5rem 0',
-  },
-  checkboxLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
-  checkbox: {
-    width: '18px',
-    height: '18px',
-    cursor: 'pointer',
-  },
-  helpText: {
-    fontSize: '0.875rem',
-    color: '#6c757d',
-    fontWeight: 'normal',
-  },
-  submitButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 500,
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#6c757d',
-    cursor: 'not-allowed',
-  },
-  inputError: {
-    borderColor: '#f44336',
-  },
-  errorText: {
-    color: '#f44336',
-    fontSize: '0.875rem',
-    marginTop: '0.25rem',
-  },
-  tableContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    overflow: 'hidden',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse' as const,
-  },
-  th: {
-    padding: '1rem',
-    textAlign: 'left' as const,
-    backgroundColor: '#f8f9fa',
-    fontWeight: 600,
-    borderBottom: '2px solid #dee2e6',
-  },
-  tr: {
-    borderBottom: '1px solid #dee2e6',
-  },
-  td: {
-    padding: '1rem',
-  },
-  emptyMessage: {
-    padding: '2rem',
-    textAlign: 'center' as const,
-    color: '#6c757d',
-  },
-  actionButtons: {
-    display: 'flex',
-    gap: '0.5rem',
-  },
-  editButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    transition: 'background-color 0.2s',
-  },
-  deleteButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    transition: 'background-color 0.2s',
-  },
-};
-
 export default AdminUsersPage;
+
