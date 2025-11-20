@@ -68,35 +68,35 @@ const AgencyDashboardPage: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1>旅行社控制台</h1>
-        <div style={styles.headerActions}>
-          <button 
-            onClick={() => navigate('/agency/itinerary-planner')} 
-            style={styles.plannerButton}
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
+        <h1 className="text-xl font-bold text-slate-800">旅行社控制台</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/agency/itinerary-planner')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
           >
-            📋 行程規劃
+            <span>📋</span> 行程規劃
           </button>
-          <div style={styles.userInfo}>
-            <span>{user?.name} ({user?.role})</span>
-            <button onClick={logout} style={styles.logoutButton}>
+          <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
+            <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
+            <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
               登出
             </button>
           </div>
         </div>
       </header>
-      <main style={styles.main}>
-        <div style={styles.filterSection}>
-          <h2>產品搜尋</h2>
-          <div style={styles.filters}>
-            <div style={styles.filterGroup}>
-              <label htmlFor="destination">目的地：</label>
+      <main className="p-8 max-w-7xl mx-auto">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+          <h2 className="text-lg font-bold text-slate-800 mb-4">產品搜尋</h2>
+          <div className="flex gap-6">
+            <div className="flex items-center gap-3">
+              <label htmlFor="destination" className="font-medium text-slate-700">目的地：</label>
               <select
                 id="destination"
                 value={destinationFilter}
                 onChange={(e) => setDestinationFilter(e.target.value)}
-                style={styles.select}
+                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[150px]"
               >
                 <option value="">全部</option>
                 {getUniqueDestinations().map(dest => (
@@ -104,13 +104,13 @@ const AgencyDashboardPage: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div style={styles.filterGroup}>
-              <label htmlFor="duration">天數：</label>
+            <div className="flex items-center gap-3">
+              <label htmlFor="duration" className="font-medium text-slate-700">天數：</label>
               <select
                 id="duration"
                 value={durationFilter}
                 onChange={(e) => setDurationFilter(e.target.value)}
-                style={styles.select}
+                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[150px]"
               >
                 <option value="">全部</option>
                 {getUniqueDurations().map(days => (
@@ -121,31 +121,45 @@ const AgencyDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {loading && <p style={styles.message}>載入中...</p>}
-        {error && <p style={styles.errorMessage}>{error}</p>}
-        
+        {loading && <p className="text-center text-slate-500 py-8">載入中...</p>}
+        {error && <p className="text-center text-red-500 py-8">{error}</p>}
+
         {!loading && !error && products.length === 0 && (
-          <p style={styles.message}>找不到符合條件的產品</p>
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed">
+            <p className="text-slate-500 text-lg">找不到符合條件的產品</p>
+          </div>
         )}
 
         {!loading && !error && products.length > 0 && (
-          <div style={styles.grid}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.map((product) => (
               <div
                 key={product.id}
-                style={styles.card}
+                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-slate-200 group"
                 onClick={() => handleCardClick(product.id)}
               >
-                <img
-                  src={product.coverImageUrl}
-                  alt={product.title}
-                  style={styles.cardImage}
-                />
-                <div style={styles.cardContent}>
-                  <h3 style={styles.cardTitle}>{product.title}</h3>
-                  <p style={styles.cardInfo}>天數：{product.durationDays}天</p>
-                  <p style={styles.cardInfo}>供應商：{product.supplierName}</p>
-                  <p style={styles.cardPrice}>{formatPrice(product.netPrice)}</p>
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={product.coverImageUrl}
+                    alt={product.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium">
+                    {product.durationDays} 天
+                  </div>
+                </div>
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {product.title}
+                  </h3>
+                  <div className="flex justify-between items-end mt-4">
+                    <div className="text-sm text-slate-500">
+                      供應商：{product.supplierName}
+                    </div>
+                    <div className="text-xl font-bold text-green-600">
+                      {formatPrice(product.netPrice)}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -156,126 +170,5 @@ const AgencyDashboardPage: React.FC = () => {
   );
 };
 
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: 'white',
-    padding: '1rem 2rem',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  plannerButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    transition: 'background-color 0.2s',
-  },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  logoutButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  main: {
-    padding: '2rem',
-  },
-  filterSection: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '8px',
-    marginBottom: '2rem',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  filters: {
-    display: 'flex',
-    gap: '2rem',
-    marginTop: '1rem',
-  },
-  filterGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  select: {
-    padding: '0.5rem',
-    borderRadius: '4px',
-    border: '1px solid #ddd',
-    fontSize: '1rem',
-  },
-  message: {
-    textAlign: 'center' as const,
-    padding: '2rem',
-    fontSize: '1.1rem',
-    color: '#666',
-  },
-  errorMessage: {
-    textAlign: 'center' as const,
-    padding: '2rem',
-    fontSize: '1.1rem',
-    color: '#dc3545',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '2rem',
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-  },
-  cardImage: {
-    width: '100%',
-    height: '200px',
-    objectFit: 'cover' as const,
-  },
-  cardContent: {
-    padding: '1rem',
-  },
-  cardTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-    color: '#333',
-  },
-  cardInfo: {
-    fontSize: '0.9rem',
-    color: '#666',
-    marginBottom: '0.25rem',
-  },
-  cardPrice: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginTop: '0.5rem',
-  },
-};
-
 export default AgencyDashboardPage;
+

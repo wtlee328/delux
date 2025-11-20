@@ -88,16 +88,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '10px',
-      maxWidth: '400px'
-    }}>
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-[400px]">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -111,18 +102,18 @@ interface ToastItemProps {
 }
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
-  const getBackgroundColor = (type: ToastType): string => {
+  const getTypeStyles = (type: ToastType): string => {
     switch (type) {
       case 'success':
-        return '#4caf50';
+        return 'bg-green-500';
       case 'error':
-        return '#f44336';
+        return 'bg-red-500';
       case 'warning':
-        return '#ff9800';
+        return 'bg-amber-500';
       case 'info':
-        return '#2196f3';
+        return 'bg-blue-500';
       default:
-        return '#333';
+        return 'bg-slate-800';
     }
   };
 
@@ -146,40 +137,19 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      style={{
-        backgroundColor: getBackgroundColor(toast.type),
-        color: 'white',
-        padding: '16px',
-        borderRadius: '4px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        animation: 'slideIn 0.3s ease-out',
-        minWidth: '300px'
-      }}
+      className={`${getTypeStyles(toast.type)} text-white p-4 rounded-lg shadow-lg flex items-center justify-between gap-3 min-w-[300px] animate-[slideIn_0.3s_ease-out]`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-        <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
+      <div className="flex items-center gap-3 flex-1">
+        <span className="text-xl font-bold">
           {getIcon(toast.type)}
         </span>
-        <span style={{ flex: 1, wordBreak: 'break-word' }}>
+        <span className="flex-1 break-words">
           {toast.message}
         </span>
       </div>
       <button
         onClick={() => onRemove(toast.id)}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: 'white',
-          cursor: 'pointer',
-          fontSize: '20px',
-          padding: '0',
-          lineHeight: '1',
-          opacity: 0.8
-        }}
+        className="bg-transparent border-none text-white cursor-pointer text-xl p-0 leading-none opacity-80 hover:opacity-100 transition-opacity"
         aria-label="關閉"
       >
         ×

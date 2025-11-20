@@ -313,29 +313,29 @@ const ItineraryPlannerPage: React.FC = () => {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div style={styles.container}>
-        <header style={styles.header}>
-          <div style={styles.headerLeft}>
-            <button onClick={() => navigate('/')} style={styles.backButton}>←</button>
-            <h1 style={styles.title}>行程規劃</h1>
+      <div className="h-screen flex flex-col bg-slate-50">
+        <header className="h-16 bg-white border-b border-slate-200 flex justify-between items-center px-8 z-10 shadow-sm">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/')} className="text-2xl text-slate-500 hover:text-slate-800 transition-colors pb-1">←</button>
+            <h1 className="text-xl font-bold text-slate-800">行程規劃</h1>
           </div>
-          <div style={styles.headerRight}>
-            <span style={styles.status}>{saveStatus}</span>
+          <div className="flex items-center gap-4">
+            <span className="text-green-600 text-sm font-medium">{saveStatus}</span>
             <button
               onClick={() => setIsSaveModalOpen(true)}
-              style={styles.saveButton}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
             >
               儲存行程
             </button>
           </div>
         </header>
 
-        <div style={styles.content}>
+        <div className="flex-1 flex overflow-hidden relative">
           {/* Left Expand Button */}
           {!isMobileMenuOpen.library && (
             <button
               onClick={() => togglePanel('library')}
-              style={styles.expandButtonLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-r-lg flex items-center justify-center cursor-pointer text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors z-20 shadow-sm"
               title="展開資源庫"
             >
               ›
@@ -343,15 +343,13 @@ const ItineraryPlannerPage: React.FC = () => {
           )}
 
           {/* Resource Library Panel */}
-          <div style={{
-            ...styles.panel,
-            width: isMobileMenuOpen.library ? '450px' : '0',
-            opacity: isMobileMenuOpen.library ? 1 : 0,
-            borderRight: isMobileMenuOpen.library ? '1px solid #e0e0e0' : 'none',
-          }}>
-            <div style={styles.panelHeader}>
+          <div
+            className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.library ? 'w-[450px] opacity-100' : 'w-0 opacity-0 border-none'
+              }`}
+          >
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center font-bold text-slate-700 bg-slate-50/50">
               <h3>資源庫</h3>
-              <button onClick={() => togglePanel('library')}>×</button>
+              <button onClick={() => togglePanel('library')} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
             </div>
             <ResourceLibrary
               onProductHover={setHoveredProduct}
@@ -360,10 +358,7 @@ const ItineraryPlannerPage: React.FC = () => {
           </div>
 
           {/* Timeline Panel */}
-          <div style={{
-            ...styles.mainPanel,
-            flex: 1,
-          }}>
+          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
             <TimelineContainer
               timeline={timeline}
               onAddDay={handleAddDay}
@@ -374,15 +369,13 @@ const ItineraryPlannerPage: React.FC = () => {
           </div>
 
           {/* Map Panel */}
-          <div style={{
-            ...styles.panel,
-            width: isMobileMenuOpen.map ? '350px' : '0',
-            opacity: isMobileMenuOpen.map ? 1 : 0,
-            borderLeft: isMobileMenuOpen.map ? '1px solid #e0e0e0' : 'none',
-          }}>
-            <div style={styles.panelHeader}>
+          <div
+            className={`bg-white border-l border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.map ? 'w-[350px] opacity-100' : 'w-0 opacity-0 border-none'
+              }`}
+          >
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center font-bold text-slate-700 bg-slate-50/50">
               <h3>地圖預覽</h3>
-              <button onClick={() => togglePanel('map')}>×</button>
+              <button onClick={() => togglePanel('map')} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
             </div>
             <MapView
               products={availableProducts}
@@ -394,7 +387,7 @@ const ItineraryPlannerPage: React.FC = () => {
           {!isMobileMenuOpen.map && (
             <button
               onClick={() => togglePanel('map')}
-              style={styles.expandButtonRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-l-lg flex items-center justify-center cursor-pointer text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors z-20 shadow-sm"
               title="展開地圖"
             >
               ‹
@@ -425,125 +418,5 @@ const ItineraryPlannerPage: React.FC = () => {
   );
 };
 
-const styles = {
-  container: {
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    height: '64px',
-    backgroundColor: 'white',
-    borderBottom: '1px solid #e0e0e0',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0 2rem',
-    zIndex: 10,
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  headerRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  backButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-    color: '#2d3436',
-  },
-  title: {
-    margin: 0,
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#2d3436',
-  },
-  saveButton: {
-    backgroundColor: '#0984e3',
-    color: 'white',
-    border: 'none',
-    padding: '0.5rem 1.5rem',
-    borderRadius: '6px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  },
-  status: {
-    color: '#00b894',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-  },
-  content: {
-    flex: 1,
-    display: 'flex',
-    overflow: 'hidden',
-  },
-  panel: {
-    backgroundColor: 'white',
-    borderRight: '1px solid #e0e0e0',
-    borderLeft: '1px solid #e0e0e0',
-    transition: 'all 0.3s ease',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflow: 'hidden',
-  },
-  mainPanel: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflow: 'hidden',
-  },
-  panelHeader: {
-    padding: '1rem',
-    borderBottom: '1px solid #f0f0f0',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontWeight: '600',
-    color: '#2d3436',
-  },
-  expandButtonLeft: {
-    width: '24px',
-    backgroundColor: 'white',
-    border: 'none',
-    borderRight: '1px solid #e0e0e0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    color: '#b2bec3',
-    fontSize: '1.2rem',
-    transition: 'all 0.2s',
-    zIndex: 10,
-    ':hover': {
-      backgroundColor: '#f8f9fa',
-      color: '#2d3436',
-    },
-  },
-  expandButtonRight: {
-    width: '24px',
-    backgroundColor: 'white',
-    border: 'none',
-    borderLeft: '1px solid #e0e0e0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    color: '#b2bec3',
-    fontSize: '1.2rem',
-    transition: 'all 0.2s',
-    zIndex: 10,
-    ':hover': {
-      backgroundColor: '#f8f9fa',
-      color: '#2d3436',
-    },
-  },
-};
-
 export default ItineraryPlannerPage;
+

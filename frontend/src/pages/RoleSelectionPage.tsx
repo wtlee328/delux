@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../config/axios';
 import { useToast } from '../components/Toast';
@@ -13,7 +13,7 @@ const RoleSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showError } = useToast();
-  const { updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const state = location.state as LocationState;
@@ -21,7 +21,7 @@ const RoleSelectionPage: React.FC = () => {
   const userName = state?.userName || '';
 
   // If no roles provided, redirect to login
-  React.useEffect(() => {
+  useEffect(() => {
     if (roles.length === 0) {
       navigate('/login');
     }
@@ -106,132 +106,59 @@ const RoleSelectionPage: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>選擇您的角色</h1>
-          <p style={styles.subtitle}>
-            歡迎回來，{userName}！請選擇您要使用的角色
-          </p>
-        </div>
-
-        <div style={styles.roleGrid}>
-          {roles.map((role) => (
-            <button
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              disabled={isLoading}
-              style={styles.roleButton}
-            >
-              <div style={styles.roleIcon}>{getRoleIcon(role)}</div>
-              <div style={styles.roleLabel}>{getRoleLabel(role)}</div>
-              <div style={styles.roleDescription}>{getRoleDescription(role)}</div>
-            </button>
-          ))}
-        </div>
-
-        <div style={styles.footer}>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
+        <h1 className="text-xl font-bold text-slate-800">Delux+</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-slate-600 font-medium">{userName}</span>
           <button
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              navigate('/login');
-            }}
-            style={styles.backButton}
-            disabled={isLoading}
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium"
           >
-            返回登入
+            登出
           </button>
         </div>
-      </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="bg-white p-10 rounded-xl shadow-lg w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">選擇您的角色</h2>
+            <p className="text-slate-500">
+              歡迎回來！請選擇您要使用的角色以繼續
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {roles.map((role) => (
+              <button
+                key={role}
+                onClick={() => handleRoleSelect(role)}
+                disabled={isLoading}
+                className="flex flex-col items-center p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">
+                  {getRoleIcon(role)}
+                </div>
+                <div className="text-lg font-bold text-slate-800 mb-1">
+                  {getRoleLabel(role)}
+                </div>
+                <div className="text-xs text-slate-500 text-center">
+                  {getRoleDescription(role)}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-    padding: '1rem',
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '2.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    width: '100%',
-    maxWidth: '600px',
-  },
-  header: {
-    marginBottom: '2rem',
-    textAlign: 'center' as const,
-  },
-  title: {
-    fontSize: '1.75rem',
-    fontWeight: 'bold',
-    marginBottom: '0.5rem',
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: '0.875rem',
-    color: '#666',
-  },
-  roleGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  roleButton: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    padding: '1.5rem 1rem',
-    backgroundColor: 'white',
-    border: '2px solid #e0e0e0',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    ':hover': {
-      borderColor: '#007bff',
-      backgroundColor: '#f8f9fa',
-    },
-  },
-  roleIcon: {
-    fontSize: '3rem',
-    marginBottom: '0.75rem',
-  },
-  roleLabel: {
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: '0.25rem',
-  },
-  roleDescription: {
-    fontSize: '0.75rem',
-    color: '#666',
-    textAlign: 'center' as const,
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'center',
-    paddingTop: '1rem',
-    borderTop: '1px solid #eee',
-  },
-  backButton: {
-    padding: '0.5rem 1.5rem',
-    backgroundColor: 'transparent',
-    color: '#666',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    fontSize: '0.875rem',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
 };
 
 export default RoleSelectionPage;
