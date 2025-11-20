@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../config/axios';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../contexts/AuthContext';
+import { LayoutDashboard, LogOut } from 'lucide-react';
 
 interface LocationState {
   roles: ('admin' | 'supplier' | 'agency')[];
@@ -113,15 +114,24 @@ const RoleSelectionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">Delux+</h1>
+      <header className="bg-white h-16 border-b border-slate-200 shadow-sm px-6 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{userName}</span>
+          <div className="flex items-center gap-2 text-slate-800">
+            <div className="bg-blue-600 text-white p-1.5 rounded-lg">
+              <LayoutDashboard size={20} />
+            </div>
+            <span className="text-xl font-bold tracking-tight">Delux+</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-slate-600 font-medium text-sm">{userName}</span>
+          <div className="h-8 w-px bg-slate-200"></div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium"
+            className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
           >
-            登出
+            <LogOut size={18} />
+            <span>登出</span>
           </button>
         </div>
       </header>

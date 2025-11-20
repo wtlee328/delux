@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
-import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
+import TopBar from '../../components/TopBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -19,7 +19,6 @@ interface ProductDetail {
 }
 
 const AdminTourDetailPage: React.FC = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -40,7 +39,7 @@ const AdminTourDetailPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`/api/admin/tours/${id}`);
+      const response = await axios.get(`/ api / admin / tours / ${id} `);
       setProduct(response.data);
     } catch (err: any) {
       setError('無法載入產品詳情');
@@ -56,7 +55,7 @@ const AdminTourDetailPage: React.FC = () => {
     try {
       setUpdating(true);
       setError(null);
-      await axios.put(`/api/admin/tours/${id}/status`, { status: '已發佈' });
+      await axios.put(`/ api / admin / tours / ${id}/status`, { status: '已發佈' });
 
       // Update local state
       setProduct({ ...product, status: '已發佈' });
@@ -108,19 +107,6 @@ const AdminTourDetailPage: React.FC = () => {
     }
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '帝樂 Admin';
-      case 'supplier':
-        return '當地供應商';
-      case 'agency':
-        return '台灣旅行社';
-      default:
-        return role;
-    }
-  };
-
   const formatPrice = (price: number) => {
     return `NT$${price.toLocaleString('zh-TW')}`;
   };
@@ -128,15 +114,7 @@ const AdminTourDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-800">產品詳情</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-600 font-medium">{user?.name} ({getRoleLabel(user?.role || '')})</span>
-            <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-              登出
-            </button>
-          </div>
-        </header>
+        <TopBar title="產品詳情" />
         <main className="p-8 max-w-7xl mx-auto">
           <p className="text-center text-slate-500 py-8">載入中...</p>
         </main>
@@ -147,15 +125,7 @@ const AdminTourDetailPage: React.FC = () => {
   if (error && !product) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-800">產品詳情</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-600 font-medium">{user?.name} ({getRoleLabel(user?.role || '')})</span>
-            <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-              登出
-            </button>
-          </div>
-        </header>
+        <TopBar title="產品詳情" />
         <main className="p-8 max-w-7xl mx-auto">
           <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-4 border border-red-200">{error}</div>
           <button onClick={() => navigate('/admin/tours')} className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium mb-6">
@@ -172,15 +142,7 @@ const AdminTourDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">產品詳情</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{user?.name} ({getRoleLabel(user?.role || '')})</span>
-          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-            登出
-          </button>
-        </div>
-      </header>
+      <TopBar title="產品詳情" />
       <main className="p-8 max-w-7xl mx-auto">
         <button onClick={() => navigate('/admin/tours')} className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium mb-6 flex items-center gap-2">
           ← 返回產品列表
@@ -225,8 +187,8 @@ const AdminTourDetailPage: React.FC = () => {
               <div className="flex flex-col gap-1">
                 <span className="text-sm font-medium text-slate-500">狀態：</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-bold inline-block w-fit ${product.status === '草稿' ? 'bg-slate-500 text-white' :
-                    product.status === '待審核' ? 'bg-amber-400 text-black' :
-                      product.status === '已發佈' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                  product.status === '待審核' ? 'bg-amber-400 text-black' :
+                    product.status === '已發佈' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                   }`}>
                   {product.status}
                 </span>

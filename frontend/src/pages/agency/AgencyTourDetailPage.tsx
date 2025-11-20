@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
-import { useAuth } from '../../contexts/AuthContext';
+import TopBar from '../../components/TopBar';
 
 interface ProductDetail {
   id: string;
@@ -17,7 +17,6 @@ interface ProductDetail {
 const AgencyTourDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,15 +49,7 @@ const AgencyTourDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-slate-800">旅行社控制台</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-            登出
-          </button>
-        </div>
-      </header>
+      <TopBar title="旅行社控制台" />
       <main className="p-8 max-w-6xl mx-auto">
         <button
           onClick={handleBack}
@@ -115,4 +106,3 @@ const AgencyTourDetailPage: React.FC = () => {
 };
 
 export default AgencyTourDetailPage;
-

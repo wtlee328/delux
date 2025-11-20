@@ -7,6 +7,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from 'axios';
 import axiosInstance from '../../config/axios';
+import TopBar from '../../components/TopBar';
 
 interface FormData {
   產品標題: string;
@@ -28,7 +29,7 @@ interface FormErrors {
 }
 
 const CreateProductPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  useAuth();
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
 
@@ -159,15 +160,7 @@ const CreateProductPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">新增旅遊產品</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-            登出
-          </button>
-        </div>
-      </header>
+      <TopBar title="新增旅遊產品" />
       <main className="p-8 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
           <button
@@ -334,4 +327,3 @@ const CreateProductPage: React.FC = () => {
 };
 
 export default CreateProductPage;
-

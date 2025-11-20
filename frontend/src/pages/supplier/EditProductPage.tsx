@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from '../../config/axios';
+import TopBar from '../../components/TopBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -27,9 +27,9 @@ interface FormErrors {
 }
 
 const EditProductPage: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  // const { showSuccess, showError } = useToast(); // Removed unused
 
   const [formData, setFormData] = useState<FormData>({
     產品標題: '',
@@ -216,15 +216,7 @@ const EditProductPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-800">編輯旅遊產品</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-            <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-              登出
-            </button>
-          </div>
-        </header>
+        <TopBar title="編輯旅遊產品" />
         <main className="p-8 max-w-4xl mx-auto">
           <p className="text-center text-slate-500 py-8">載入中...</p>
         </main>
@@ -234,15 +226,7 @@ const EditProductPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">編輯旅遊產品</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-            登出
-          </button>
-        </div>
-      </header>
+      <TopBar title="編輯旅遊產品" />
       <main className="p-8 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
           <button
@@ -260,8 +244,8 @@ const EditProductPage: React.FC = () => {
             <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
               <span className="font-bold text-slate-700">目前狀態：</span>
               <span className={`px-3 py-1 rounded-full text-sm font-bold inline-block ${currentStatus === '草稿' ? 'bg-slate-500 text-white' :
-                  currentStatus === '待審核' ? 'bg-amber-400 text-black' :
-                    currentStatus === '已發佈' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                currentStatus === '待審核' ? 'bg-amber-400 text-black' :
+                  currentStatus === '已發佈' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                 }`}>
                 {currentStatus}
               </span>

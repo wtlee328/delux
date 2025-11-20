@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import axios from '../../config/axios';
+import TopBar from '../../components/TopBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -13,7 +13,6 @@ interface Product {
 }
 
 const SupplierDashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,15 +71,7 @@ const SupplierDashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">供應商控制台</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-          <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-            登出
-          </button>
-        </div>
-      </header>
+      <TopBar title="供應商控制台" />
       <main className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">我的產品</h2>
@@ -157,4 +148,3 @@ const SupplierDashboardPage: React.FC = () => {
 };
 
 export default SupplierDashboardPage;
-

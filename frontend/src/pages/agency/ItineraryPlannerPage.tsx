@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
@@ -21,6 +20,7 @@ import ResourceDetailModal from '../../components/itinerary/ResourceDetailModal'
 import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
 import './ItineraryPlanner.css';
+import TopBar from '../../components/TopBar';
 
 interface Product {
   id: string;
@@ -50,7 +50,6 @@ interface TimelineDay {
 
 const ItineraryPlannerPage: React.FC = () => {
   const { showSuccess } = useToast();
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -314,21 +313,20 @@ const ItineraryPlannerPage: React.FC = () => {
       onDragEnd={handleDragEnd}
     >
       <div className="h-screen flex flex-col bg-slate-50">
-        <header className="h-16 bg-white border-b border-slate-200 flex justify-between items-center px-8 z-10 shadow-sm">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/')} className="text-2xl text-slate-500 hover:text-slate-800 transition-colors pb-1">←</button>
-            <h1 className="text-xl font-bold text-slate-800">行程規劃</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-green-600 text-sm font-medium">{saveStatus}</span>
-            <button
-              onClick={() => setIsSaveModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
-            >
-              儲存行程
-            </button>
-          </div>
-        </header>
+        <TopBar
+          title="行程規劃"
+          actions={
+            <div className="flex items-center gap-4">
+              <span className="text-green-600 text-sm font-medium">{saveStatus}</span>
+              <button
+                onClick={() => setIsSaveModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+              >
+                儲存行程
+              </button>
+            </div>
+          }
+        />
 
         <div className="flex-1 flex overflow-hidden relative">
           {/* Left Expand Button */}
@@ -419,4 +417,3 @@ const ItineraryPlannerPage: React.FC = () => {
 };
 
 export default ItineraryPlannerPage;
-

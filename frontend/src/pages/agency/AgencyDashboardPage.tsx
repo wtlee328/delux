@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
-import { useAuth } from '../../contexts/AuthContext';
+import TopBar from '../../components/TopBar';
 
 interface Product {
   id: string;
@@ -14,7 +14,6 @@ interface Product {
 }
 
 const AgencyDashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,24 +68,18 @@ const AgencyDashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white px-8 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-slate-800">旅行社控制台</h1>
-        <div className="flex items-center gap-4">
+      <TopBar title="旅行社控制台" />
+      <main className="p-8 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">探索產品</h2>
           <button
             onClick={() => navigate('/agency/itinerary-planner')}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
           >
             <span>📋</span> 行程規劃
           </button>
-          <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
-            <span className="text-slate-600 font-medium">{user?.name} ({user?.role})</span>
-            <button onClick={logout} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium">
-              登出
-            </button>
-          </div>
         </div>
-      </header>
-      <main className="p-8 max-w-7xl mx-auto">
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
           <h2 className="text-lg font-bold text-slate-800 mb-4">產品搜尋</h2>
           <div className="flex gap-6">
@@ -171,4 +164,3 @@ const AgencyDashboardPage: React.FC = () => {
 };
 
 export default AgencyDashboardPage;
-
