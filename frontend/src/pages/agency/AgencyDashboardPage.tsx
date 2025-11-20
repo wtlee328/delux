@@ -63,6 +63,17 @@ const AgencyDashboardPage: React.FC = () => {
       <TopBar title="產品搜尋" />
 
       <main className="p-8 max-w-7xl mx-auto">
+        {/* Header with Itinerary Planning Button */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">探索產品</h2>
+          <button
+            onClick={() => navigate('/agency/itinerary-planner')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
+          >
+            <span>📋</span> 行程規劃
+          </button>
+        </div>
+
         {/* Search and Filter Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
           <div className="flex flex-col md:flex-row gap-4">
@@ -141,7 +152,7 @@ const AgencyDashboardPage: React.FC = () => {
                       供應商: {product.supplierName}
                     </div>
                     <div className="font-bold text-blue-600">
-                      HKD {product.netPrice.toLocaleString()}
+                      TWD {product.netPrice.toLocaleString()}
                     </div>
                   </div>
                 </div>
