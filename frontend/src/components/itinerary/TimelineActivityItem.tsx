@@ -246,11 +246,12 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     );
 };
 
-export const TimelineActivityItemPreview: React.FC<{ item: Product }> = ({
+export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineItem?: boolean }> = ({
     item,
+    isTimelineItem,
 }) => {
     return (
-        <div style={{ ...styles.container, paddingLeft: 0 }}>
+        <div style={{ ...styles.container, paddingLeft: isTimelineItem ? '3rem' : 0 }}>
             {/* Card */}
             <div
                 style={{
