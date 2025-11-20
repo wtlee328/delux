@@ -42,6 +42,15 @@ const DraggableProduct = ({
     data: { type: 'resource', product },
   });
 
+  // Map category to Chinese labels
+  const categoryLabels: Record<string, string> = {
+    'landmark': '地標',
+    'activity': '活動',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
+  };
+
   const style = {
     zIndex: isDragging ? 1000 : 1,
     position: 'relative' as const,
@@ -132,7 +141,7 @@ const DraggableProduct = ({
               color: '#636e72',
               fontWeight: '500'
             }}>
-              {product.productType}
+              {categoryLabels[product.category] || product.category}
             </span>
             <span style={{ color: '#b2bec3' }}>|</span>
             <span style={{ color: '#636e72' }}>{product.supplierName}</span>
@@ -163,11 +172,22 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
       try {
         const response = await axios.get('/api/agency/tours');
         // Map backend data to frontend Product interface
-        const mappedProducts = response.data.map((p: any) => ({
-          ...p,
-          productType: 'activity', // Default to activity as backend doesn't support types yet
-          location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 }, // Mock location around Taipei
-        }));
+        const mappedProducts = response.data.map((p: any) => {
+          // Map category to productType for filtering
+          const categoryToType: Record<string, 'activity' | 'accommodation' | 'food' | 'transportation'> = {
+            'landmark': 'activity', // Map landmark to activity for now
+            'activity': 'activity',
+            'accommodation': 'accommodation',
+            'food': 'food',
+            'transportation': 'transportation'
+          };
+
+          return {
+            ...p,
+            productType: categoryToType[p.category] || 'activity',
+            location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 }, // Mock location around Taipei
+          };
+        });
         setProducts(mappedProducts);
         setAvailableProducts(mappedProducts);
       } catch (error) {
