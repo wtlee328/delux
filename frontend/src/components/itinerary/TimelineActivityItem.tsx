@@ -431,7 +431,7 @@ const styles = {
         display: 'none',
     },
     timeInput: {
-        width: '70px',
+        width: '80px',
         border: '1px solid #dfe6e9',
         borderRadius: '4px',
         padding: '4px 8px',
@@ -445,7 +445,7 @@ const styles = {
         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     durationInput: {
-        width: '60px',
+        width: '70px',
         border: '1px solid #dfe6e9',
         borderRadius: '4px',
         padding: '4px 8px',
