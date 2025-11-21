@@ -431,7 +431,7 @@ const styles = {
         display: 'none',
     },
     timeInput: {
-        width: '80px',
+        width: '90px',
         border: '1px solid #dfe6e9',
         borderRadius: '4px',
         padding: '4px 4px',
