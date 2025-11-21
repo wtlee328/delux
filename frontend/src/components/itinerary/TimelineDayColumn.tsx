@@ -36,7 +36,6 @@ interface TimelineDayColumnProps {
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
     onPreview: (product: Product) => void;
-    onRemoveDay: (dayNumber: number) => void;
 }
 
 export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
@@ -45,7 +44,6 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
     onTimeUpdate,
     onDelete,
     onPreview,
-    onRemoveDay,
 }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `day-${day.dayNumber}`,
@@ -59,14 +57,12 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                 <div style={{ ...styles.dayBadge, backgroundColor: colorTheme.light, color: colorTheme.primary }}>
                     第 {day.dayNumber} 天
                 </div>
-                <button
-                    onClick={() => onRemoveDay(day.dayNumber)}
-                    style={styles.removeDayBtn}
-                    aria-label={`Remove Day ${day.dayNumber}`}
-                    title="刪除此天"
-                >
-                    ×
-                </button>
+                {day.date && (
+                    <div style={styles.dateInfo}>
+                        <span style={styles.dateText}>{day.date}</span>
+                        <span style={styles.dayOfWeek}>{day.dayOfWeek}</span>
+                    </div>
+                )}
             </div>
 
             {/* Timeline Area */}
@@ -129,20 +125,22 @@ const styles = {
         alignItems: 'center',
         backgroundColor: 'white',
     },
-    removeDayBtn: {
+    dateInfo: {
         marginLeft: 'auto',
-        background: 'none',
-        border: 'none',
-        color: '#dfe6e9',
-        fontSize: '1.5rem',
-        cursor: 'pointer',
-        padding: '0 0.5rem',
-        lineHeight: 1,
-        transition: 'color 0.2s',
-        outline: 'none',
-        ':hover': {
-            color: '#ff7675',
-        },
+        display: 'flex',
+        flexDirection: 'column' as const,
+        alignItems: 'flex-end',
+        lineHeight: 1.2,
+    },
+    dateText: {
+        fontSize: '0.9rem',
+        fontWeight: '600',
+        color: '#2d3436',
+    },
+    dayOfWeek: {
+        fontSize: '0.75rem',
+        color: '#b2bec3',
+        fontWeight: '500',
     },
     dayBadge: {
         padding: '0.5rem 1rem',

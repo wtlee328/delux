@@ -33,9 +33,7 @@ interface TimelineContainerProps {
     timeline: TimelineDay[];
     onTimeUpdate: (dayNumber: number, itemId: string, startTime: string, duration: number) => void;
     onDelete: (dayNumber: number, itemId: string) => void;
-    onAddDay: () => void;
     onPreview: (product: Product) => void;
-    onRemoveDay: (dayNumber: number) => void;
 }
 
 export const dayColorThemes = [
@@ -51,9 +49,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     timeline,
     onTimeUpdate,
     onDelete,
-    onAddDay,
     onPreview,
-    onRemoveDay,
 }) => {
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
@@ -171,17 +167,8 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
                         onTimeUpdate={(itemId, startTime, duration) => onTimeUpdate(day.dayNumber, itemId, startTime, duration)}
                         onDelete={(itemId) => onDelete(day.dayNumber, itemId)}
                         onPreview={onPreview}
-                        onRemoveDay={onRemoveDay}
                     />
                 ))}
-
-                {/* Add Day Button Column */}
-                <div style={styles.addDayColumn}>
-                    <button onClick={onAddDay} style={styles.addDayBtn}>
-                        <span style={styles.plusIcon}>+</span>
-                        <span>新增天數</span>
-                    </button>
-                </div>
             </div>
         </div>
     );

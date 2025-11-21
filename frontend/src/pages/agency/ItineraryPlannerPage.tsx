@@ -104,28 +104,19 @@ const ItineraryPlannerPage: React.FC = () => {
     let currentTime = items[0].startTime || dayStartTime;
 
     return items.map((item) => {
-      // First item keeps its time (or gets the day start time if undefined)
-      // Subsequent items get calculated based on previous item's end time
-      // All items keep their own duration (default 60 if not set)
-
       const duration = item.duration || 60;
       const startTime = currentTime;
-
       currentTime = addMinutes(startTime, duration);
-
       return { ...item, startTime, duration };
     });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-
-    // Check if it's a resource or a timeline item
     if (active.data.current?.type === 'resource') {
       setActiveProduct(active.data.current.product);
       setDragSourceType('resource');
     } else {
-      // Find the item in the timeline
       for (const day of timeline) {
         const item = day.items.find(i => i.timelineId === active.id);
         if (item) {
@@ -140,10 +131,8 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
-
-    // If dragging a resource over a day column
     if (active.data.current?.type === 'resource' && over.data.current?.type === 'day') {
-      // We don't need to do anything here for visual feedback as the drop zone handles it
+      // No op
     }
   };
 
@@ -154,18 +143,15 @@ const ItineraryPlannerPage: React.FC = () => {
 
     if (!over) return;
 
-    // 1. Dragging from Resource Library to Timeline
     if (active.data.current?.type === 'resource' && over.data.current?.type === 'day') {
       const product = active.data.current.product;
       const dayNumber = over.data.current.dayNumber;
-
       const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
-      const productCopy = { ...product, timelineId: uniqueId, duration: 60 }; // Default 60
+      const productCopy = { ...product, timelineId: uniqueId, duration: 60 };
 
       setTimeline(prev => prev.map(day => {
         if (day.dayNumber === dayNumber) {
           const newItems = [...day.items, productCopy];
-          // If it's the first item, it might default to 09:00 via recalculateTimes
           return { ...day, items: recalculateTimes(newItems) };
         }
         return day;
@@ -174,12 +160,10 @@ const ItineraryPlannerPage: React.FC = () => {
       return;
     }
 
-    // 2. Reordering within Timeline or Moving between days
     const activeId = active.id as string;
     const overId = over.id as string;
 
     if (activeId !== overId) {
-      // Find source day and item index
       let sourceDayIndex = -1;
       let sourceItemIndex = -1;
       let destDayIndex = -1;
@@ -192,10 +176,9 @@ const ItineraryPlannerPage: React.FC = () => {
           sourceItemIndex = itemIndex;
         }
 
-        // Check if over is a day (dropping on empty space) or an item (reordering)
         if (over.data.current?.type === 'day' && over.data.current.dayNumber === day.dayNumber) {
           destDayIndex = dIndex;
-          destItemIndex = day.items.length; // Append to end
+          destItemIndex = day.items.length;
         } else {
           const overItemIndex = day.items.findIndex(i => i.timelineId === overId);
           if (overItemIndex !== -1) {
@@ -211,33 +194,20 @@ const ItineraryPlannerPage: React.FC = () => {
           const sourceDay = newTimeline[sourceDayIndex];
           const destDay = newTimeline[destDayIndex];
 
-          // Move within same day
           if (sourceDayIndex === destDayIndex) {
             const newItems = arrayMove(sourceDay.items, sourceItemIndex, destItemIndex);
-            // If moved to index 0, it keeps its time or inherits? 
-            // "If an activity card is moved into the first position... It inherits the original first activity’s start time."
-            // recalculateTimes handles this because it uses the first item's time as anchor. 
-            // BUT if we just moved it, the first item is now the moved item. 
-            // We need to ensure the NEW first item has the OLD first item's start time (or a default).
-
             const oldFirstTime = sourceDay.items[0]?.startTime || '09:00';
             if (destItemIndex === 0) {
               newItems[0].startTime = oldFirstTime;
             }
-
             newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(newItems) };
           } else {
-            // Move to different day
             const [movedItem] = sourceDay.items.splice(sourceItemIndex, 1);
-
-            // If dropping into first position of new day
             if (destItemIndex === 0) {
               const destFirstTime = destDay.items[0]?.startTime || '09:00';
               movedItem.startTime = destFirstTime;
             }
-
             destDay.items.splice(destItemIndex, 0, movedItem);
-
             newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(sourceDay.items) };
             newTimeline[destDayIndex] = { ...destDay, items: recalculateTimes(destDay.items) };
           }
@@ -262,26 +232,15 @@ const ItineraryPlannerPage: React.FC = () => {
     });
   }, []);
 
-  const handleAddDay = useCallback(() => {
-    setTimeline(prevTimeline => {
-      const newDayNumber = prevTimeline.length + 1;
-      return [...prevTimeline, { dayNumber: newDayNumber, items: [] }];
-    });
-  }, []);
-
   const handleUpdateTime = useCallback((dayNumber: number, uniqueId: string, startTime: string, duration: number) => {
     setTimeline(prevTimeline => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
-          // Only update the specific item
           const updatedItems = day.items.map(item =>
             (item.timelineId || item.id) === uniqueId
               ? { ...item, startTime, duration }
               : item
           );
-
-          // Then recalculate everything. 
-          // Since only the first item is editable, recalculateTimes will propagate the change.
           return { ...day, items: recalculateTimes(updatedItems) };
         }
         return day;
@@ -312,24 +271,47 @@ const ItineraryPlannerPage: React.FC = () => {
     }
   };
 
-  const handleRemoveDay = (dayNumber: number) => {
-    if (timeline.length <= 1) {
-      showWarning('至少需要保留一天');
-      return;
-    }
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
-    if (window.confirm(`確定要刪除第 ${dayNumber} 天嗎？該天行程將被移除。`)) {
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+
+    if (start && end) {
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
       setTimeline(prev => {
-        const newTimeline = prev.filter(day => day.dayNumber !== dayNumber);
-        // Re-index days
-        return newTimeline.map((day, index) => ({
-          ...day,
-          dayNumber: index + 1
-        }));
+        const newTimeline: TimelineDay[] = [];
+        for (let i = 0; i < diffDays; i++) {
+          const currentDate = new Date(start);
+          currentDate.setDate(currentDate.getDate() + i);
+          const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+          const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDate.getDay()];
+
+          // Preserve existing items if they exist for this day index
+          const existingDay = prev.find(d => d.dayNumber === i + 1);
+          newTimeline.push({
+            dayNumber: i + 1,
+            items: existingDay ? existingDay.items : [],
+            date: dateStr,
+            dayOfWeek: dayOfWeek
+          });
+        }
+        return newTimeline;
       });
-      showSuccess('已刪除天數');
     }
   };
+
+  const handleClearItinerary = () => {
+    if (window.confirm('確定要清除所有行程嗎？此動作無法復原。')) {
+      setTimeline(prev => prev.map(day => ({ ...day, items: [] })));
+      showSuccess('已清除行程');
+    }
+  };
+
+
 
   return (
     <DndContext
@@ -344,6 +326,12 @@ const ItineraryPlannerPage: React.FC = () => {
           actions={
             <div className="flex items-center gap-4">
               <span className="text-green-600 text-sm font-medium">{saveStatus}</span>
+              <button
+                onClick={handleClearItinerary}
+                className="text-slate-500 hover:text-red-600 px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+              >
+                清除行程
+              </button>
               <button
                 onClick={() => setIsSaveModalOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
@@ -371,14 +359,13 @@ const ItineraryPlannerPage: React.FC = () => {
             className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.library ? 'w-[450px] opacity-100' : 'w-0 opacity-0 border-none'
               }`}
           >
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center font-bold text-slate-700 bg-slate-50/50">
-              <h3>資源庫</h3>
-              <button onClick={() => togglePanel('library')} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
-            </div>
             <ResourceLibrary
               onProductHover={setHoveredProduct}
               setAvailableProducts={setAvailableProducts}
               initialDestination={initialDestination || undefined}
+              startDate={startDate}
+              endDate={endDate}
+              onDateRangeChange={handleDateRangeChange}
             />
           </div>
 
@@ -386,11 +373,9 @@ const ItineraryPlannerPage: React.FC = () => {
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
             <TimelineContainer
               timeline={timeline}
-              onAddDay={handleAddDay}
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
-              onRemoveDay={handleRemoveDay}
             />
           </div>
 

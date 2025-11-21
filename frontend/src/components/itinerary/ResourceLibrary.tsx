@@ -27,6 +27,9 @@ interface ResourceLibraryProps {
   onProductHover?: (product: Product | null) => void;
   setAvailableProducts: (products: Product[]) => void;
   initialDestination?: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  onDateRangeChange: (start: Date | null, end: Date | null) => void;
 }
 
 const DraggableProduct = ({
@@ -161,7 +164,14 @@ const DraggableProduct = ({
   );
 };
 
-const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAvailableProducts, initialDestination }) => {
+const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
+  onProductHover,
+  setAvailableProducts,
+  initialDestination,
+  startDate,
+  endDate,
+  onDateRangeChange
+}) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(initialDestination || '');
@@ -172,11 +182,9 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
     const fetchProducts = async () => {
       try {
         const response = await axios.get('/api/agency/tours');
-        // Map backend data to frontend Product interface
         const mappedProducts = response.data.map((p: any) => {
-          // Map category to productType for filtering
           const categoryToType: Record<string, 'activity' | 'accommodation' | 'food' | 'transportation'> = {
-            'landmark': 'activity', // Map landmark to activity for now
+            'landmark': 'activity',
             'activity': 'activity',
             'accommodation': 'accommodation',
             'food': 'food',
@@ -186,11 +194,10 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
           return {
             ...p,
             productType: categoryToType[p.category] || 'activity',
-            location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 }, // Mock location around Taipei
+            location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 },
           };
         });
 
-        // If initialDestination is provided, filter products to only that destination
         const filteredByDestination = initialDestination
           ? mappedProducts.filter((p: Product) =>
             p.destination.toLowerCase().includes(initialDestination.toLowerCase())
@@ -220,7 +227,6 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
 
   return (
     <div style={styles.container}>
-      {/* Destination Label */}
       {initialDestination && (
         <div style={styles.destinationBanner}>
           <div style={styles.destinationIcon}>📍</div>
@@ -230,6 +236,33 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
           </div>
         </div>
       )}
+
+      <div style={styles.dateRangeContainer}>
+        <div style={styles.dateInputGroup}>
+          <label style={styles.dateLabel}>開始日期</label>
+          <input
+            type="date"
+            value={startDate ? startDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const date = e.target.value ? new Date(e.target.value) : null;
+              onDateRangeChange(date, endDate);
+            }}
+            style={styles.dateInput}
+          />
+        </div>
+        <div style={styles.dateInputGroup}>
+          <label style={styles.dateLabel}>結束日期</label>
+          <input
+            type="date"
+            value={endDate ? endDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => {
+              const date = e.target.value ? new Date(e.target.value) : null;
+              onDateRangeChange(startDate, date);
+            }}
+            style={styles.dateInput}
+          />
+        </div>
+      </div>
 
       <div style={styles.header}>
         <div style={styles.searchContainer}>
@@ -326,6 +359,33 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '700',
     color: '#1e40af',
+  },
+  dateRangeContainer: {
+    padding: '1rem',
+    borderBottom: '1px solid #f0f0f0',
+    display: 'flex',
+    gap: '1rem',
+    backgroundColor: '#fff',
+  },
+  dateInputGroup: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.25rem',
+  },
+  dateLabel: {
+    fontSize: '0.75rem',
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  dateInput: {
+    width: '100%',
+    padding: '0.5rem',
+    borderRadius: '6px',
+    border: '1px solid #dfe6e9',
+    fontSize: '0.9rem',
+    outline: 'none',
+    color: '#2d3436',
   },
   header: {
     padding: '1rem',
