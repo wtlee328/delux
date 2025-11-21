@@ -26,6 +26,7 @@ interface Product {
 interface ResourceLibraryProps {
   onProductHover?: (product: Product | null) => void;
   setAvailableProducts: (products: Product[]) => void;
+  initialDestination?: string;
 }
 
 const DraggableProduct = ({
@@ -160,10 +161,10 @@ const DraggableProduct = ({
   );
 };
 
-const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAvailableProducts }) => {
+const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAvailableProducts, initialDestination }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialDestination || '');
   const [activeTab, setActiveTab] = useState<'all' | 'activity' | 'accommodation' | 'food' | 'transportation'>('all');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 

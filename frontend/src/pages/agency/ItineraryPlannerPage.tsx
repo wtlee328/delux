@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
@@ -50,6 +51,8 @@ interface TimelineDay {
 
 const ItineraryPlannerPage: React.FC = () => {
   const { showSuccess, showWarning } = useToast();
+  const [searchParams] = useSearchParams();
+  const initialDestination = searchParams.get('destination');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -375,6 +378,7 @@ const ItineraryPlannerPage: React.FC = () => {
             <ResourceLibrary
               onProductHover={setHoveredProduct}
               setAvailableProducts={setAvailableProducts}
+              initialDestination={initialDestination || undefined}
             />
           </div>
 
