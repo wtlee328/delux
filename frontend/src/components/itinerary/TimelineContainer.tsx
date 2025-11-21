@@ -36,6 +36,10 @@ interface TimelineContainerProps {
     onPreview: (product: Product) => void;
 }
 
+export interface TimelineContainerRef {
+    scrollToDay: (dayNumber: number) => void;
+}
+
 export const dayColorThemes = [
     { primary: '#FFB6C1', light: '#FFF0F2', dot: '#FF69B4' }, // Pink
     { primary: '#98D8C8', light: '#E8F5F1', dot: '#5FD3B3' }, // Mint Green
@@ -45,12 +49,15 @@ export const dayColorThemes = [
     { primary: '#FFE5B4', light: '#FFF8E7', dot: '#FFD54F' }, // Cream
 ];
 
-export const TimelineContainer: React.FC<TimelineContainerProps> = ({
-    timeline,
-    onTimeUpdate,
-    onDelete,
-    onPreview,
-}) => {
+export const TimelineContainer = React.forwardRef<TimelineContainerRef, TimelineContainerProps>((
+    {
+        timeline,
+        onTimeUpdate,
+        onDelete,
+        onPreview,
+    },
+    ref
+) => {
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
     const [showRightArrow, setShowRightArrow] = React.useState(false);
@@ -108,6 +115,11 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
             }, 800); // Slightly longer than smooth scroll duration
         }
     };
+
+    // Expose scrollToDay method to parent component via ref
+    React.useImperativeHandle(ref, () => ({
+        scrollToDay
+    }));
 
     React.useEffect(() => {
         checkScroll();
@@ -172,7 +184,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
             </div>
         </div>
     );
-};
+});
 
 const styles = {
     container: {

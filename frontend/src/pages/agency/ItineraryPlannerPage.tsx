@@ -14,7 +14,7 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useToast } from '../../components/Toast';
 import ResourceLibrary from '../../components/itinerary/ResourceLibrary';
-import { TimelineContainer } from '../../components/itinerary/TimelineContainer';
+import { TimelineContainer, TimelineContainerRef } from '../../components/itinerary/TimelineContainer';
 import { TimelineActivityItemPreview } from '../../components/itinerary/TimelineActivityItem';
 import SaveItineraryModal from '../../components/itinerary/SaveItineraryModal';
 import ResourceDetailModal from '../../components/itinerary/ResourceDetailModal';
@@ -66,6 +66,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [dragSourceType, setDragSourceType] = useState<'resource' | 'timeline' | null>(null);
@@ -301,6 +302,11 @@ const ItineraryPlannerPage: React.FC = () => {
         }
         return newTimeline;
       });
+
+      // Scroll to Day 1 after timeline is generated
+      setTimeout(() => {
+        timelineRef.current?.scrollToDay(1);
+      }, 100);
     }
   };
 
@@ -372,6 +378,7 @@ const ItineraryPlannerPage: React.FC = () => {
           {/* Timeline Panel */}
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
             <TimelineContainer
+              ref={timelineRef}
               timeline={timeline}
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
