@@ -35,6 +35,7 @@ interface TimelineContainerProps {
     onDelete: (dayNumber: number, itemId: string) => void;
     onAddDay: () => void;
     onPreview: (product: Product) => void;
+    onRemoveDay: (dayNumber: number) => void;
 }
 
 export const dayColorThemes = [
@@ -52,6 +53,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     onDelete,
     onAddDay,
     onPreview,
+    onRemoveDay,
 }) => {
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
@@ -169,6 +171,7 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
                         onTimeUpdate={(itemId, startTime, duration) => onTimeUpdate(day.dayNumber, itemId, startTime, duration)}
                         onDelete={(itemId) => onDelete(day.dayNumber, itemId)}
                         onPreview={onPreview}
+                        onRemoveDay={onRemoveDay}
                     />
                 ))}
 

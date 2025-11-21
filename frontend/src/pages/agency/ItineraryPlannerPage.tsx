@@ -49,7 +49,7 @@ interface TimelineDay {
 }
 
 const ItineraryPlannerPage: React.FC = () => {
-  const { showSuccess } = useToast();
+  const { showSuccess, showWarning } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -309,6 +309,25 @@ const ItineraryPlannerPage: React.FC = () => {
     }
   };
 
+  const handleRemoveDay = (dayNumber: number) => {
+    if (timeline.length <= 1) {
+      showWarning('至少需要保留一天');
+      return;
+    }
+
+    if (window.confirm(`確定要刪除第 ${dayNumber} 天嗎？該天行程將被移除。`)) {
+      setTimeline(prev => {
+        const newTimeline = prev.filter(day => day.dayNumber !== dayNumber);
+        // Re-index days
+        return newTimeline.map((day, index) => ({
+          ...day,
+          dayNumber: index + 1
+        }));
+      });
+      showSuccess('已刪除天數');
+    }
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -367,6 +386,7 @@ const ItineraryPlannerPage: React.FC = () => {
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
+              onRemoveDay={handleRemoveDay}
             />
           </div>
 
