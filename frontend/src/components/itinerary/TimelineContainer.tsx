@@ -41,11 +41,11 @@ export interface TimelineContainerRef {
 }
 
 export const dayColorThemes = [
-    { primary: '#FFB6C1', light: '#FFF0F2', dot: '#FF69B4' }, // Pink
+    { primary: '#A8D8EA', light: '#E3F2FD', dot: '#4FC3F7' }, // Sky Blue (was 5th)
     { primary: '#98D8C8', light: '#E8F5F1', dot: '#5FD3B3' }, // Mint Green
     { primary: '#FFD4A3', light: '#FFF4E6', dot: '#FFB347' }, // Peach
     { primary: '#B4A7D6', light: '#E8E4F3', dot: '#9370DB' }, // Lavender
-    { primary: '#A8D8EA', light: '#E3F2FD', dot: '#4FC3F7' }, // Sky Blue
+    { primary: '#FFB6C1', light: '#FFF0F2', dot: '#FF69B4' }, // Pink (was 1st)
     { primary: '#FFE5B4', light: '#FFF8E7', dot: '#FFD54F' }, // Cream
 ];
 
