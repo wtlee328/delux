@@ -88,7 +88,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-[400px]">
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-3 items-center pointer-events-none">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -102,18 +102,33 @@ interface ToastItemProps {
 }
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
-  const getTypeStyles = (type: ToastType): string => {
+  const getBorderColor = (type: ToastType): string => {
     switch (type) {
       case 'success':
-        return 'bg-green-500';
+        return 'border-green-500';
       case 'error':
-        return 'bg-red-500';
+        return 'border-red-500';
       case 'warning':
-        return 'bg-amber-500';
+        return 'border-amber-500';
       case 'info':
-        return 'bg-blue-500';
+        return 'border-blue-500';
       default:
-        return 'bg-slate-800';
+        return 'border-slate-500';
+    }
+  };
+
+  const getIconColor = (type: ToastType): string => {
+    switch (type) {
+      case 'success':
+        return 'text-green-400';
+      case 'error':
+        return 'text-red-400';
+      case 'warning':
+        return 'text-amber-400';
+      case 'info':
+        return 'text-blue-400';
+      default:
+        return 'text-slate-400';
     }
   };
 
@@ -137,32 +152,32 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      className={`${getTypeStyles(toast.type)} text-white p-4 rounded-lg shadow-lg flex items-center justify-between gap-3 min-w-[300px] animate-[slideIn_0.3s_ease-out]`}
+      className={`bg-gray-900/85 backdrop-blur-md text-white px-5 py-3 rounded-lg shadow-2xl flex items-center justify-between gap-4 min-w-[320px] max-w-[500px] animate-[slideDown_0.3s_ease-out] pointer-events-auto border-l-4 ${getBorderColor(toast.type)}`}
     >
       <div className="flex items-center gap-3 flex-1">
-        <span className="text-xl font-bold">
+        <span className={`text-lg font-bold ${getIconColor(toast.type)}`}>
           {getIcon(toast.type)}
         </span>
-        <span className="flex-1 break-words">
+        <span className="flex-1 break-words text-sm font-medium tracking-wide">
           {toast.message}
         </span>
       </div>
       <button
         onClick={() => onRemove(toast.id)}
-        className="bg-transparent border-none text-white cursor-pointer text-xl p-0 leading-none opacity-80 hover:opacity-100 transition-opacity"
+        className="bg-transparent border-none text-white/60 hover:text-white cursor-pointer text-xl p-1 leading-none transition-colors rounded-full hover:bg-white/10 flex items-center justify-center w-6 h-6"
         aria-label="關閉"
       >
         ×
       </button>
       <style>
         {`
-          @keyframes slideIn {
+          @keyframes slideDown {
             from {
-              transform: translateX(100%);
+              transform: translateY(-20px);
               opacity: 0;
             }
             to {
-              transform: translateX(0);
+              transform: translateY(0);
               opacity: 1;
             }
           }
