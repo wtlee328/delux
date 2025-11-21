@@ -74,7 +74,8 @@ const LoginPage: React.FC = () => {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 border border-slate-200">
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center flex flex-col items-center">
+          <img src="/logo.png" alt="Delux+ Logo" className="h-20 w-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
             Delux+ 帝樂旅遊平台
           </h1>
