@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/Toast';
 import TopBar from '../../components/TopBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
@@ -15,13 +16,17 @@ interface Product {
 
 const AdminToursPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
 
   useEffect(() => {
+    setSelectedIds(new Set());
     fetchProducts();
     fetchPendingCount();
   }, [showPendingOnly]);
@@ -81,9 +86,54 @@ const AdminToursPage: React.FC = () => {
       // Refresh the product list
       await fetchProducts();
       await fetchPendingCount();
+      showSuccess('產品已刪除');
     } catch (err: any) {
-      setError('刪除產品失敗，請稍後再試');
+      showError('刪除產品失敗，請稍後再試');
       console.error('Error deleting product:', err);
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(new Set(products.map(p => p.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectProduct = (id: string, e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBatchApprove = async () => {
+    if (selectedIds.size === 0) return;
+
+    if (!window.confirm(`確定要批量批准 ${selectedIds.size} 個產品嗎？\n這些產品的狀態將變更為「已發佈」。`)) {
+      return;
+    }
+
+    try {
+      setIsBatchProcessing(true);
+      await Promise.all(Array.from(selectedIds).map(id =>
+        axios.put(`/api/admin/tours/${id}/status`, { status: '已發佈' })
+      ));
+
+      showSuccess(`成功批准 ${selectedIds.size} 個產品`);
+      setSelectedIds(new Set());
+      await fetchProducts();
+      await fetchPendingCount();
+    } catch (err) {
+      console.error('Batch approve error:', err);
+      showError('批量批准失敗');
+    } finally {
+      setIsBatchProcessing(false);
     }
   };
 
@@ -110,6 +160,15 @@ const AdminToursPage: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">產品列表</h2>
           <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+              <button
+                onClick={handleBatchApprove}
+                disabled={isBatchProcessing}
+                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium shadow-sm flex items-center gap-2"
+              >
+                {isBatchProcessing ? '處理中...' : `批准選取 (${selectedIds.size})`}
+              </button>
+            )}
             <button
               onClick={() => setShowPendingOnly(false)}
               className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${!showPendingOnly ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
@@ -132,6 +191,14 @@ const AdminToursPage: React.FC = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-6 py-4 w-12">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={products.length > 0 && selectedIds.size === products.length}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">產品標題</th>
                   <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">供應商名稱</th>
                   <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">狀態</th>
@@ -142,9 +209,17 @@ const AdminToursPage: React.FC = () => {
                 {products.map((product) => (
                   <tr
                     key={product.id}
-                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectedIds.has(product.id) ? 'bg-blue-50 hover:bg-blue-100' : ''}`}
                     onClick={() => handleProductClick(product.id)}
                   >
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        checked={selectedIds.has(product.id)}
+                        onChange={(e) => handleSelectProduct(product.id, e)}
+                      />
+                    </td>
                     <td className="px-6 py-4 text-slate-700 font-medium">{product.title}</td>
                     <td className="px-6 py-4 text-slate-600">{product.supplierName}</td>
                     <td className="px-6 py-4">
