@@ -12,6 +12,8 @@ interface Product {
   supplierName: string;
   status: ProductStatus;
   createdAt: string;
+  destination: string;
+  category: string;
 }
 
 const AdminToursPage: React.FC = () => {
@@ -24,6 +26,12 @@ const AdminToursPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+
+  const [filterSupplier, setFilterSupplier] = useState('');
+  const [filterDestination, setFilterDestination] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Product; direction: 'asc' | 'desc' } | null>(null);
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -95,7 +103,7 @@ const AdminToursPage: React.FC = () => {
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(new Set(products.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
     } else {
       setSelectedIds(new Set());
     }
@@ -136,6 +144,50 @@ const AdminToursPage: React.FC = () => {
       setIsBatchProcessing(false);
     }
   };
+
+  const handleSort = (key: keyof Product) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredProducts = React.useMemo(() => {
+    let result = [...products];
+
+    // Filtering
+    if (filterSupplier) {
+      result = result.filter(p => p.supplierName.toLowerCase().includes(filterSupplier.toLowerCase()));
+    }
+    if (filterDestination) {
+      result = result.filter(p => p.destination.toLowerCase().includes(filterDestination.toLowerCase()));
+    }
+    if (filterCategory) {
+      result = result.filter(p => p.category === filterCategory);
+    }
+    if (filterStatus) {
+      result = result.filter(p => p.status === filterStatus);
+    }
+
+    // Sorting
+    if (sortConfig) {
+      result.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [products, filterSupplier, filterDestination, filterCategory, filterStatus, sortConfig]);
+
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const uniqueStatuses = Array.from(new Set(products.map(p => p.status))).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -184,6 +236,71 @@ const AdminToursPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Filter Bar */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">供應商</label>
+            <input
+              type="text"
+              placeholder="搜尋供應商..."
+              value={filterSupplier}
+              onChange={(e) => setFilterSupplier(e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">目的地</label>
+            <input
+              type="text"
+              placeholder="搜尋目的地..."
+              value={filterDestination}
+              onChange={(e) => setFilterDestination(e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1 min-w-[150px]">
+            <label className="text-xs font-bold text-slate-500 uppercase">類別</label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">全部類別</option>
+              {uniqueCategories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1 min-w-[150px]">
+            <label className="text-xs font-bold text-slate-500 uppercase">狀態</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">全部狀態</option>
+              {uniqueStatuses.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          {(filterSupplier || filterDestination || filterCategory || filterStatus) && (
+            <div className="flex items-end pb-1">
+              <button
+                onClick={() => {
+                  setFilterSupplier('');
+                  setFilterDestination('');
+                  setFilterCategory('');
+                  setFilterStatus('');
+                }}
+                className="text-sm text-red-500 hover:text-red-700 font-medium"
+              >
+                清除篩選
+              </button>
+            </div>
+          )}
+        </div>
+
         {loading && <p className="text-center text-slate-500 py-8">載入中...</p>}
         {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-4 border border-red-200">{error}</div>}
         {!loading && !error && (
@@ -195,18 +312,45 @@ const AdminToursPage: React.FC = () => {
                     <input
                       type="checkbox"
                       className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      checked={products.length > 0 && selectedIds.size === products.length}
+                      checked={filteredProducts.length > 0 && selectedIds.size === filteredProducts.length}
                       onChange={handleSelectAll}
                     />
                   </th>
-                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">產品標題</th>
-                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">供應商名稱</th>
-                  <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">狀態</th>
+                  <th
+                    className="px-6 py-4 text-left font-semibold text-slate-700 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    onClick={() => handleSort('title')}
+                  >
+                    產品標題 {sortConfig?.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left font-semibold text-slate-700 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    onClick={() => handleSort('supplierName')}
+                  >
+                    供應商名稱 {sortConfig?.key === 'supplierName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left font-semibold text-slate-700 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    onClick={() => handleSort('destination')}
+                  >
+                    目的地 {sortConfig?.key === 'destination' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left font-semibold text-slate-700 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    onClick={() => handleSort('category')}
+                  >
+                    類別 {sortConfig?.key === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left font-semibold text-slate-700 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    onClick={() => handleSort('status')}
+                  >
+                    狀態 {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th className="px-6 py-4 text-left font-semibold text-slate-700 text-sm">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr
                     key={product.id}
                     className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectedIds.has(product.id) ? 'bg-blue-50 hover:bg-blue-100' : ''}`}
@@ -222,6 +366,12 @@ const AdminToursPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-slate-700 font-medium">{product.title}</td>
                     <td className="px-6 py-4 text-slate-600">{product.supplierName}</td>
+                    <td className="px-6 py-4 text-slate-600">{product.destination}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600">
+                        {product.category}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <span className={getStatusStyle(product.status)}>
                         {product.status}
@@ -239,8 +389,10 @@ const AdminToursPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
-            {products.length === 0 && (
-              <p className="p-8 text-center text-slate-500">尚無產品</p>
+            {filteredProducts.length === 0 && (
+              <p className="p-8 text-center text-slate-500">
+                {products.length === 0 ? '尚無產品' : '沒有符合篩選條件的產品'}
+              </p>
             )}
           </div>
         )}
