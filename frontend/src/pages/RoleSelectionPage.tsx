@@ -54,16 +54,16 @@ const RoleSelectionPage: React.FC = () => {
     }
   };
 
-  const getRoleIcon = (role: string): string => {
+  const getRoleIcon = (role: string) => {
     switch (role) {
       case 'admin':
-        return '👤';
+        return <span className="material-symbols-outlined text-4xl">admin_panel_settings</span>;
       case 'supplier':
-        return '🏢';
+        return <span className="material-symbols-outlined text-4xl">storefront</span>;
       case 'agency':
-        return '✈️';
+        return <span className="material-symbols-outlined text-4xl">flight_takeoff</span>;
       default:
-        return '📋';
+        return <span className="material-symbols-outlined text-4xl">assignment</span>;
     }
   };
 

@@ -76,7 +76,7 @@ const AgencyDashboardPage: React.FC = () => {
               onClick={() => navigate(`/agency/itinerary-planner?destination=${encodeURIComponent(searchTerm)}`)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-right-4"
             >
-              <span>📋</span> 行程規劃
+              <span className="material-symbols-outlined text-lg">assignment</span> 行程規劃
             </button>
           )}
         </div>
@@ -104,8 +104,8 @@ const AgencyDashboardPage: React.FC = () => {
                     key={dest}
                     onClick={() => setSearchTerm(dest)}
                     className={`px-3 py-1 rounded-full text-sm transition-colors border ${searchTerm === dest
-                        ? 'bg-blue-50 text-blue-600 border-blue-200'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                      ? 'bg-blue-50 text-blue-600 border-blue-200'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
                       }`}
                   >
                     {dest}
