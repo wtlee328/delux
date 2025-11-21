@@ -242,9 +242,15 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
           <input
             type="date"
             value={startDate ? startDate.toISOString().split('T')[0] : ''}
+            min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
             onChange={(e) => {
               const date = e.target.value ? new Date(e.target.value) : null;
-              onDateRangeChange(date, endDate);
+              // If changing start date and it's after current end date, clear end date
+              if (date && endDate && date >= endDate) {
+                onDateRangeChange(date, null);
+              } else {
+                onDateRangeChange(date, endDate);
+              }
             }}
             style={styles.dateInput}
           />
@@ -254,11 +260,16 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
           <input
             type="date"
             value={endDate ? endDate.toISOString().split('T')[0] : ''}
+            min={startDate ? new Date(new Date(startDate).setDate(startDate.getDate() + 1)).toISOString().split('T')[0] : ''}
+            disabled={!startDate}
             onChange={(e) => {
               const date = e.target.value ? new Date(e.target.value) : null;
               onDateRangeChange(startDate, date);
             }}
-            style={styles.dateInput}
+            style={{
+              ...styles.dateInput,
+              ...((!startDate) && styles.dateInputDisabled)
+            }}
           />
         </div>
       </div>
@@ -387,6 +398,11 @@ const styles = {
     fontSize: '0.9rem',
     outline: 'none',
     color: '#2d3436',
+  },
+  dateInputDisabled: {
+    backgroundColor: '#f5f5f5',
+    color: '#9ca3af',
+    cursor: 'not-allowed',
   },
   header: {
     padding: '1rem',
