@@ -113,6 +113,11 @@ const ItineraryPlannerPage: React.FC = () => {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
+    // Prevent dragging if dates are not selected
+    if (!startDate || !endDate) {
+      return;
+    }
+
     const { active } = event;
     if (active.data.current?.type === 'resource') {
       setActiveProduct(active.data.current.product);
@@ -334,13 +339,21 @@ const ItineraryPlannerPage: React.FC = () => {
               <span className="text-green-600 text-sm font-medium">{saveStatus}</span>
               <button
                 onClick={handleClearItinerary}
-                className="text-slate-500 hover:text-red-600 px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                disabled={!startDate || !endDate}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${!startDate || !endDate
+                    ? 'text-slate-300 cursor-not-allowed'
+                    : 'text-slate-500 hover:text-red-600'
+                  }`}
               >
                 清除行程
               </button>
               <button
                 onClick={() => setIsSaveModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+                disabled={!startDate || !endDate}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors shadow-sm ${!startDate || !endDate
+                    ? 'bg-slate-300 text-slate-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md'
+                  }`}
               >
                 儲存行程
               </button>
@@ -376,7 +389,16 @@ const ItineraryPlannerPage: React.FC = () => {
           </div>
 
           {/* Timeline Panel */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
+          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 relative">
+            {!startDate || !endDate ? (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/95 backdrop-blur-sm">
+                <div className="text-center px-8 py-12 bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md">
+                  <div className="mb-4 text-6xl">📅</div>
+                  <h3 className="text-xl font-semibold text-slate-800 mb-2">請選擇起訖日以開始規劃行程</h3>
+                  <p className="text-slate-500 text-sm">在左側資源庫選擇旅遊日期範圍後，即可開始拖曳活動至時間軸</p>
+                </div>
+              </div>
+            ) : null}
             <TimelineContainer
               ref={timelineRef}
               timeline={timeline}
