@@ -393,11 +393,13 @@ const ItineraryPlannerPage: React.FC = () => {
             {!startDate || !endDate ? (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/95 backdrop-blur-sm">
                 <div className="text-center px-8 py-12 bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md">
-                  <div className="mb-4 text-6xl text-blue-500">
-                    <span className="material-symbols-outlined text-6xl">calendar_month</span>
+                  <div className="mb-4 flex items-center justify-center gap-4 text-blue-500">
+                    <span className="material-symbols-outlined text-5xl text-slate-300">calendar_today</span>
+                    <span className="material-symbols-outlined text-3xl text-slate-300">arrow_forward</span>
+                    <span className="material-symbols-outlined text-5xl">event_available</span>
                   </div>
                   <h3 className="text-xl font-semibold text-slate-800 mb-2">請選擇起訖日以開始規劃行程</h3>
-                  <p className="text-slate-500 text-sm">在左側資源庫選擇旅遊日期範圍後，即可開始拖曳活動至時間軸</p>
+                  <p className="text-slate-500 text-sm">在左側選擇旅遊日期範圍後，即可開始拖曳活動至時間軸</p>
                 </div>
               </div>
             ) : null}
