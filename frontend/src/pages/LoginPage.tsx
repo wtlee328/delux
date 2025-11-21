@@ -77,7 +77,7 @@ const LoginPage: React.FC = () => {
         <div className="mb-8 text-center flex flex-col items-center">
           <img src="/logo.png" alt="Delux+ Logo" className="h-20 w-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-            Delux+ 帝樂旅遊平台
+            帝樂旅遊平台
           </h1>
           <p className="text-sm text-slate-500 font-medium">
             B2B2B Travel Supply Chain Platform
