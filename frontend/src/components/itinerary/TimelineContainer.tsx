@@ -57,6 +57,9 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
     const [showRightArrow, setShowRightArrow] = React.useState(false);
     const [activeDay, setActiveDay] = React.useState(1);
+    const isProgrammaticScroll = React.useRef(false);
+    const scrollTimeout = React.useRef<NodeJS.Timeout>();
+    const prevTimelineLength = React.useRef(timeline.length);
 
     const checkScroll = () => {
         if (scrollContainerRef.current) {
@@ -64,24 +67,47 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
             setShowLeftArrow(scrollLeft > 0);
             setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10); // -10 buffer
 
-            // Update active day based on scroll position
-            const cardWidth = 340 + 24; // Width + gap
-            const index = Math.round(scrollLeft / cardWidth);
-            if (timeline[index]) {
-                setActiveDay(timeline[index].dayNumber);
+            // Update active day based on scroll position only if not scrolling programmatically
+            if (!isProgrammaticScroll.current) {
+                const cardWidth = 340 + 24; // Width + gap
+                const index = Math.round(scrollLeft / cardWidth);
+                if (timeline[index]) {
+                    setActiveDay(timeline[index].dayNumber);
+                }
             }
         }
     };
 
+    // Watch for new days
+    React.useEffect(() => {
+        if (timeline.length > prevTimelineLength.current) {
+            // Day added, scroll to the last day
+            const lastDay = timeline[timeline.length - 1];
+            // Use a small timeout to ensure DOM is ready
+            setTimeout(() => {
+                scrollToDay(lastDay.dayNumber);
+            }, 100);
+        }
+        prevTimelineLength.current = timeline.length;
+    }, [timeline.length]);
+
     const scrollToDay = (dayNumber: number) => {
         const index = timeline.findIndex(d => d.dayNumber === dayNumber);
         if (index !== -1 && scrollContainerRef.current) {
+            isProgrammaticScroll.current = true;
+            setActiveDay(dayNumber); // Update immediately
+
             const scrollAmount = 340 + 24;
             scrollContainerRef.current.scrollTo({
                 left: index * scrollAmount,
                 behavior: 'smooth'
             });
-            setActiveDay(dayNumber);
+
+            // Reset flag after scroll animation
+            if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+            scrollTimeout.current = setTimeout(() => {
+                isProgrammaticScroll.current = false;
+            }, 800); // Slightly longer than smooth scroll duration
         }
     };
 

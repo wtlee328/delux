@@ -28,44 +28,46 @@ export const MiniTimeline: React.FC<MiniTimelineProps> = ({
     return (
         <div style={styles.wrapper}>
             <div ref={scrollContainerRef} style={styles.container}>
-                {/* Connecting Line */}
-                <div style={styles.line} />
+                <div style={styles.content}>
+                    {/* Connecting Line */}
+                    <div style={styles.line} />
 
-                {days.map((day, index) => {
-                    const isActive = day.dayNumber === activeDay;
-                    const theme = colorThemes[index % colorThemes.length];
+                    {days.map((day, index) => {
+                        const isActive = day.dayNumber === activeDay;
+                        const theme = colorThemes[index % colorThemes.length];
 
-                    return (
-                        <button
-                            key={day.dayNumber}
-                            data-day={day.dayNumber}
-                            onClick={() => onDayClick(day.dayNumber)}
-                            style={{
-                                ...styles.nodeBtn,
-                                ...(isActive ? { transform: 'scale(1.1)' } : {}),
-                            }}
-                            aria-label={`Go to Day ${day.dayNumber}${day.date ? `, ${day.date}` : ''}`}
-                            title={`Day ${day.dayNumber} ${day.date ? `— ${day.date}` : ''}`}
-                        >
-                            <div
+                        return (
+                            <button
+                                key={day.dayNumber}
+                                data-day={day.dayNumber}
+                                onClick={() => onDayClick(day.dayNumber)}
                                 style={{
-                                    ...styles.circle,
-                                    backgroundColor: isActive ? theme.primary : '#f1f2f6',
-                                    color: isActive ? 'white' : '#b2bec3',
-                                    border: isActive ? `2px solid ${theme.dot}` : '2px solid transparent',
-                                    boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${theme.light}` : 'none',
+                                    ...styles.nodeBtn,
+                                    ...(isActive ? { transform: 'scale(1.1)' } : {}),
                                 }}
+                                aria-label={`Go to Day ${day.dayNumber}${day.date ? `, ${day.date}` : ''}`}
+                                title={`Day ${day.dayNumber} ${day.date ? `— ${day.date}` : ''}`}
                             >
-                                {day.dayNumber}
-                            </div>
-                            {isActive && (
-                                <span style={{ ...styles.label, color: theme.dot }}>
-                                    {day.date || `Day ${day.dayNumber}`}
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
+                                <div
+                                    style={{
+                                        ...styles.circle,
+                                        backgroundColor: isActive ? theme.primary : '#f1f2f6',
+                                        color: isActive ? 'white' : '#b2bec3',
+                                        border: isActive ? `2px solid ${theme.dot}` : '2px solid transparent',
+                                        boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${theme.light}` : 'none',
+                                    }}
+                                >
+                                    {day.dayNumber}
+                                </div>
+                                {isActive && (
+                                    <span style={{ ...styles.label, color: theme.dot }}>
+                                        {day.date || `Day ${day.dayNumber}`}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Fade gradients for scroll indication */}
@@ -87,10 +89,6 @@ const styles = {
         zIndex: 20,
     },
     container: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '40px',
-        padding: '0 40px',
         overflowX: 'auto' as const,
         scrollbarWidth: 'none' as const,
         msOverflowStyle: 'none' as const,
@@ -98,12 +96,22 @@ const styles = {
         height: '100%',
         position: 'relative' as const,
     },
+    content: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '40px',
+        padding: '0 40px',
+        minWidth: '100%',
+        height: '100%',
+        position: 'relative' as const,
+        boxSizing: 'border-box' as const,
+    },
     line: {
         position: 'absolute' as const,
         left: 0,
         right: 0,
         top: '50%',
-        transform: 'translateY(-18px)', // Adjust based on circle center
+        transform: 'translateY(-50%)',
         height: '2px',
         backgroundColor: '#f1f2f6',
         zIndex: 0,
