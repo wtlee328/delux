@@ -81,12 +81,12 @@ const styles = {
     wrapper: {
         position: 'relative' as const,
         width: '100%',
-        height: '80px',
-        backgroundColor: 'white',
-        borderBottom: '1px solid #f1f2f6',
+        height: '100px', // Increased height to prevent label cutoff
+        // Transparent background to integrate with main container
         display: 'flex',
         alignItems: 'center',
         zIndex: 20,
+        paddingTop: '10px',
     },
     container: {
         overflowX: 'auto' as const,
@@ -113,7 +113,7 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         height: '2px',
-        backgroundColor: '#f1f2f6',
+        backgroundColor: '#e2e8f0', // Slightly darker for visibility on gray
         zIndex: 0,
     },
     nodeBtn: {
@@ -156,7 +156,7 @@ const styles = {
         top: 0,
         bottom: 0,
         width: '40px',
-        background: 'linear-gradient(to right, white, transparent)',
+        background: 'linear-gradient(to right, #f8f9fa, transparent)',
         pointerEvents: 'none' as const,
         zIndex: 2,
     },
@@ -166,7 +166,7 @@ const styles = {
         top: 0,
         bottom: 0,
         width: '40px',
-        background: 'linear-gradient(to left, white, transparent)',
+        background: 'linear-gradient(to left, #f8f9fa, transparent)',
         pointerEvents: 'none' as const,
         zIndex: 2,
     },
