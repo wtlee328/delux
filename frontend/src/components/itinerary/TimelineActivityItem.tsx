@@ -206,70 +206,68 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                         </div>
                     </div>
 
-                    {isEditing ? (
-                        <div
-                            ref={editContainerRef}
-                            style={styles.editContainer}
-                            onPointerDown={(e) => e.stopPropagation()}
-                        >
-                            <div style={styles.editRow}>
-                                <span style={styles.label}>開始</span>
-                                <style>
-                                    {`
-                                        .no-clock-icon::-webkit-calendar-picker-indicator {
-                                            display: none !important;
-                                        }
-                                    `}
-                                </style>
-                                <input
-                                    ref={inputRef}
-                                    type="time"
-                                    className="no-clock-icon"
-                                    value={editTime}
-                                    onChange={(e) => setEditTime(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    style={{
-                                        ...styles.timeInput,
-                                        backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
-                                        color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
-                                    }}
-                                    disabled={!isStartTimeEditable}
-                                />
-                            </div>
-                            <div style={styles.editRow}>
-                                <span style={styles.label}>停留</span>
-                                <div style={{ position: 'relative', width: '100%' }}>
+                    <div style={styles.infoRow}>
+                        {isEditing ? (
+                            <div
+                                ref={editContainerRef}
+                                style={styles.editContainer}
+                                onPointerDown={(e) => e.stopPropagation()}
+                            >
+                                <div style={styles.editRow}>
                                     <input
-                                        ref={durationInputRef}
-                                        type="number"
-                                        value={editDuration}
-                                        onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                        ref={inputRef}
+                                        type="time"
+                                        className="no-clock-icon"
+                                        value={editTime}
+                                        onChange={(e) => setEditTime(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        style={{ ...styles.durationInput, paddingRight: '40px' }}
-                                        min="15"
-                                        step="15"
+                                        style={{
+                                            ...styles.timeInput,
+                                            backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
+                                            color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
+                                            padding: '2px 4px',
+                                            fontSize: '0.85rem',
+                                        }}
+                                        disabled={!isStartTimeEditable}
                                     />
-                                    <span style={styles.unit}>分鐘</span>
+                                </div>
+                                <div style={styles.editRow}>
+                                    <div style={{ position: 'relative', width: '100%' }}>
+                                        <input
+                                            ref={durationInputRef}
+                                            type="number"
+                                            value={editDuration}
+                                            onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
+                                            onKeyDown={handleKeyDown}
+                                            style={{
+                                                ...styles.durationInput,
+                                                padding: '2px 4px',
+                                                paddingRight: '24px',
+                                                fontSize: '0.85rem'
+                                            }}
+                                            min="15"
+                                            step="15"
+                                        />
+                                        <span style={{ ...styles.unit, fontSize: '0.75rem', right: '4px' }}>分</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div
-                            style={{
-                                ...styles.timeDisplay,
-                                cursor: 'pointer',
-                                opacity: 1,
-                            }}
-                            onClick={() => setIsEditing(true)}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            title="點擊編輯時間"
-                        >
-                            <span style={styles.timeText}>{item.startTime || '09:00'}</span>
-                            <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>
-                        </div>
-                    )}
+                        ) : (
+                            <div
+                                style={{
+                                    ...styles.timeDisplay,
+                                    padding: '0',
+                                    marginLeft: '0',
+                                }}
+                                onClick={() => setIsEditing(true)}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                title="點擊編輯時間"
+                            >
+                                <span style={styles.timeText}>{item.startTime || '09:00'}</span>
+                                <span style={styles.durationText}>({item.duration || 60}m)</span>
+                            </div>
+                        )}
 
-                    <div style={{ ...styles.footerRow, justifyContent: 'flex-end' }}>
                         <span style={styles.categoryBadge}>
                             {categoryLabels[item.category] || item.category}
                         </span>
@@ -300,10 +298,10 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineIt
                     <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
                     </div>
-                    <div style={styles.timeInfo}>
-                        {item.startTime || '09:00'} • {item.duration || 60} 分鐘
-                    </div>
-                    <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={styles.infoRow}>
+                        <div style={styles.timeInfo}>
+                            {item.startTime || '09:00'} • {item.duration || 60}m
+                        </div>
                         <span style={styles.categoryBadge}>
                             {categoryLabels[item.category] || item.category}
                         </span>
@@ -340,10 +338,10 @@ const styles = {
     },
     card: {
         backgroundColor: 'white',
-        borderRadius: '16px',
-        padding: '1rem',
+        borderRadius: '12px',
+        padding: '0.75rem',
         display: 'flex',
-        gap: '1rem',
+        gap: '0.75rem',
         border: '1px solid rgba(0,0,0,0.03)',
         transition: 'all 0.2s ease',
         cursor: 'grab',
@@ -351,7 +349,7 @@ const styles = {
     cardContent: {
         display: 'flex',
         flexDirection: 'column' as const,
-        gap: '0.5rem',
+        gap: '0.25rem',
         flex: 1,
         minWidth: 0,
     },
@@ -360,16 +358,23 @@ const styles = {
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         width: '100%',
+        marginBottom: '2px',
     },
     title: {
         margin: 0,
-        fontSize: '1rem',
+        fontSize: '0.95rem',
         fontWeight: '600',
         color: '#2d3436',
-        lineHeight: 1.4,
+        lineHeight: 1.3,
+    },
+    infoRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: '2px',
     },
     timeInfo: {
-        fontSize: '0.85rem',
+        fontSize: '0.8rem',
         color: '#b2bec3',
     },
     deleteBtn: {
@@ -396,44 +401,39 @@ const styles = {
         width: 'fit-content',
     },
     timeText: {
-        fontSize: '0.9rem',
+        fontSize: '0.85rem',
         fontWeight: '600',
         color: '#2d3436',
         fontFamily: 'monospace',
     },
     durationText: {
-        fontSize: '0.85rem',
+        fontSize: '0.8rem',
         color: '#b2bec3',
     },
     editContainer: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        display: 'flex',
         gap: '8px',
-        marginTop: '0.5rem',
+        marginTop: '0',
         backgroundColor: '#f8f9fa',
-        padding: '8px',
-        borderRadius: '12px',
-        width: '100%',
+        padding: '4px',
+        borderRadius: '6px',
+        width: 'fit-content',
         boxSizing: 'border-box' as const,
         border: '1px solid #f1f2f6',
     },
     editRow: {
         display: 'flex',
         flexDirection: 'column' as const,
-        gap: '4px',
-        width: '100%',
+        gap: '0',
+        width: 'auto',
     },
     label: {
-        fontSize: '0.75rem',
-        color: '#636e72',
-        fontWeight: '700',
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.5px',
+        display: 'none',
     },
     timeInput: {
-        width: '100%',
+        width: '70px',
         border: '1px solid #dfe6e9',
-        borderRadius: '8px',
+        borderRadius: '4px',
         padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
@@ -445,9 +445,9 @@ const styles = {
         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     },
     durationInput: {
-        width: '100%',
+        width: '60px',
         border: '1px solid #dfe6e9',
-        borderRadius: '8px',
+        borderRadius: '4px',
         padding: '4px 8px',
         fontSize: '0.9rem',
         color: '#2d3436',
@@ -468,14 +468,11 @@ const styles = {
         pointerEvents: 'none' as const,
     },
     footerRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        marginTop: '8px',
+        display: 'none',
     },
     categoryBadge: {
-        fontSize: '0.75rem',
-        padding: '2px 8px',
+        fontSize: '0.7rem',
+        padding: '1px 6px',
         borderRadius: '4px',
         backgroundColor: '#f1f2f6',
         color: '#636e72',
@@ -506,6 +503,7 @@ const styles = {
         borderRadius: '4px',
         transition: 'all 0.2s',
         marginRight: '-4px',
+        marginTop: '-4px',
     },
     menuDropdown: {
         position: 'absolute' as const,
