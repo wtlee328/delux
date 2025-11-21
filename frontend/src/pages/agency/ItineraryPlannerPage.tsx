@@ -306,7 +306,7 @@ const ItineraryPlannerPage: React.FC = () => {
       // Scroll to Day 1 after timeline is generated
       setTimeout(() => {
         timelineRef.current?.scrollToDay(1);
-      }, 100);
+      }, 200);
     }
   };
 

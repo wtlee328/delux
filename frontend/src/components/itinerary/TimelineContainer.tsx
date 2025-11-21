@@ -64,7 +64,6 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
     const [activeDay, setActiveDay] = React.useState(1);
     const isProgrammaticScroll = React.useRef(false);
     const scrollTimeout = React.useRef<NodeJS.Timeout>();
-    const prevTimelineLength = React.useRef(timeline.length);
 
     const checkScroll = () => {
         if (scrollContainerRef.current) {
@@ -83,18 +82,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         }
     };
 
-    // Watch for new days
-    React.useEffect(() => {
-        if (timeline.length > prevTimelineLength.current) {
-            // Day added, scroll to the last day
-            const lastDay = timeline[timeline.length - 1];
-            // Use a small timeout to ensure DOM is ready
-            setTimeout(() => {
-                scrollToDay(lastDay.dayNumber);
-            }, 100);
-        }
-        prevTimelineLength.current = timeline.length;
-    }, [timeline.length]);
+
 
     const scrollToDay = (dayNumber: number) => {
         const index = timeline.findIndex(d => d.dayNumber === dayNumber);
