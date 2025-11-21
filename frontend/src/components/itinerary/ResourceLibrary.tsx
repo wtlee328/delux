@@ -189,8 +189,16 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
             location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 }, // Mock location around Taipei
           };
         });
-        setProducts(mappedProducts);
-        setAvailableProducts(mappedProducts);
+
+        // If initialDestination is provided, filter products to only that destination
+        const filteredByDestination = initialDestination
+          ? mappedProducts.filter((p: Product) =>
+            p.destination.toLowerCase().includes(initialDestination.toLowerCase())
+          )
+          : mappedProducts;
+
+        setProducts(filteredByDestination);
+        setAvailableProducts(filteredByDestination);
       } catch (error) {
         console.error('Failed to fetch products:', error);
       } finally {
@@ -199,7 +207,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
     };
 
     fetchProducts();
-  }, [setAvailableProducts]);
+  }, [setAvailableProducts, initialDestination]);
 
   const filteredProducts = products.filter(product => {
     const title = product.title || '';
@@ -212,11 +220,22 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onProductHover, setAv
 
   return (
     <div style={styles.container}>
+      {/* Destination Label */}
+      {initialDestination && (
+        <div style={styles.destinationBanner}>
+          <div style={styles.destinationIcon}>📍</div>
+          <div style={styles.destinationInfo}>
+            <div style={styles.destinationLabel}>目的地</div>
+            <div style={styles.destinationName}>{initialDestination}</div>
+          </div>
+        </div>
+      )}
+
       <div style={styles.header}>
         <div style={styles.searchContainer}>
           <input
             type="text"
-            placeholder="搜尋資源..."
+            placeholder={initialDestination ? `在 ${initialDestination} 搜尋資源...` : "搜尋資源..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
@@ -278,6 +297,35 @@ const styles = {
     flexDirection: 'column' as const,
     backgroundColor: '#ffffff',
     borderRight: '1px solid #e0e0e0',
+  },
+  destinationBanner: {
+    padding: '1rem 1.25rem',
+    backgroundColor: '#f0f7ff',
+    borderBottom: '2px solid #3b82f6',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+  },
+  destinationIcon: {
+    fontSize: '1.5rem',
+    lineHeight: 1,
+  },
+  destinationInfo: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.125rem',
+  },
+  destinationLabel: {
+    fontSize: '0.7rem',
+    fontWeight: '500',
+    color: '#64748b',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+  },
+  destinationName: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#1e40af',
   },
   header: {
     padding: '1rem',
