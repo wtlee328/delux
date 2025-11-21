@@ -50,11 +50,13 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     onPreview,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [editTime, setEditTime] = useState(item.startTime || '09:00');
     const [editDuration, setEditDuration] = useState(item.duration || 60);
     const inputRef = useRef<HTMLInputElement>(null);
     const durationInputRef = useRef<HTMLInputElement>(null);
     const editContainerRef = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const {
         attributes,
@@ -97,14 +99,18 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     };
 
     // Handle click outside to save
+    // Handle click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent | TouchEvent) => {
             if (isEditing && editContainerRef.current && !editContainerRef.current.contains(event.target as Node)) {
                 handleSave();
             }
+            if (isMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
         };
 
-        if (isEditing) {
+        if (isEditing || isMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('touchstart', handleClickOutside);
         }
@@ -113,7 +119,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('touchstart', handleClickOutside);
         };
-    }, [isEditing, editTime, editDuration]); // Dependencies are crucial for handleSave to see current state
+    }, [isEditing, editTime, editDuration, isMenuOpen]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         e.stopPropagation();
@@ -148,16 +154,56 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                 <div style={styles.cardContent}>
                     <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
-                        <button
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
-                            style={styles.deleteBtn}
-                            title="Remove"
-                            onMouseEnter={(e) => e.currentTarget.style.color = '#ff7675'}
-                            onMouseLeave={(e) => e.currentTarget.style.color = '#dfe6e9'}
-                        >
-                            ×
-                        </button>
+                        <div style={{ position: 'relative' }} ref={menuRef}>
+                            <button
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
+                                style={styles.menuBtn}
+                                title="More options"
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="19" cy="12" r="1"></circle>
+                                    <circle cx="5" cy="12" r="1"></circle>
+                                </svg>
+                            </button>
+                            {isMenuOpen && (
+                                <div style={styles.menuDropdown}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onPreview(item);
+                                            setIsMenuOpen(false);
+                                        }}
+                                        style={styles.menuItem}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f2f6'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        預覽
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDelete(item.timelineId!);
+                                            setIsMenuOpen(false);
+                                        }}
+                                        style={{ ...styles.menuItem, color: '#ff7675' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fff0f0'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                        刪除
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {isEditing ? (
@@ -223,29 +269,10 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                         </div>
                     )}
 
-                    <div style={styles.footerRow}>
+                    <div style={{ ...styles.footerRow, justifyContent: 'flex-end' }}>
                         <span style={styles.categoryBadge}>
                             {categoryLabels[item.category] || item.category}
                         </span>
-                        <button
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => { e.stopPropagation(); onPreview(item); }}
-                            style={styles.previewBtn}
-                            title="預覽"
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.color = '#0984e3';
-                                e.currentTarget.style.backgroundColor = '#f1f2f6';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.color = '#b2bec3';
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -276,7 +303,7 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineIt
                     <div style={styles.timeInfo}>
                         {item.startTime || '09:00'} • {item.duration || 60} 分鐘
                     </div>
-                    <div style={{ marginTop: '8px' }}>
+                    <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
                         <span style={styles.categoryBadge}>
                             {categoryLabels[item.category] || item.category}
                         </span>
@@ -466,5 +493,45 @@ const styles = {
         borderRadius: '4px',
         transition: 'all 0.2s',
         marginRight: '-4px',
+    },
+    menuBtn: {
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '4px',
+        color: '#b2bec3',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '4px',
+        transition: 'all 0.2s',
+        marginRight: '-4px',
+    },
+    menuDropdown: {
+        position: 'absolute' as const,
+        top: '100%',
+        right: 0,
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        padding: '4px',
+        zIndex: 10,
+        minWidth: '100px',
+        border: '1px solid #f1f2f6',
+    },
+    menuItem: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        width: '100%',
+        padding: '8px 12px',
+        border: 'none',
+        background: 'none',
+        cursor: 'pointer',
+        fontSize: '0.85rem',
+        color: '#2d3436',
+        borderRadius: '4px',
+        textAlign: 'left' as const,
+        transition: 'background-color 0.2s',
     },
 };
