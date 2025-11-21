@@ -1,5 +1,6 @@
 import React from 'react';
 import { TimelineDayColumn } from './TimelineDayColumn';
+import { MiniTimeline } from './MiniTimeline';
 
 interface Product {
     id: string;
@@ -36,7 +37,7 @@ interface TimelineContainerProps {
     onPreview: (product: Product) => void;
 }
 
-const dayColorThemes = [
+export const dayColorThemes = [
     { primary: '#FFB6C1', light: '#FFF0F2', dot: '#FF69B4' }, // Pink
     { primary: '#98D8C8', light: '#E8F5F1', dot: '#5FD3B3' }, // Mint Green
     { primary: '#FFD4A3', light: '#FFF4E6', dot: '#FFB347' }, // Peach
@@ -55,12 +56,32 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
     const [showRightArrow, setShowRightArrow] = React.useState(false);
+    const [activeDay, setActiveDay] = React.useState(1);
 
     const checkScroll = () => {
         if (scrollContainerRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
             setShowLeftArrow(scrollLeft > 0);
             setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10); // -10 buffer
+
+            // Update active day based on scroll position
+            const cardWidth = 340 + 24; // Width + gap
+            const index = Math.round(scrollLeft / cardWidth);
+            if (timeline[index]) {
+                setActiveDay(timeline[index].dayNumber);
+            }
+        }
+    };
+
+    const scrollToDay = (dayNumber: number) => {
+        const index = timeline.findIndex(d => d.dayNumber === dayNumber);
+        if (index !== -1 && scrollContainerRef.current) {
+            const scrollAmount = 340 + 24;
+            scrollContainerRef.current.scrollTo({
+                left: index * scrollAmount,
+                behavior: 'smooth'
+            });
+            setActiveDay(dayNumber);
         }
     };
 
@@ -82,6 +103,13 @@ export const TimelineContainer: React.FC<TimelineContainerProps> = ({
 
     return (
         <div style={styles.container}>
+            <MiniTimeline
+                days={timeline.map(d => ({ dayNumber: d.dayNumber, date: d.date }))}
+                activeDay={activeDay}
+                onDayClick={scrollToDay}
+                colorThemes={dayColorThemes}
+            />
+
             {showLeftArrow && (
                 <button
                     onClick={() => scroll('left')}
