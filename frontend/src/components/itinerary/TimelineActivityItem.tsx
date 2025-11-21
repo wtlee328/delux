@@ -33,6 +33,14 @@ interface TimelineActivityItemProps {
 
 
 
+const categoryLabels: Record<string, string> = {
+    'landmark': '地標',
+    'activity': '活動',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
+};
+
 export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     item,
     colorTheme,
@@ -140,42 +148,16 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                 <div style={styles.cardContent}>
                     <div style={styles.headerRow}>
                         <h4 style={styles.title}>{item.title}</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', marginRight: '-8px', marginTop: '-4px' }}>
-                            <button
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
-                                style={{
-                                    ...styles.deleteBtn,
-                                    marginTop: 0,
-                                    marginRight: 0,
-                                }}
-                                title="Remove"
-                            >
-                                ×
-                            </button>
-                            <button
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); onPreview(item); }}
-                                style={{
-                                    ...styles.deleteBtn,
-                                    color: '#b2bec3',
-                                    fontSize: '1rem',
-                                    marginTop: 0,
-                                    marginRight: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '24px',
-                                    height: '24px',
-                                }}
-                                title="預覽"
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            </button>
-                        </div>
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); onDelete(item.timelineId!); }}
+                            style={styles.deleteBtn}
+                            title="Remove"
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#ff7675'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#dfe6e9'}
+                        >
+                            ×
+                        </button>
                     </div>
 
                     {isEditing ? (
@@ -240,6 +222,31 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                             <span style={styles.durationText}>({item.duration || 60} 分鐘)</span>
                         </div>
                     )}
+
+                    <div style={styles.footerRow}>
+                        <span style={styles.categoryBadge}>
+                            {categoryLabels[item.category] || item.category}
+                        </span>
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); onPreview(item); }}
+                            style={styles.previewBtn}
+                            title="預覽"
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = '#0984e3';
+                                e.currentTarget.style.backgroundColor = '#f1f2f6';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = '#b2bec3';
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,6 +275,11 @@ export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineIt
                     </div>
                     <div style={styles.timeInfo}>
                         {item.startTime || '09:00'} • {item.duration || 60} 分鐘
+                    </div>
+                    <div style={{ marginTop: '8px' }}>
+                        <span style={styles.categoryBadge}>
+                            {categoryLabels[item.category] || item.category}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -427,5 +439,32 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         pointerEvents: 'none' as const,
+    },
+    footerRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginTop: '8px',
+    },
+    categoryBadge: {
+        fontSize: '0.75rem',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        backgroundColor: '#f1f2f6',
+        color: '#636e72',
+        fontWeight: '500',
+    },
+    previewBtn: {
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '4px',
+        color: '#b2bec3',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '4px',
+        transition: 'all 0.2s',
+        marginRight: '-4px',
     },
 };
