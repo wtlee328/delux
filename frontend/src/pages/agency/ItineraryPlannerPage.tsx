@@ -50,7 +50,7 @@ interface TimelineDay {
 }
 
 const ItineraryPlannerPage: React.FC = () => {
-  const { showSuccess, showWarning } = useToast();
+  const { showSuccess } = useToast();
   const [searchParams] = useSearchParams();
   const initialDestination = searchParams.get('destination');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
