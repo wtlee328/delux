@@ -71,7 +71,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
         transform: CSS.Transform.toString(transform),
         transition,
         ...styles.container,
-        zIndex: isDragging ? 1000 : 1,
+        zIndex: isDragging ? 1000 : (isMenuOpen ? 100 : 1),
         opacity: isDragging ? 0.5 : 1,
         position: 'relative' as const,
         touchAction: 'none',
