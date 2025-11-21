@@ -326,7 +326,7 @@ const ItineraryPlannerPage: React.FC = () => {
 
   return (
     <DndContext
-      sensors={sensors}
+      sensors={startDate && endDate ? sensors : []}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -341,8 +341,8 @@ const ItineraryPlannerPage: React.FC = () => {
                 onClick={handleClearItinerary}
                 disabled={!startDate || !endDate}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${!startDate || !endDate
-                    ? 'text-slate-300 cursor-not-allowed'
-                    : 'text-slate-500 hover:text-red-600'
+                  ? 'text-slate-300 cursor-not-allowed'
+                  : 'text-slate-500 hover:text-red-600'
                   }`}
               >
                 清除行程
@@ -351,8 +351,8 @@ const ItineraryPlannerPage: React.FC = () => {
                 onClick={() => setIsSaveModalOpen(true)}
                 disabled={!startDate || !endDate}
                 className={`px-6 py-2 rounded-lg font-medium transition-colors shadow-sm ${!startDate || !endDate
-                    ? 'bg-slate-300 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md'
+                  ? 'bg-slate-300 text-slate-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md'
                   }`}
               >
                 儲存行程
