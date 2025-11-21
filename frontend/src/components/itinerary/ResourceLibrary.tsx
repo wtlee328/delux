@@ -129,10 +129,7 @@ const DraggableProduct = ({
             }}
             title="預覽詳情"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
           </button>
         </div>
 
@@ -229,7 +226,9 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
     <div style={styles.container}>
       {initialDestination && (
         <div style={styles.destinationBanner}>
-          <div style={styles.destinationIcon}>📍</div>
+          <div style={styles.destinationIcon}>
+            <span className="material-symbols-outlined text-slate-400">location_on</span>
+          </div>
           <div style={styles.destinationInfo}>
             <div style={styles.destinationLabel}>目的地</div>
             <div style={styles.destinationName}>{initialDestination}</div>

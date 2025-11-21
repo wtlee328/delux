@@ -369,7 +369,7 @@ const ItineraryPlannerPage: React.FC = () => {
               className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-r-lg flex items-center justify-center cursor-pointer text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors z-20 shadow-sm"
               title="展開資源庫"
             >
-              ›
+              <span className="material-symbols-outlined text-slate-400">chevron_right</span>
             </button>
           )}
 
@@ -393,7 +393,9 @@ const ItineraryPlannerPage: React.FC = () => {
             {!startDate || !endDate ? (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/95 backdrop-blur-sm">
                 <div className="text-center px-8 py-12 bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md">
-                  <div className="mb-4 text-6xl">📅</div>
+                  <div className="mb-4 text-6xl text-blue-500">
+                    <span className="material-symbols-outlined text-6xl">calendar_month</span>
+                  </div>
                   <h3 className="text-xl font-semibold text-slate-800 mb-2">請選擇起訖日以開始規劃行程</h3>
                   <p className="text-slate-500 text-sm">在左側資源庫選擇旅遊日期範圍後，即可開始拖曳活動至時間軸</p>
                 </div>
@@ -415,7 +417,9 @@ const ItineraryPlannerPage: React.FC = () => {
           >
             <div className="p-4 border-b border-slate-100 flex justify-between items-center font-bold text-slate-700 bg-slate-50/50">
               <h3>地圖預覽</h3>
-              <button onClick={() => togglePanel('map')} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+              <button onClick={() => togglePanel('map')} className="text-slate-400 hover:text-slate-600 leading-none flex items-center">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
             <MapView
               products={availableProducts}
@@ -430,7 +434,7 @@ const ItineraryPlannerPage: React.FC = () => {
               className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-l-lg flex items-center justify-center cursor-pointer text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors z-20 shadow-sm"
               title="展開地圖"
             >
-              ‹
+              <span className="material-symbols-outlined text-slate-400">chevron_left</span>
             </button>
           )}
         </div>
