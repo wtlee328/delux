@@ -108,9 +108,8 @@ const CreateProductPage: React.FC = () => {
       submitData.append('title', formData.產品標題);
       submitData.append('destination', formData.目的地);
       submitData.append('category', formData.類別 === '地標' ? 'landmark' :
-        formData.類別 === '活動' ? 'activity' :
-          formData.類別 === '住宿' ? 'accommodation' :
-            formData.類別 === '餐飲' ? 'food' : 'transportation');
+        formData.類別 === '住宿' ? 'accommodation' :
+          formData.類別 === '餐飲' ? 'food' : 'transportation');
       submitData.append('description', formData.產品描述);
       submitData.append('netPrice', formData.淨價);
       submitData.append('status', status);
@@ -216,7 +215,6 @@ const CreateProductPage: React.FC = () => {
                 className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
               >
                 <option value="地標">地標</option>
-                <option value="活動">活動</option>
                 <option value="住宿">住宿</option>
                 <option value="餐飲">餐飲</option>
                 <option value="交通">交通</option>

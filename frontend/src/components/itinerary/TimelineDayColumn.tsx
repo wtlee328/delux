@@ -11,7 +11,7 @@ interface Product {
     coverImageUrl: string;
     netPrice: number;
     supplierName: string;
-    productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
     notes?: string;
     location?: {
         lat: number;

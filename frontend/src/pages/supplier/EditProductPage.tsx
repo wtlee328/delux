@@ -60,7 +60,6 @@ const EditProductPage: React.FC = () => {
       // Map backend category to frontend display value
       const categoryMap: Record<string, string> = {
         'landmark': '地標',
-        'activity': '活動',
         'accommodation': '住宿',
         'food': '餐飲',
         'transportation': '交通'
@@ -171,7 +170,6 @@ const EditProductPage: React.FC = () => {
 
       const categoryMap: Record<string, string> = {
         '地標': 'landmark',
-        '活動': 'activity',
         '住宿': 'accommodation',
         '餐飲': 'food',
         '交通': 'transportation'
@@ -317,7 +315,6 @@ const EditProductPage: React.FC = () => {
                 className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
               >
                 <option value="地標">地標</option>
-                <option value="活動">活動</option>
                 <option value="住宿">住宿</option>
                 <option value="餐飲">餐飲</option>
                 <option value="交通">交通</option>

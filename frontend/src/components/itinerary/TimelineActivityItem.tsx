@@ -10,7 +10,7 @@ interface Product {
     coverImageUrl: string;
     netPrice: number;
     supplierName: string;
-    productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+    productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
     notes?: string;
     location?: {
         lat: number;
@@ -35,7 +35,6 @@ interface TimelineActivityItemProps {
 
 const categoryLabels: Record<string, string> = {
     'landmark': '地標',
-    'activity': '活動',
     'accommodation': '住宿',
     'food': '餐飲',
     'transportation': '交通'

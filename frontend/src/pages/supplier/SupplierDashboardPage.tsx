@@ -114,7 +114,16 @@ const SupplierDashboardPage: React.FC = () => {
     return result;
   }, [products, filterDestination, filterCategory, filterStatus, sortConfig]);
 
-  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const categoryMap: Record<string, string> = {
+    'landmark': '地標',
+    'accommodation': '住宿',
+    'food': '餐飲',
+    'transportation': '交通'
+  };
+
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category)))
+    .filter(Boolean)
+    .filter(c => c !== 'activity');
   const uniqueStatuses = Array.from(new Set(products.map(p => p.status))).filter(Boolean);
 
   return (
@@ -152,7 +161,7 @@ const SupplierDashboardPage: React.FC = () => {
             >
               <option value="">全部類別</option>
               {uniqueCategories.map(c => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{categoryMap[c] || c}</option>
               ))}
             </select>
           </div>
@@ -248,7 +257,7 @@ const SupplierDashboardPage: React.FC = () => {
                     <td className="px-6 py-4 text-slate-600">{product.destination}</td>
                     <td className="px-6 py-4 text-slate-600">
                       <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600">
-                        {product.category}
+                        {categoryMap[product.category] || product.category}
                       </span>
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(product.status)}</td>

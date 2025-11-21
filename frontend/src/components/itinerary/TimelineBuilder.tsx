@@ -10,7 +10,7 @@ interface Product {
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
-  productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+  productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
   notes?: string;
   timelineId?: string;
   startTime?: string; // Format: "HH:mm"
@@ -48,7 +48,7 @@ const getActivityIcon = (type: string) => {
   const icons: Record<string, string> = {
     accommodation: '🏨',
     food: '🍽️',
-    activity: '🎯',
+    landmark: '🎯',
     transportation: '🚗',
   };
   return icons[type] || '📍';

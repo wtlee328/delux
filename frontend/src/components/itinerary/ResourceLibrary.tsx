@@ -11,7 +11,7 @@ interface Product {
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
-  productType: 'activity' | 'accommodation' | 'food' | 'transportation';
+  productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
   description?: string;
   notes?: string;
   location?: {
@@ -49,7 +49,6 @@ const DraggableProduct = ({
   // Map category to Chinese labels
   const categoryLabels: Record<string, string> = {
     'landmark': '地標',
-    'activity': '活動',
     'accommodation': '住宿',
     'food': '餐飲',
     'transportation': '交通'
@@ -172,7 +171,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(initialDestination || '');
-  const [activeTab, setActiveTab] = useState<'all' | 'activity' | 'accommodation' | 'food' | 'transportation'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'landmark' | 'accommodation' | 'food' | 'transportation'>('all');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
@@ -180,9 +179,8 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
       try {
         const response = await axios.get('/api/agency/tours');
         const mappedProducts = response.data.map((p: any) => {
-          const categoryToType: Record<string, 'activity' | 'accommodation' | 'food' | 'transportation'> = {
-            'landmark': 'activity',
-            'activity': 'activity',
+          const categoryToType: Record<string, 'landmark' | 'accommodation' | 'food' | 'transportation'> = {
+            'landmark': 'landmark',
             'accommodation': 'accommodation',
             'food': 'food',
             'transportation': 'transportation'
@@ -190,7 +188,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
 
           return {
             ...p,
-            productType: categoryToType[p.category] || 'activity',
+            productType: categoryToType[p.category] || 'landmark',
             location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 },
           };
         });
@@ -287,7 +285,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
         <div style={styles.tabs}>
           {[
             { id: 'all', label: '全部' },
-            { id: 'activity', label: '活動' },
+            { id: 'landmark', label: '地標' },
             { id: 'accommodation', label: '住宿' },
             { id: 'food', label: '餐飲' },
             { id: 'transportation', label: '交通' }
