@@ -74,17 +74,16 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={{ showToast, showSuccess, showError, showWarning, showInfo }}>
       {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer toasts={toasts} />
     </ToastContext.Provider>
   );
 };
 
 interface ToastContainerProps {
   toasts: Toast[];
-  onRemove: (id: string) => void;
 }
 
-const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
+const ToastContainer: React.FC<ToastContainerProps> = ({ toasts }) => {
   if (toasts.length === 0) return null;
 
   return (
