@@ -46,6 +46,7 @@ const EditProductPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<ProductStatus>('草稿');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProductDetails();
@@ -77,6 +78,7 @@ const EditProductPage: React.FC = () => {
       setExistingImageUrl(product.coverImageUrl);
       setImagePreview(product.coverImageUrl);
       setCurrentStatus(product.status);
+      setRejectionReason(product.rejectionReason);
     } catch (err: any) {
       setErrors({ submit: err.response?.data?.message || '載入產品失敗' });
     } finally {
@@ -266,6 +268,16 @@ const EditProductPage: React.FC = () => {
                 {currentStatus}
               </span>
             </div>
+
+            {currentStatus === '需要修改' && rejectionReason && (
+              <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                <h4 className="font-bold mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined">error</span>
+                  審核未通過原因
+                </h4>
+                <p className="whitespace-pre-wrap">{rejectionReason}</p>
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <label htmlFor="產品標題" className="font-bold text-slate-700">

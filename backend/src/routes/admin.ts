@@ -32,8 +32,8 @@ router.post('/users', async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!email || !password || !name) {
-      res.status(400).json({ 
-        error: 'Required fields: email, password, name' 
+      res.status(400).json({
+        error: 'Required fields: email, password, name'
       });
       return;
     }
@@ -41,8 +41,8 @@ router.post('/users', async (req: Request, res: Response) => {
     // Validate roles array or single role
     const userRoles = roles && roles.length > 0 ? roles : [role];
     if (userRoles.length === 0) {
-      res.status(400).json({ 
-        error: 'At least one role is required' 
+      res.status(400).json({
+        error: 'At least one role is required'
       });
       return;
     }
@@ -50,8 +50,8 @@ router.post('/users', async (req: Request, res: Response) => {
     // Validate each role
     for (const r of userRoles) {
       if (!['admin', 'supplier', 'agency'].includes(r)) {
-        res.status(400).json({ 
-          error: 'Invalid role. Must be admin, supplier, or agency' 
+        res.status(400).json({
+          error: 'Invalid role. Must be admin, supplier, or agency'
         });
         return;
       }
@@ -89,8 +89,8 @@ router.put('/users/:id', async (req: Request, res: Response) => {
 
     // Validate at least one field to update
     if (!name && !email && !password && !roles) {
-      res.status(400).json({ 
-        error: 'At least one field must be provided to update' 
+      res.status(400).json({
+        error: 'At least one field must be provided to update'
       });
       return;
     }
@@ -98,16 +98,16 @@ router.put('/users/:id', async (req: Request, res: Response) => {
     // Validate roles if provided
     if (roles) {
       if (!Array.isArray(roles) || roles.length === 0) {
-        res.status(400).json({ 
-          error: 'Roles must be a non-empty array' 
+        res.status(400).json({
+          error: 'Roles must be a non-empty array'
         });
         return;
       }
 
       for (const role of roles) {
         if (!['admin', 'supplier', 'agency'].includes(role)) {
-          res.status(400).json({ 
-            error: 'Invalid role. Must be admin, supplier, or agency' 
+          res.status(400).json({
+            error: 'Invalid role. Must be admin, supplier, or agency'
           });
           return;
         }
@@ -256,7 +256,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     }
 
     const { updateProductStatus } = await import('../services/productService');
-    const product = await updateProductStatus(id, status);
+    const product = await updateProductStatus(id, status, undefined, feedback);
 
     // TODO: In task 17.5, send email notification with feedback if status is '需要修改'
 

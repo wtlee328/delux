@@ -31,6 +31,7 @@ export interface Product {
   coverImageUrl: string;
   netPrice: number;
   status: ProductStatus;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,7 +60,7 @@ export async function createProduct(
   const result = await pool.query(
     `INSERT INTO products (supplier_id, title, destination, category, description, cover_image_url, net_price, status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
     [supplierId, title, destination, category, description, coverImageUrl, netPrice, status]
   );
 
@@ -140,7 +141,7 @@ export async function updateProduct(
     `UPDATE products
      SET ${updates.join(', ')}
      WHERE id = $${paramCount}
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
     values
   );
 
@@ -156,6 +157,7 @@ export async function updateProduct(
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
     status: product.status,
+    rejectionReason: product.rejection_reason,
     createdAt: product.created_at,
     updatedAt: product.updated_at,
   };
@@ -168,7 +170,7 @@ export async function updateProduct(
  */
 export async function getProductsBySupplier(supplierId: string): Promise<Product[]> {
   const result = await pool.query(
-    `SELECT id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at
+    `SELECT id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at
      FROM products
      WHERE supplier_id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)
      ORDER BY created_at DESC`,
@@ -185,6 +187,7 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
     status: row.status,
+    rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
@@ -229,7 +232,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
 export async function getPublishedProducts(filters?: ProductFilters): Promise<ProductWithSupplier[]> {
   let query = `
     SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-           p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
+           p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
            u.name as supplier_name
     FROM products p
     JOIN users u ON p.supplier_id = u.id
@@ -302,6 +305,7 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
     status: row.status,
+    rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     supplierName: row.supplier_name,
@@ -319,7 +323,8 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
 export async function updateProductStatus(
   id: string,
   status: ProductStatus,
-  supplierId?: string
+  supplierId?: string,
+  rejectionReason?: string
 ): Promise<Product> {
   // If supplierId is provided, verify ownership
   if (supplierId) {
@@ -332,12 +337,22 @@ export async function updateProductStatus(
       throw new Error('Product not found or access denied');
     }
   }
+
+  const updates: string[] = ['status = $1', 'updated_at = CURRENT_TIMESTAMP'];
+  const values: any[] = [status, id];
+  let paramCount = 3;
+
+  if (rejectionReason !== undefined) {
+    updates.push(`rejection_reason = $${paramCount++}`);
+    values.push(rejectionReason);
+  }
+
   const result = await pool.query(
     `UPDATE products
-     SET status = $1, updated_at = CURRENT_TIMESTAMP
+     SET ${updates.join(', ')}
      WHERE id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, created_at, updated_at`,
-    [status, id]
+     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
+    values
   );
 
   if (result.rows.length === 0) {
@@ -356,6 +371,7 @@ export async function updateProductStatus(
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
     status: product.status,
+    rejectionReason: product.rejection_reason,
     createdAt: product.created_at,
     updatedAt: product.updated_at,
   };
@@ -369,7 +385,7 @@ export async function updateProductStatus(
 export async function getProductsByStatus(status: ProductStatus): Promise<ProductWithSupplier[]> {
   const result = await pool.query(
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-            p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
+            p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -388,6 +404,7 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
     status: row.status,
+    rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     supplierName: row.supplier_name,
