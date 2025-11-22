@@ -281,7 +281,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
 export async function getProductById(id: string): Promise<ProductWithSupplier> {
   const result = await pool.query(
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-            p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
+            p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
