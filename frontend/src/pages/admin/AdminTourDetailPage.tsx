@@ -14,6 +14,7 @@ interface ProductDetail {
   coverImageUrl: string;
   netPrice: number;
   status: ProductStatus;
+  rejectionReason?: string;
   supplierName: string;
   createdAt: string;
 }
@@ -92,7 +93,7 @@ const AdminTourDetailPage: React.FC = () => {
       });
 
       // Update local state
-      setProduct({ ...product, status: '需要修改' });
+      setProduct({ ...product, status: '需要修改', rejectionReason: revisionFeedback });
       setUpdateSuccess(true);
       setShowRevisionModal(false);
       setRevisionFeedback('');
@@ -238,7 +239,13 @@ const AdminTourDetailPage: React.FC = () => {
 
             {product.status === '需要修改' && (
               <div className="mt-8 p-4 bg-red-50 rounded-lg border border-red-100">
-                <p className="text-red-700 font-medium">此產品需要供應商修改</p>
+                <p className="text-red-700 font-medium mb-2">此產品需要供應商修改</p>
+                {product.rejectionReason && (
+                  <div className="text-red-600 text-sm bg-white p-3 rounded border border-red-100">
+                    <span className="font-bold block mb-1">修改建議：</span>
+                    {product.rejectionReason}
+                  </div>
+                )}
               </div>
             )}
 
