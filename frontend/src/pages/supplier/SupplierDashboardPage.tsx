@@ -134,7 +134,7 @@ const SupplierDashboardPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">我的產品</h2>
           <button
             onClick={() => navigate('/supplier/tours/new')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
           >
             + 新增產品
           </button>
@@ -205,7 +205,7 @@ const SupplierDashboardPage: React.FC = () => {
             <p className="text-slate-500 mb-4 text-lg">尚無產品</p>
             <button
               onClick={() => navigate('/supplier/tours/new')}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+              className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
             >
               建立第一個產品
             </button>

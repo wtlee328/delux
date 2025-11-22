@@ -232,13 +232,13 @@ const AdminToursPage: React.FC = () => {
             )}
             <button
               onClick={() => setShowPendingOnly(false)}
-              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${!showPendingOnly ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${!showPendingOnly ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
             >
               全部產品
             </button>
             <button
               onClick={() => setShowPendingOnly(true)}
-              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${showPendingOnly ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${showPendingOnly ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
             >
               待審核 {pendingCount > 0 && <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">{pendingCount}</span>}
             </button>

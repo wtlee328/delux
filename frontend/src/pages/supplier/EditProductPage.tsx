@@ -426,7 +426,7 @@ const EditProductPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleStatusChange('待審核')}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                  className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                   disabled={isSubmitting}
                 >
                   提交審核
