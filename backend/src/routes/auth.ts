@@ -24,7 +24,7 @@ router.post('/login', async (req: Request, res: Response) => {
     res.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed';
-    
+
     // Return 401 for invalid credentials
     if (message === 'Invalid email or password') {
       res.status(401).json({ error: message });
@@ -53,7 +53,7 @@ router.post('/select-role', requireAuth, async (req: Request, res: Response) => 
     }
 
     // Validate role value
-    if (!['admin', 'supplier', 'agency'].includes(role)) {
+    if (!['admin', 'supplier', 'agency', 'super_admin'].includes(role)) {
       res.status(400).json({ error: 'Invalid role' });
       return;
     }
@@ -64,7 +64,7 @@ router.post('/select-role', requireAuth, async (req: Request, res: Response) => 
     res.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Role selection failed';
-    
+
     // Return 403 for invalid role
     if (message === 'User does not have this role') {
       res.status(403).json({ error: message });
