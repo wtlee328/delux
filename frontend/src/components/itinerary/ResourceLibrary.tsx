@@ -173,6 +173,11 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
   const [searchTerm, setSearchTerm] = useState(initialDestination || '');
   const [activeTab, setActiveTab] = useState<'all' | 'landmark' | 'accommodation' | 'food' | 'transportation'>('all');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+
+  useEffect(() => {
+    setSelectedSupplier('all');
+  }, [initialDestination]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -211,13 +216,16 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
     fetchProducts();
   }, [setAvailableProducts, initialDestination]);
 
+  const uniqueSuppliers = Array.from(new Set(products.map(p => p.supplierName))).filter(Boolean).sort();
+
   const filteredProducts = products.filter(product => {
     const title = product.title || '';
     const destination = product.destination || '';
     const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       destination.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = activeTab === 'all' || product.productType === activeTab;
-    return matchesSearch && matchesType;
+    const matchesSupplier = selectedSupplier === 'all' || product.supplierName === selectedSupplier;
+    return matchesSearch && matchesType && matchesSupplier;
   });
 
   return (
@@ -230,6 +238,49 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
           <div style={styles.destinationInfo}>
             <div style={styles.destinationLabel}>目的地</div>
             <div style={styles.destinationName}>{initialDestination}</div>
+          </div>
+
+          <div style={{ width: '1px', height: '24px', backgroundColor: '#e5e7eb', margin: '0 0.5rem' }}></div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '140px' }}>
+            <div style={styles.destinationLabel}>供應商</div>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select
+                value={selectedSupplier}
+                onChange={(e) => setSelectedSupplier(e.target.value)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  color: '#1f2937',
+                  paddingRight: '1.5rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  appearance: 'none',
+                  width: '100%',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden'
+                }}
+              >
+                <option value="all">全部供應商</option>
+                {uniqueSuppliers.map(supplier => (
+                  <option key={supplier} value={supplier}>{supplier}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined" style={{
+                position: 'absolute',
+                right: 0,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '1.25rem',
+                color: '#9ca3af',
+                pointerEvents: 'none'
+              }}>
+                arrow_drop_down
+              </span>
+            </div>
           </div>
         </div>
       )}
