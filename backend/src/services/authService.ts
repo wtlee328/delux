@@ -13,8 +13,8 @@ export interface LoginResponse {
     id: string;
     email: string;
     name: string;
-    role: 'admin' | 'supplier' | 'agency';
-    roles: ('admin' | 'supplier' | 'agency')[];
+    role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+    roles: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
   };
 }
 
@@ -71,10 +71,10 @@ export async function login(
     // user_roles table doesn't exist yet, will use legacy role
     console.log('user_roles table not found, using legacy role');
   }
-  
+
   // If no roles in user_roles table, fall back to single role from users table
   const userRoles = roles.length > 0 ? roles : [user.role];
-  
+
   // Use active_role if set, otherwise use first role or legacy role
   const activeRole = user.active_role || userRoles[0] || user.role;
 
@@ -83,6 +83,7 @@ export async function login(
     userId: user.id,
     email: user.email,
     role: activeRole,
+    roles: userRoles as any,
   };
 
   const token = generateToken(payload);
@@ -94,7 +95,7 @@ export async function login(
       email: user.email,
       name: user.name,
       role: activeRole,
-      roles: userRoles,
+      roles: userRoles as any,
     },
   };
 }
@@ -108,7 +109,7 @@ export async function login(
  */
 export async function setActiveRole(
   userId: string,
-  role: 'admin' | 'supplier' | 'agency'
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin'
 ): Promise<LoginResponse> {
   // Verify user has this role
   let roleCheck;
@@ -128,7 +129,7 @@ export async function setActiveRole(
       'SELECT role FROM users WHERE id = $1',
       [userId]
     );
-    
+
     if (userCheck.rows.length === 0 || userCheck.rows[0].role !== role) {
       throw new Error('User does not have this role');
     }
@@ -169,7 +170,7 @@ export async function setActiveRole(
     // user_roles table doesn't exist yet
     console.log('user_roles table not found in setActiveRole');
   }
-  
+
   const userRoles = roles.length > 0 ? roles : [user.role];
 
   // Generate new JWT token with selected role
@@ -177,6 +178,7 @@ export async function setActiveRole(
     userId: user.id,
     email: user.email,
     role: role,
+    roles: userRoles as any,
   };
 
   const token = generateToken(payload);
@@ -188,7 +190,7 @@ export async function setActiveRole(
       email: user.email,
       name: user.name,
       role: role,
-      roles: userRoles,
+      roles: userRoles as any,
     },
   };
 }

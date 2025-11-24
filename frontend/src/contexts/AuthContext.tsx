@@ -5,8 +5,8 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'supplier' | 'agency';
-  roles: ('admin' | 'supplier' | 'agency')[];
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+  roles: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
 }
 
 interface AuthContextType {
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
+
     if (storedToken && storedUser && storedUser !== 'undefined') {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -55,20 +55,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await axios.post('/api/auth/login', { email, password });
       console.log('Login response:', response.data);
       const { token: newToken, user: newUser } = response.data;
-      
+
       // Validate response data
       if (!newToken || !newUser) {
         throw new Error('Invalid login response: missing token or user data');
       }
-      
+
       // Store in state
       setToken(newToken);
       setUser(newUser);
-      
+
       // Store in localStorage
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
-      
+
       // Set default authorization header for axios
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     } catch (error) {
@@ -81,11 +81,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear state
     setToken(null);
     setUser(null);
-    
+
     // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     // Remove authorization header
     delete axios.defaults.headers.common['Authorization'];
   };
@@ -94,11 +94,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Update state
     setToken(newToken);
     setUser(newUser);
-    
+
     // Update localStorage
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
-    
+
     // Update axios header
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };

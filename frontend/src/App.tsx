@@ -24,8 +24,10 @@ const RoleBasedRedirect = () => {
   }
 
   switch (user.role) {
-    case 'admin':
+    case 'super_admin':
       return <Navigate to="/admin/users" replace />;
+    case 'admin':
+      return <Navigate to="/admin/tours" replace />;
     case 'supplier':
       return <Navigate to="/supplier/dashboard" replace />;
     case 'agency':
@@ -45,7 +47,7 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/select-role" element={<RoleSelectionPage />} />
-              
+
               {/* Root redirect based on authentication */}
               <Route path="/" element={<RoleBasedRedirect />} />
 
@@ -53,7 +55,7 @@ function App() {
               <Route
                 path="/admin/users"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminUsersPage />
                   </ProtectedRoute>
                 }

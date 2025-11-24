@@ -40,18 +40,34 @@ export function requireAuth(
  * Middleware to check if user has required role
  * @param allowedRoles - Array of roles that are allowed to access the route
  */
-export function requireRole(allowedRoles: Array<'admin' | 'supplier' | 'agency'>) {
+export function requireRole(allowedRoles: Array<'admin' | 'supplier' | 'agency' | 'super_admin'>) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({ error: 'Access denied' });
+    // Super admin has access to everything admin has access to
+    if (req.user.role === 'super_admin' && allowedRoles.includes('admin')) {
+      next();
       return;
     }
 
-    next();
+    // Direct role match
+    if (allowedRoles.includes(req.user.role as any)) {
+      next();
+      return;
+    }
+
+    // Check if user has multiple roles and one of them matches
+    if (req.user.roles && req.user.roles.some((role: string) => {
+      if (role === 'super_admin' && allowedRoles.includes('admin')) return true;
+      return allowedRoles.includes(role as any);
+    })) {
+      next();
+      return;
+    }
+
+    res.status(403).json({ error: 'Access denied' });
   };
 }

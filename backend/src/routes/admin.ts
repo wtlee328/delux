@@ -6,13 +6,14 @@ const router = Router();
 
 // Apply authentication and admin role requirement to all routes
 router.use(requireAuth);
+// Base requirement is admin, but specific routes might require super_admin
 router.use(requireRole(['admin']));
 
 /**
  * GET /api/admin/users
- * Get all users (admin only)
+ * Get all users (super_admin only)
  */
-router.get('/users', async (req: Request, res: Response) => {
+router.get('/users', requireRole(['super_admin']), async (req: Request, res: Response) => {
   try {
     const users = await getAllUsers();
     res.json(users);
@@ -24,9 +25,9 @@ router.get('/users', async (req: Request, res: Response) => {
 
 /**
  * POST /api/admin/users
- * Create a new user (admin only)
+ * Create a new user (super_admin only)
  */
-router.post('/users', async (req: Request, res: Response) => {
+router.post('/users', requireRole(['super_admin']), async (req: Request, res: Response) => {
   try {
     const { email, password, name, role, roles } = req.body;
 
@@ -49,9 +50,9 @@ router.post('/users', async (req: Request, res: Response) => {
 
     // Validate each role
     for (const r of userRoles) {
-      if (!['admin', 'supplier', 'agency'].includes(r)) {
+      if (!['admin', 'supplier', 'agency', 'super_admin'].includes(r)) {
         res.status(400).json({
-          error: 'Invalid role. Must be admin, supplier, or agency'
+          error: 'Invalid role. Must be admin, supplier, agency, or super_admin'
         });
         return;
       }
@@ -78,9 +79,9 @@ router.post('/users', async (req: Request, res: Response) => {
 
 /**
  * PUT /api/admin/users/:id
- * Update a user (admin only)
+ * Update a user (super_admin only)
  */
-router.put('/users/:id', async (req: Request, res: Response) => {
+router.put('/users/:id', requireRole(['super_admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, email, password, roles } = req.body;
@@ -105,9 +106,9 @@ router.put('/users/:id', async (req: Request, res: Response) => {
       }
 
       for (const role of roles) {
-        if (!['admin', 'supplier', 'agency'].includes(role)) {
+        if (!['admin', 'supplier', 'agency', 'super_admin'].includes(role)) {
           res.status(400).json({
-            error: 'Invalid role. Must be admin, supplier, or agency'
+            error: 'Invalid role. Must be admin, supplier, agency, or super_admin'
           });
           return;
         }
@@ -138,9 +139,9 @@ router.put('/users/:id', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/admin/users/:id
- * Delete a user (admin only)
+ * Delete a user (super_admin only)
  */
-router.delete('/users/:id', async (req: Request, res: Response) => {
+router.delete('/users/:id', requireRole(['super_admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

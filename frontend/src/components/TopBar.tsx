@@ -34,6 +34,8 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions }) => {
 
     const getRoleLabel = (role: string): string => {
         switch (role) {
+            case 'super_admin':
+                return 'Super Admin';
             case 'admin':
                 return '管理員';
             case 'supplier':
@@ -47,8 +49,10 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions }) => {
 
     const getRedirectPath = (role: string): string => {
         switch (role) {
-            case 'admin':
+            case 'super_admin':
                 return '/admin/users';
+            case 'admin':
+                return '/admin/tours';
             case 'supplier':
                 return '/supplier/dashboard';
             case 'agency':
@@ -58,7 +62,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions }) => {
         }
     };
 
-    const handleRoleSwitch = async (role: 'admin' | 'supplier' | 'agency') => {
+    const handleRoleSwitch = async (role: 'admin' | 'supplier' | 'agency' | 'super_admin') => {
         if (role === user?.role) {
             setIsDropdownOpen(false);
             return;

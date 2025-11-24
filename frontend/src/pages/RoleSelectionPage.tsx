@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 
 interface LocationState {
-  roles: ('admin' | 'supplier' | 'agency')[];
+  roles: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
   userName: string;
 }
 
@@ -30,6 +30,8 @@ const RoleSelectionPage: React.FC = () => {
 
   const getRoleLabel = (role: string): string => {
     switch (role) {
+      case 'super_admin':
+        return 'Super Admin';
       case 'admin':
         return '管理員';
       case 'supplier':
@@ -43,6 +45,8 @@ const RoleSelectionPage: React.FC = () => {
 
   const getRoleDescription = (role: string): string => {
     switch (role) {
+      case 'super_admin':
+        return '系統最高權限管理';
       case 'admin':
         return '管理用戶和審核產品';
       case 'supplier':
@@ -56,6 +60,8 @@ const RoleSelectionPage: React.FC = () => {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
+      case 'super_admin':
+        return <span className="material-symbols-outlined text-4xl">security</span>;
       case 'admin':
         return <span className="material-symbols-outlined text-4xl">admin_panel_settings</span>;
       case 'supplier':
@@ -69,8 +75,10 @@ const RoleSelectionPage: React.FC = () => {
 
   const getRedirectPath = (role: string): string => {
     switch (role) {
-      case 'admin':
+      case 'super_admin':
         return '/admin/users';
+      case 'admin':
+        return '/admin/tours';
       case 'supplier':
         return '/supplier/dashboard';
       case 'agency':
@@ -80,7 +88,7 @@ const RoleSelectionPage: React.FC = () => {
     }
   };
 
-  const handleRoleSelect = async (role: 'admin' | 'supplier' | 'agency') => {
+  const handleRoleSelect = async (role: 'admin' | 'supplier' | 'agency' | 'super_admin') => {
     setIsLoading(true);
 
     try {

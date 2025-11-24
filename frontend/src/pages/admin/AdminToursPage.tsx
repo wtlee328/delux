@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 import TopBar from '../../components/TopBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
@@ -198,17 +199,21 @@ const AdminToursPage: React.FC = () => {
     .filter(c => c !== 'activity'); // Filter out 'activity' if any remain in state temporarily
   const uniqueStatuses = Array.from(new Set(products.map(p => p.status))).filter(Boolean);
 
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar title="後台管理" />
       <div className="bg-white border-b border-slate-200 py-4 flex justify-center sticky top-16 z-30 shadow-sm">
         <nav className="flex p-1 bg-slate-100 rounded-xl">
-          <button
-            onClick={() => navigate('/admin/users')}
-            className="px-6 py-2.5 text-slate-500 hover:text-slate-700 font-medium transition-all"
-          >
-            用戶管理
-          </button>
+          {user?.role === 'super_admin' && (
+            <button
+              onClick={() => navigate('/admin/users')}
+              className="px-6 py-2.5 text-slate-500 hover:text-slate-700 font-medium transition-all"
+            >
+              用戶管理
+            </button>
+          )}
           <button
             onClick={() => navigate('/admin/tours')}
             className="px-6 py-2.5 bg-white text-slate-900 shadow-sm rounded-lg font-bold transition-all"

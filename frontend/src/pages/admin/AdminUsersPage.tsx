@@ -10,8 +10,8 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'supplier' | 'agency';
-  roles: ('admin' | 'supplier' | 'agency')[];
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+  roles: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
   createdAt: string;
 }
 
@@ -27,8 +27,8 @@ const AdminUsersPage: React.FC = () => {
     email: '',
     password: '',
     name: '',
-    role: 'supplier' as 'admin' | 'supplier' | 'agency',
-    roles: [] as ('admin' | 'supplier' | 'agency')[],
+    role: 'supplier' as 'admin' | 'supplier' | 'agency' | 'super_admin',
+    roles: [] as ('admin' | 'supplier' | 'agency' | 'super_admin')[],
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -60,7 +60,7 @@ const AdminUsersPage: React.FC = () => {
     }
   };
 
-  const handleRoleCheckboxChange = (role: 'admin' | 'supplier' | 'agency') => {
+  const handleRoleCheckboxChange = (role: 'admin' | 'supplier' | 'agency' | 'super_admin') => {
     setFormData(prev => {
       const roles = prev.roles.includes(role)
         ? prev.roles.filter(r => r !== role)
@@ -188,7 +188,9 @@ const AdminUsersPage: React.FC = () => {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin':
-        return '帝樂 Admin';
+        return '管理員';
+      case 'super_admin':
+        return 'Super Admin';
       case 'supplier':
         return '當地供應商';
       case 'agency':
@@ -347,7 +349,17 @@ const AdminUsersPage: React.FC = () => {
                       disabled={submitting}
                       className="w-5 h-5 rounded border-slate-300 text-slate-800 focus:ring-slate-400"
                     />
-                    <span>帝樂 Admin</span>
+                    <span>管理員</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer text-slate-700 hover:text-slate-900 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes('super_admin')}
+                      onChange={() => handleRoleCheckboxChange('super_admin')}
+                      disabled={submitting}
+                      className="w-5 h-5 rounded border-slate-300 text-slate-800 focus:ring-slate-400"
+                    />
+                    <span>Super Admin</span>
                   </label>
                 </div>
                 {fieldErrors.role && (

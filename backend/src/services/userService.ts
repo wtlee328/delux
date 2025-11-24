@@ -5,16 +5,16 @@ export interface CreateUserRequest {
   email: string;
   password: string;
   name: string;
-  role: 'admin' | 'supplier' | 'agency';
-  roles?: ('admin' | 'supplier' | 'agency')[]; // Optional array for multi-role support
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+  roles?: ('admin' | 'supplier' | 'agency' | 'super_admin')[]; // Optional array for multi-role support
 }
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'supplier' | 'agency';
-  roles: ('admin' | 'supplier' | 'agency')[]; // All roles for this user
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+  roles: ('admin' | 'supplier' | 'agency' | 'super_admin')[]; // All roles for this user
   createdAt: Date;
   updatedAt: Date;
 }
@@ -171,7 +171,7 @@ export interface UpdateUserRequest {
   name?: string;
   email?: string;
   password?: string;
-  roles?: ('admin' | 'supplier' | 'agency')[];
+  roles?: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
 }
 
 /**

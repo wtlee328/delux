@@ -6,7 +6,8 @@ const JWT_EXPIRES_IN = '24h';
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: 'admin' | 'supplier' | 'agency';
+  role: 'admin' | 'supplier' | 'agency' | 'super_admin';
+  roles?: ('admin' | 'supplier' | 'agency' | 'super_admin')[];
 }
 
 /**
