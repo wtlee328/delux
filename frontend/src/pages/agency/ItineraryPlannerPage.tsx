@@ -149,23 +149,52 @@ const ItineraryPlannerPage: React.FC = () => {
 
     if (!over) return;
 
-    if (active.data.current?.type === 'resource' && over.data.current?.type === 'day') {
+    // Handle dropping a resource (new item)
+    if (active.data.current?.type === 'resource') {
       const product = active.data.current.product;
-      const dayNumber = over.data.current.dayNumber;
-      const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
-      const productCopy = { ...product, timelineId: uniqueId, duration: 60 };
+      let targetDayNumber = -1;
+      let insertIndex = -1;
 
-      setTimeline(prev => prev.map(day => {
-        if (day.dayNumber === dayNumber) {
-          const newItems = [...day.items, productCopy];
-          return { ...day, items: recalculateTimes(newItems) };
+      // Case 1: Dropped directly on the day container
+      if (over.data.current?.type === 'day') {
+        targetDayNumber = over.data.current.dayNumber;
+        const day = timeline.find(d => d.dayNumber === targetDayNumber);
+        if (day) insertIndex = day.items.length;
+      }
+      // Case 2: Dropped over an existing item
+      else {
+        const overId = over.id as string;
+        const day = timeline.find(d => d.items.some(i => i.timelineId === overId));
+        if (day) {
+          targetDayNumber = day.dayNumber;
+          const overIndex = day.items.findIndex(i => i.timelineId === overId);
+          // Insert after the hovered item
+          insertIndex = overIndex + 1;
         }
-        return day;
-      }));
-      showSuccess(`已將 ${product.title} 加入第 ${dayNumber} 天`);
-      return;
+      }
+
+      if (targetDayNumber !== -1) {
+        const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
+        const productCopy = { ...product, timelineId: uniqueId, duration: 60 };
+
+        setTimeline(prev => prev.map(day => {
+          if (day.dayNumber === targetDayNumber) {
+            const newItems = [...day.items];
+            if (insertIndex >= 0 && insertIndex <= newItems.length) {
+              newItems.splice(insertIndex, 0, productCopy);
+            } else {
+              newItems.push(productCopy);
+            }
+            return { ...day, items: recalculateTimes(newItems) };
+          }
+          return day;
+        }));
+        showSuccess(`已將 ${product.title} 加入第 ${targetDayNumber} 天`);
+        return;
+      }
     }
 
+    // Handle reordering (Timeline Item -> Timeline Item/Day)
     const activeId = active.id as string;
     const overId = over.id as string;
 
