@@ -31,7 +31,10 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     });
 
     // Summary Data
-    const landmarks = day.items.filter(i => i.productType === 'landmark' || i.productType === 'transportation');
+    // Debug logging
+    console.log(`Day ${day.dayNumber} items:`, day.items);
+
+    const landmarks = day.items.filter(i => (i.productType === 'landmark' || i.productType === 'transportation') && i.timelineId);
     const meals = day.items.filter(i => i.productType === 'food');
     const hotels = day.items.filter(i => i.productType === 'accommodation');
 
@@ -51,8 +54,8 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                         <div style={styles.routeText}>
                             {landmarks.length > 0 ? (
                                 landmarks.map((l, i) => (
-                                    <React.Fragment key={l.id}>
-                                        {i > 0 && <span style={styles.arrow}>➝</span>}
+                                    <React.Fragment key={l.timelineId || i}>
+                                        {i > 0 && <span style={styles.arrow}> – </span>}
                                         <span>{l.title}</span>
                                     </React.Fragment>
                                 ))
