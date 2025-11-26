@@ -243,6 +243,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                     ...styles.timeDisplay,
                                     padding: '0',
                                     marginLeft: '0',
+                                    display: 'none', // Hide time display as requested
                                 }}
                                 onClick={() => setIsEditing(true)}
                                 onPointerDown={(e) => e.stopPropagation()}
@@ -253,9 +254,10 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                             </div>
                         )}
 
-                        <span style={styles.categoryBadge}>
+                        {/* Hide category badge as requested */}
+                        {/* <span style={styles.categoryBadge}>
                             {categoryLabels[item.category] || item.category}
-                        </span>
+                        </span> */}
                     </div>
                 </div>
             </div>

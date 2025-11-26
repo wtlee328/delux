@@ -132,14 +132,15 @@ const styles = {
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
         border: '1px solid #f1f2f6',
     },
     summaryCard: {
         display: 'flex',
         cursor: 'pointer',
-        minHeight: '100px',
+        minHeight: '80px',
         transition: 'background-color 0.2s',
+        borderRadius: '12px',
+        overflow: 'hidden',
     },
     dayColumn: {
         width: '80px',
@@ -162,6 +163,7 @@ const styles = {
         padding: '1rem',
         display: 'flex',
         flexDirection: 'column' as const,
+        justifyContent: 'center',
         gap: '6px',
         minWidth: 0,
     },
@@ -183,8 +185,8 @@ const styles = {
     },
     arrow: {
         color: '#b2bec3',
-        fontSize: '0.8rem',
-        margin: '0 2px',
+        fontSize: '0.9rem',
+        margin: '0 4px',
     },
     dateText: {
         fontSize: '0.85rem',
@@ -206,6 +208,8 @@ const styles = {
         borderTop: '1px solid #f1f2f6',
         backgroundColor: '#fafafa',
         padding: '1rem 0',
+        borderBottomLeftRadius: '12px',
+        borderBottomRightRadius: '12px',
     },
     timelineLine: {
         position: 'absolute' as const,
