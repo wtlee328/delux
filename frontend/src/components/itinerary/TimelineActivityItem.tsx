@@ -1,26 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-interface Product {
-    id: string;
-    title: string;
-    destination: string;
-    category: string;
-    coverImageUrl: string;
-    netPrice: number;
-    supplierName: string;
-    productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
-    notes?: string;
-    location?: {
-        lat: number;
-        lng: number;
-    };
-    timelineId?: string;
-    startTime?: string;
-    duration?: number;
-    description?: string;
-}
+import { Product } from '../../types/itinerary';
 
 interface TimelineActivityItemProps {
     item: Product;
