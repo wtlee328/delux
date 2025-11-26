@@ -404,7 +404,7 @@ const ItineraryPlannerPage: React.FC = () => {
 
           {/* Resource Library Panel */}
           <div
-            className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.library ? 'w-[450px] opacity-100' : 'w-0 opacity-0 border-none'
+            className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.library ? 'w-[360px] opacity-100' : 'w-0 opacity-0 border-none'
               }`}
           >
             <ResourceLibrary

@@ -146,14 +146,7 @@ const DraggableProduct = ({
             <span style={{ color: '#b2bec3' }}>|</span>
             <span style={{ color: '#636e72' }}>{product.supplierName}</span>
           </div>
-          <span
-            style={{
-              fontWeight: '600',
-              color: '#00b894',
-            }}
-          >
-            NT${product.netPrice.toLocaleString()}
-          </span>
+          {/* Price removed as requested */}
         </div>
       </div>
     </div>

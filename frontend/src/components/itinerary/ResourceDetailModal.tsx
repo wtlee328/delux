@@ -62,10 +62,7 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({ product, onCl
                             <span style={styles.label}>供應商</span>
                             <span style={styles.value}>{product.supplierName}</span>
                         </div>
-                        <div style={styles.infoItem}>
-                            <span style={styles.label}>淨價</span>
-                            <span style={styles.price}>NT${product.netPrice.toLocaleString()}</span>
-                        </div>
+                        {/* Price removed as requested */}
                     </div>
 
                     {product.description && (

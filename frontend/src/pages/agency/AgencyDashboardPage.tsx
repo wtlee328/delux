@@ -154,9 +154,7 @@ const AgencyDashboardPage: React.FC = () => {
                     <div className="text-sm text-slate-500">
                       供應商: {product.supplierName}
                     </div>
-                    <div className="font-bold text-blue-600">
-                      TWD {product.netPrice.toLocaleString()}
-                    </div>
+                    {/* Price removed as requested */}
                   </div>
                 </div>
               </div>
