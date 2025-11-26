@@ -418,7 +418,7 @@ const ItineraryPlannerPage: React.FC = () => {
           </div>
 
           {/* Timeline Panel */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 relative">
+          <div className="flex-1 flex flex-col overflow-hidden bg-white relative">
             {!startDate || !endDate ? (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/95 backdrop-blur-sm">
                 <div className="text-center px-8 py-12 bg-white rounded-2xl shadow-lg border border-slate-200 max-w-md">
