@@ -118,7 +118,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
 const styles = {
     container: {
         height: '100%',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'white',
         display: 'flex',
         flexDirection: 'column' as const,
         overflow: 'hidden',

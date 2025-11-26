@@ -135,7 +135,6 @@ const styles = {
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        border: '1px solid #f1f2f6',
     },
     summaryCard: {
         display: 'flex',
