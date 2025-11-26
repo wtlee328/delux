@@ -9,6 +9,7 @@ interface TimelineDayRowProps {
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
+    onEdit?: (id: string) => void;
     onPreview: (product: Product) => void;
     isExpanded: boolean;
     onToggle: () => void;
@@ -19,6 +20,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     colorTheme,
     onTimeUpdate,
     onDelete,
+    onEdit,
     onPreview,
     isExpanded,
     onToggle,
@@ -110,6 +112,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                                         colorTheme={colorTheme}
                                         onTimeUpdate={onTimeUpdate}
                                         onDelete={onDelete}
+                                        onEdit={onEdit}
                                         isStartTimeEditable={true}
                                         onPreview={onPreview}
                                     />

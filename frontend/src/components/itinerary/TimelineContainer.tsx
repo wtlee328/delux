@@ -7,6 +7,7 @@ interface TimelineContainerProps {
     timeline: TimelineDay[];
     onTimeUpdate: (dayNumber: number, itemId: string, startTime: string, duration: number) => void;
     onDelete: (dayNumber: number, itemId: string) => void;
+    onEdit?: (dayNumber: number, itemId: string) => void;
     onPreview: (product: Product) => void;
     onAddDay?: () => void;
 }
@@ -29,6 +30,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         timeline,
         onTimeUpdate,
         onDelete,
+        onEdit,
         onPreview,
         onAddDay,
     },
@@ -92,6 +94,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 colorTheme={dayColorThemes[index % dayColorThemes.length]}
                                 onTimeUpdate={(itemId, startTime, duration) => onTimeUpdate(day.dayNumber, itemId, startTime, duration)}
                                 onDelete={(itemId) => onDelete(day.dayNumber, itemId)}
+                                onEdit={(itemId) => onEdit?.(day.dayNumber, itemId)}
                                 onPreview={onPreview}
                                 isExpanded={!!expandedDays[day.dayNumber]}
                                 onToggle={() => toggleDay(day.dayNumber)}

@@ -24,6 +24,7 @@ const TimelineBuilder: React.FC<TimelineBuilderProps> = ({
       timeline={timeline}
       onTimeUpdate={(day, item, time, dur) => onUpdateTime?.(day, item, time, dur)}
       onDelete={(day, item) => onDeleteCard?.(day, item)}
+      onEdit={(day, item) => onEditCard?.(day, item)}
       onPreview={onPreview || (() => { })}
       onAddDay={onAddDay}
     />

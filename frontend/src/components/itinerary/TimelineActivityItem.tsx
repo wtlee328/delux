@@ -8,11 +8,10 @@ interface TimelineActivityItemProps {
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
+    onEdit?: (id: string) => void;
     isStartTimeEditable: boolean;
     onPreview: (product: Product) => void;
 }
-
-
 
 const categoryLabels: Record<string, string> = {
     'landmark': '地標',
@@ -26,6 +25,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     colorTheme,
     onTimeUpdate,
     onDelete,
+    onEdit,
     isStartTimeEditable,
     onPreview,
 }) => {
@@ -158,6 +158,21 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
                                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
                                         預覽
                                     </button>
+                                    {onEdit && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEdit(item.timelineId!);
+                                                setIsMenuOpen(false);
+                                            }}
+                                            style={styles.menuItem}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f2f6'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                                            編輯
+                                        </button>
+                                    )}
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
