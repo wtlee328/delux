@@ -27,7 +27,7 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
     console.log('Request body:', req.body);
     console.log('Request file:', req.file ? { name: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } : 'No file');
 
-    const { title, destination, category, description, netPrice, status } = req.body;
+    const { title, destination, category, description, netPrice, status, hasShopping, hasTicket, ticketPrice, duration } = req.body;
     const supplierId = req.user!.userId;
 
     // Validate status if provided
@@ -74,6 +74,10 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
       description,
       coverImageUrl,
       netPrice: parseFloat(netPrice),
+      hasShopping: hasShopping === 'true' || hasShopping === true,
+      hasTicket: hasTicket === 'true' || hasTicket === true,
+      ticketPrice: ticketPrice ? parseFloat(ticketPrice) : undefined,
+      duration: duration ? parseFloat(duration) : 1.0,
     }, productStatus);
     console.log('Product created successfully:', product.id);
 
@@ -139,7 +143,7 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, destination, category, description, netPrice } = req.body;
+    const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration } = req.body;
     const supplierId = req.user!.userId;
 
     // Build update data
@@ -150,6 +154,10 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     if (category) updateData.category = category;
     if (description) updateData.description = description;
     if (netPrice) updateData.netPrice = parseFloat(netPrice);
+    if (hasShopping !== undefined) updateData.hasShopping = hasShopping === 'true' || hasShopping === true;
+    if (hasTicket !== undefined) updateData.hasTicket = hasTicket === 'true' || hasTicket === true;
+    if (ticketPrice !== undefined) updateData.ticketPrice = ticketPrice ? parseFloat(ticketPrice) : null;
+    if (duration !== undefined) updateData.duration = parseFloat(duration);
 
     // Handle cover image update if provided
     if (req.file) {
