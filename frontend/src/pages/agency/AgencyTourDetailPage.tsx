@@ -12,6 +12,10 @@ interface ProductDetail {
   coverImageUrl: string;
   netPrice: number;
   supplierName: string;
+  hasShopping: boolean;
+  hasTicket: boolean;
+  ticketPrice?: number;
+  duration: number;
 }
 
 const AgencyTourDetailPage: React.FC = () => {
@@ -97,6 +101,22 @@ const AgencyTourDetailPage: React.FC = () => {
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-slate-500">淨價</span>
                   <span className="text-2xl font-bold text-green-600">{formatPrice(product.netPrice)}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-slate-500">停留時間</span>
+                  <span className="text-lg font-semibold text-slate-800">{product.duration} 小時</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-slate-500">購物行程</span>
+                  <span className="text-lg font-semibold text-slate-800">
+                    {product.hasShopping ? '有' : '無'}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-slate-500">門票</span>
+                  <span className="text-lg font-semibold text-slate-800">
+                    {product.hasTicket ? `有 (${formatPrice(product.ticketPrice || 0)})` : '無'}
+                  </span>
                 </div>
               </div>
 

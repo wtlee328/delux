@@ -15,6 +15,10 @@ interface FormData {
   產品描述: string;
   封面圖: File | null;
   淨價: string;
+  購物行程: boolean;
+  門票: boolean;
+  門票價格: string;
+  停留時間: string;
 }
 
 interface FormErrors {
@@ -39,6 +43,10 @@ const CreateProductPage: React.FC = () => {
     產品描述: '',
     封面圖: null,
     淨價: '',
+    購物行程: false,
+    門票: false,
+    門票價格: '',
+    停留時間: '1',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -46,8 +54,14 @@ const CreateProductPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
     // Clear error for this field
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
@@ -93,6 +107,8 @@ const CreateProductPage: React.FC = () => {
     if (!formData.產品描述) newErrors.產品描述 = '請輸入產品描述';
     if (!formData.淨價) newErrors.淨價 = '請輸入淨價';
     if (!formData.封面圖) newErrors.封面圖 = '請上傳封面圖';
+    if (formData.門票 && !formData.門票價格) newErrors.submit = '請輸入門票價格';
+    if (!formData.停留時間) newErrors.submit = '請輸入停留時間';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -112,6 +128,12 @@ const CreateProductPage: React.FC = () => {
           formData.類別 === '餐飲' ? 'food' : 'transportation');
       submitData.append('description', formData.產品描述);
       submitData.append('netPrice', formData.淨價);
+      submitData.append('hasShopping', formData.購物行程.toString());
+      submitData.append('hasTicket', formData.門票.toString());
+      if (formData.門票) {
+        submitData.append('ticketPrice', formData.門票價格);
+      }
+      submitData.append('duration', formData.停留時間);
       submitData.append('status', status);
       if (formData.封面圖) {
         submitData.append('coverImage', formData.封面圖);
@@ -242,6 +264,84 @@ const CreateProductPage: React.FC = () => {
               {errors.淨價 && (
                 <span className="text-red-500 text-sm">{errors.淨價}</span>
               )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-slate-700">
+                  購物行程
+                </label>
+                <div className="flex items-center gap-2 p-3 border border-slate-300 rounded-lg bg-white">
+                  <input
+                    type="checkbox"
+                    id="購物行程"
+                    name="購物行程"
+                    checked={formData.購物行程}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="購物行程" className="text-slate-700 cursor-pointer select-none">
+                    包含購物行程
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="停留時間" className="font-bold text-slate-700">
+                  停留時間 (小時) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="停留時間"
+                  type="number"
+                  name="停留時間"
+                  value={formData.停留時間}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="請輸入停留時間"
+                  min="0.1"
+                  step="0.1"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-slate-700">
+                門票
+              </label>
+              <div className="flex flex-col gap-4 p-4 border border-slate-300 rounded-lg bg-white">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="門票"
+                    name="門票"
+                    checked={formData.門票}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="門票" className="text-slate-700 cursor-pointer select-none">
+                    需要門票
+                  </label>
+                </div>
+
+                {formData.門票 && (
+                  <div className="pl-7">
+                    <label htmlFor="門票價格" className="font-bold text-slate-700 block mb-1">
+                      門票價格 (TWD) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="門票價格"
+                      type="number"
+                      name="門票價格"
+                      value={formData.門票價格}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="請輸入門票價格"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">

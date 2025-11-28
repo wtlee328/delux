@@ -8,6 +8,10 @@ export interface CreateProductRequest {
   description: string;
   coverImageUrl: string;
   netPrice: number;
+  hasShopping: boolean;
+  hasTicket: boolean;
+  ticketPrice?: number;
+  duration: number;
 }
 
 export interface UpdateProductRequest {
@@ -17,6 +21,10 @@ export interface UpdateProductRequest {
   description?: string;
   coverImageUrl?: string;
   netPrice?: number;
+  hasShopping?: boolean;
+  hasTicket?: boolean;
+  ticketPrice?: number;
+  duration?: number;
 }
 
 export type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
@@ -30,6 +38,10 @@ export interface Product {
   description: string;
   coverImageUrl: string;
   netPrice: number;
+  hasShopping: boolean;
+  hasTicket: boolean;
+  ticketPrice?: number;
+  duration: number;
   status: ProductStatus;
   rejectionReason?: string;
   createdAt: Date;
@@ -55,13 +67,26 @@ export async function createProduct(
   productData: CreateProductRequest,
   status: ProductStatus = '草稿'
 ): Promise<Product> {
-  const { supplierId, title, destination, category, description, coverImageUrl, netPrice } = productData;
+  const {
+    supplierId, title, destination, category, description,
+    coverImageUrl, netPrice, hasShopping, hasTicket, ticketPrice, duration
+  } = productData;
 
   const result = await pool.query(
-    `INSERT INTO products (supplier_id, title, destination, category, description, cover_image_url, net_price, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
-    [supplierId, title, destination, category, description, coverImageUrl, netPrice, status]
+    `INSERT INTO products (
+       supplier_id, title, destination, category, description, 
+       cover_image_url, net_price, has_shopping, has_ticket, 
+       ticket_price, duration, status
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     RETURNING id, supplier_id, title, destination, category, description, 
+               cover_image_url, net_price, has_shopping, has_ticket, 
+               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
+    [
+      supplierId, title, destination, category, description,
+      coverImageUrl, netPrice, hasShopping, hasTicket,
+      ticketPrice || null, duration, status
+    ]
   );
 
   const product = result.rows[0];
@@ -75,6 +100,10 @@ export async function createProduct(
     description: product.description,
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
+    hasShopping: product.has_shopping,
+    hasTicket: product.has_ticket,
+    ticketPrice: product.ticket_price ? parseFloat(product.ticket_price) : undefined,
+    duration: parseFloat(product.duration),
     status: product.status,
     createdAt: product.created_at,
     updatedAt: product.updated_at,
@@ -133,6 +162,22 @@ export async function updateProduct(
     updates.push(`net_price = $${paramCount++}`);
     values.push(productData.netPrice);
   }
+  if (productData.hasShopping !== undefined) {
+    updates.push(`has_shopping = $${paramCount++}`);
+    values.push(productData.hasShopping);
+  }
+  if (productData.hasTicket !== undefined) {
+    updates.push(`has_ticket = $${paramCount++}`);
+    values.push(productData.hasTicket);
+  }
+  if (productData.ticketPrice !== undefined) {
+    updates.push(`ticket_price = $${paramCount++}`);
+    values.push(productData.ticketPrice);
+  }
+  if (productData.duration !== undefined) {
+    updates.push(`duration = $${paramCount++}`);
+    values.push(productData.duration);
+  }
 
   updates.push(`updated_at = CURRENT_TIMESTAMP`);
   values.push(id);
@@ -141,7 +186,9 @@ export async function updateProduct(
     `UPDATE products
      SET ${updates.join(', ')}
      WHERE id = $${paramCount}
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, 
+               cover_image_url, net_price, has_shopping, has_ticket, 
+               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
     values
   );
 
@@ -170,7 +217,9 @@ export async function updateProduct(
  */
 export async function getProductsBySupplier(supplierId: string): Promise<Product[]> {
   const result = await pool.query(
-    `SELECT id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at
+    `SELECT id, supplier_id, title, destination, category, description, 
+            cover_image_url, net_price, has_shopping, has_ticket, 
+            ticket_price, duration, status, rejection_reason, created_at, updated_at
      FROM products
      WHERE supplier_id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)
      ORDER BY created_at DESC`,
@@ -186,6 +235,10 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
+    hasShopping: row.has_shopping,
+    hasTicket: row.has_ticket,
+    ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
+    duration: parseFloat(row.duration),
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
@@ -200,7 +253,8 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
 export async function getAllProducts(): Promise<ProductWithSupplier[]> {
   const result = await pool.query(
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-            p.cover_image_url, p.net_price, p.status, p.created_at, p.updated_at,
+            p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
+            p.ticket_price, p.duration, p.status, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -217,6 +271,10 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
+    hasShopping: row.has_shopping,
+    hasTicket: row.has_ticket,
+    ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
+    duration: parseFloat(row.duration),
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -232,7 +290,8 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
 export async function getPublishedProducts(filters?: ProductFilters): Promise<ProductWithSupplier[]> {
   let query = `
     SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-           p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
+           p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
+           p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
            u.name as supplier_name
     FROM products p
     JOIN users u ON p.supplier_id = u.id
@@ -265,6 +324,10 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
+    hasShopping: row.has_shopping,
+    hasTicket: row.has_ticket,
+    ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
+    duration: parseFloat(row.duration),
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -281,7 +344,8 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
 export async function getProductById(id: string): Promise<ProductWithSupplier> {
   const result = await pool.query(
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-            p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
+            p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
+            p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -304,6 +368,10 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
+    hasShopping: row.has_shopping,
+    hasTicket: row.has_ticket,
+    ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
+    duration: parseFloat(row.duration),
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
@@ -351,7 +419,9 @@ export async function updateProductStatus(
     `UPDATE products
      SET ${updates.join(', ')}
      WHERE id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)
-     RETURNING id, supplier_id, title, destination, category, description, cover_image_url, net_price, status, rejection_reason, created_at, updated_at`,
+     RETURNING id, supplier_id, title, destination, category, description, 
+               cover_image_url, net_price, has_shopping, has_ticket, 
+               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
     values
   );
 
@@ -370,6 +440,10 @@ export async function updateProductStatus(
     description: product.description,
     coverImageUrl: product.cover_image_url,
     netPrice: parseFloat(product.net_price),
+    hasShopping: product.has_shopping,
+    hasTicket: product.has_ticket,
+    ticketPrice: product.ticket_price ? parseFloat(product.ticket_price) : undefined,
+    duration: parseFloat(product.duration),
     status: product.status,
     rejectionReason: product.rejection_reason,
     createdAt: product.created_at,
@@ -385,7 +459,8 @@ export async function updateProductStatus(
 export async function getProductsByStatus(status: ProductStatus): Promise<ProductWithSupplier[]> {
   const result = await pool.query(
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
-            p.cover_image_url, p.net_price, p.status, p.rejection_reason, p.created_at, p.updated_at,
+            p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
+            p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -403,6 +478,10 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
     description: row.description,
     coverImageUrl: row.cover_image_url,
     netPrice: parseFloat(row.net_price),
+    hasShopping: row.has_shopping,
+    hasTicket: row.has_ticket,
+    ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
+    duration: parseFloat(row.duration),
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,

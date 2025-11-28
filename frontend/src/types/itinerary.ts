@@ -14,8 +14,11 @@ export interface Product {
     };
     timelineId?: string;
     startTime?: string; // Format: "HH:mm"
-    duration?: number; // Duration in minutes
+    duration?: number; // Duration in minutes (or hours depending on usage, backend says decimal hours)
     description?: string;
+    hasShopping?: boolean;
+    hasTicket?: boolean;
+    ticketPrice?: number;
 }
 
 export interface TimelineDay {
