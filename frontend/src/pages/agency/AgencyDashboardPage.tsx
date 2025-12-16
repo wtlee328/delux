@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
-import { Search, MapPin } from 'lucide-react'; // Added imports for icons
+import DestinationMenu, { DESTINATION_GROUPS } from '../../components/DestinationMenu';
+import { Search, MapPin } from 'lucide-react'; 
+import { useSearchParams } from 'react-router-dom';
 
 interface Product {
   id: string;
@@ -18,7 +20,27 @@ const AgencyDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlDestination = searchParams.get('destination');
+  const [searchTerm, setSearchTerm] = useState(urlDestination || '');
+
+  // Update searchTerm when URL changes
+  useEffect(() => {
+    if (urlDestination) {
+      setSearchTerm(urlDestination);
+    } else {
+      setSearchTerm('');
+    }
+  }, [urlDestination]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value) {
+      setSearchParams({ destination: value });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -45,27 +67,27 @@ const AgencyDashboardPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter(product => {
-    if (!searchTerm) return false; // Show nothing if no search? Or show all? 
-    // User request: "Filter and display only the product cards that match the selected destination."
-    // This implies if no destination selected, maybe show nothing or show all?
-    // Usually "Search" implies filtering. If empty, maybe show all?
-    // But "Display the 「行程規劃」 button only after a destination is selected."
-    // If I show all, user might want to plan.
-    // Let's show all initially, but only show button if filtered.
-    // Actually, if I show all, the grid is full.
-    // Let's stick to: Show all initially, but button appears when searchTerm is set.
-    return product.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!searchTerm) return true; // Show all if no search
+
+    const lowerSearch = searchTerm.toLowerCase();
+    const lowerDest = product.destination.toLowerCase();
+    
+    // Check if search matches a region group
+    const matchedGroup = DESTINATION_GROUPS.find(g => g.region === searchTerm);
+    if (matchedGroup) {
+      // If searchTerm is a region (e.g., "中國西南"), match if product destination is in this group
+      return matchedGroup.items.some(item => item === product.destination) || lowerDest.includes(lowerSearch);
+    }
+
+    return lowerDest.includes(lowerSearch);
   });
 
-  // If searchTerm is empty, show all products?
   // "Filter and display only the product cards that match the selected destination."
-  // This phrasing suggests that *after* search, we filter.
-  // I'll show all products if searchTerm is empty, for better UX.
-  const displayProducts = searchTerm ? filteredProducts : products;
+  const displayProducts = filteredProducts;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar />
+      <TopBar middleContent={<DestinationMenu />} />
 
       <main className="p-8 max-w-7xl mx-auto">
         {/* Header with Itinerary Planning Button */}
@@ -91,7 +113,7 @@ const AgencyDashboardPage: React.FC = () => {
                 placeholder="輸入目的地..."
                 className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
 
@@ -102,7 +124,7 @@ const AgencyDashboardPage: React.FC = () => {
                 {popularDestinations.map(dest => (
                   <button
                     key={dest}
-                    onClick={() => setSearchTerm(dest)}
+                    onClick={() => handleSearchChange(dest)}
                     className={`px-3 py-1 rounded-full text-sm transition-colors border ${searchTerm === dest
                       ? 'bg-blue-50 text-blue-600 border-blue-200'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
@@ -120,7 +142,11 @@ const AgencyDashboardPage: React.FC = () => {
         {loading ? (
           <div className="text-center py-12 text-slate-500">載入中...</div>
         ) : displayProducts.length === 0 ? (
-          <div className="text-center py-12 text-slate-500">沒有找到符合的產品</div>
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <MapPin className="w-12 h-12 mb-4 text-slate-300" />
+            <h3 className="text-lg font-medium text-slate-700 mb-2">此目的地目前尚無相關行程</h3>
+            <p className="text-slate-500">請嘗試選擇其他目的地，或稍後再回來查看。</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayProducts.map(product => (

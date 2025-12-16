@@ -8,9 +8,10 @@ import { ChevronDown, LogOut, User as UserIcon, Check } from 'lucide-react';
 interface TopBarProps {
     title?: string;
     actions?: React.ReactNode;
+    middleContent?: React.ReactNode;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ title, actions }) => {
+const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
     const { user, updateUser, logout } = useAuth();
     const navigate = useNavigate();
     const { showError, showSuccess } = useToast();
@@ -106,6 +107,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions }) => {
                         <h1 className="text-lg font-medium text-slate-600">{title}</h1>
                     </>
                 )}
+                {middleContent}
             </div>
 
             <div className="flex items-center gap-4">
