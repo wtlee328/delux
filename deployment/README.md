@@ -1,23 +1,24 @@
 # Delux+ Deployment Guide
 
-Complete guide for deploying the Delux+ B2B2B travel platform to Google Cloud Platform.
+Complete guide for deploying the Delux+ B2B2B travel platform to Google Cloud
+Platform.
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │                         Internet                             │
-└────────────┬────────────────────────────────┬───────────────┘
+└────────────┬─────────────────────────────────┬───────────────┘
              │                                 │
              │                                 │
-    ┌────────▼────────┐              ┌────────▼────────┐
+    ┌────────▼─────────┐              ┌────────▼────────┐
     │ Firebase Hosting │              │   Cloud Run     │
     │   (Frontend)     │              │   (Backend)     │
     └──────────────────┘              └────────┬────────┘
                                                │
                                     ┌──────────┴──────────┐
                                     │                     │
-                           ┌────────▼────────┐  ┌────────▼────────┐
+                           ┌────────▼────────┐  ┌─────────▼───────┐
                            │   Cloud SQL     │  │ Cloud Storage   │
                            │  (PostgreSQL)   │  │   (Images)      │
                            └─────────────────┘  └─────────────────┘
@@ -38,6 +39,7 @@ Complete guide for deploying the Delux+ B2B2B travel platform to Google Cloud Pl
 1. Create a GCP project
 2. Enable billing
 3. Enable required APIs:
+
 ```bash
 gcloud services enable \
     sqladmin.googleapis.com \
@@ -87,6 +89,7 @@ chmod +x gcloud-storage-setup.sh
 ```
 
 Move the generated key file:
+
 ```bash
 mv gcs-keyfile.json ../backend/gcs-keyfile.json
 ```
@@ -130,6 +133,7 @@ chmod +x setup-secrets.sh
 ```
 
 You'll be prompted for:
+
 - Database password
 - JWT secret (or auto-generate)
 
@@ -144,6 +148,7 @@ export SERVICE_ACCOUNT_EMAIL="delux-plus-storage-sa@${GCP_PROJECT_ID}.iam.gservi
 ```
 
 Test the deployment:
+
 ```bash
 SERVICE_URL=$(gcloud run services describe delux-plus-backend \
     --region=asia-east1 \
@@ -193,6 +198,7 @@ chmod +x seed-production.sh
 ```
 
 This script will:
+
 1. Create the initial admin user
 2. Optionally create test data (suppliers, agencies, sample products)
 3. Display credentials securely
@@ -219,6 +225,7 @@ npm run seed:test
 ```
 
 **Important Security Notes:**
+
 - Save admin credentials immediately in a password manager
 - Change the default password after first login
 - Never commit credentials to version control
@@ -379,6 +386,7 @@ gcloud sql backups restore BACKUP_ID --backup-instance=delux-plus-db
 ### Monthly Costs (Estimated)
 
 **Development/Testing:**
+
 - Cloud SQL (db-f1-micro): ~$10
 - Cloud Storage (10 GB): ~$0.26
 - Cloud Run (minimal traffic): ~$0-5
@@ -386,6 +394,7 @@ gcloud sql backups restore BACKUP_ID --backup-instance=delux-plus-db
 - **Total: ~$10-15/month**
 
 **Production (Low Traffic):**
+
 - Cloud SQL (db-n1-standard-1): ~$50
 - Cloud Storage (50 GB): ~$1.30
 - Cloud Run (moderate traffic): ~$20-50
@@ -430,6 +439,7 @@ gcloud sql backups restore BACKUP_ID --backup-instance=delux-plus-db
 ## CI/CD Setup
 
 See individual README files for CI/CD integration examples:
+
 - [Backend CI/CD](./README-CLOUDRUN.md#cicd-integration)
 - [Frontend CI/CD](./README-FIREBASE.md#cicd-integration)
 
@@ -454,26 +464,31 @@ See individual README files for CI/CD integration examples:
 
 After successful deployment:
 
-1. **Create test accounts** for each role (admin, supplier, agency)
-2. **Test complete workflows** (product creation → review → discovery)
-3. **Set up monitoring** and alerts
-4. **Configure custom domain** (optional)
-5. **Implement CI/CD** for automated deployments
-6. **Schedule regular backups**
-7. **Plan scaling strategy** based on usage
+1. **Review Development Workflow** - See [WORKFLOW.md](./WORKFLOW.md) for the
+   end-to-end development to production lifecycle.
+2. **Create test accounts** for each role (admin, supplier, agency)
+3. **Test complete workflows** (product creation → review → discovery)
+4. **Set up monitoring** and alerts
+5. **Configure custom domain** (optional)
+6. **Implement CI/CD** for automated deployments
+7. **Schedule regular backups**
+8. **Plan scaling strategy** based on usage
 
 ## Maintenance Schedule
 
 ### Daily
+
 - Monitor error logs
 - Check service health
 
 ### Weekly
+
 - Review resource usage
 - Check backup status
 - Update dependencies (if needed)
 
 ### Monthly
+
 - Review costs
 - Security updates
 - Performance optimization
@@ -482,6 +497,7 @@ After successful deployment:
 ## Contact
 
 For deployment issues or questions, refer to:
+
 - GCP Support (if you have a support plan)
 - Firebase Support
 - Project documentation

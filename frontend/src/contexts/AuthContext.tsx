@@ -38,8 +38,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setToken(storedToken);
         setUser(parsedUser);
-        // Set default authorization header for axios
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       } catch (error) {
         // If parsing fails, clear invalid data
         console.error('Failed to parse stored user data:', error);
@@ -68,9 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Store in localStorage
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
-
-      // Set default authorization header for axios
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     } catch (error) {
       console.error('Login error in AuthContext:', error);
       throw error;
@@ -85,9 +80,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
-    // Remove authorization header
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   const updateUser = (newToken: string, newUser: User) => {
@@ -98,9 +90,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Update localStorage
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
-
-    // Update axios header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };
 
   const value: AuthContextType = {

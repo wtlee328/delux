@@ -150,8 +150,13 @@ const RoleSelectionPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {roles.map((role) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...roles]
+              .sort((a, b) => {
+                const order = ['agency', 'supplier', 'admin', 'super_admin'];
+                return order.indexOf(a) - order.indexOf(b);
+              })
+              .map((role) => (
               <button
                 key={role}
                 onClick={() => handleRoleSelect(role)}

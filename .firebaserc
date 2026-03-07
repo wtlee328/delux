@@ -1,5 +1,23 @@
 {
   "projects": {
-    "default": "delux-plus-prod"
-  }
+    "default": "delux-plus-prod",
+    "staging": "delux-plus-staging-488508"
+  },
+  "targets": {
+    "delux-plus-prod": {
+      "hosting": {
+        "prod": [
+          "delux-plus-prod"
+        ]
+      }
+    },
+    "delux-plus-staging-488508": {
+      "hosting": {
+        "staging": [
+          "delux-plus-staging-488508"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
