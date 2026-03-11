@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import FilterBar from '../../components/supplier/FilterBar';
+import TripPreviewModal from '../../components/supplier/TripPreviewModal';
 
 interface Trip {
   id: string;
@@ -18,6 +19,7 @@ const SupplierTripList: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewTripId, setPreviewTripId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTrips();
@@ -168,6 +170,12 @@ const SupplierTripList: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex gap-3">
                       <button
+                        onClick={() => setPreviewTripId(trip.id)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-md transition-colors font-medium border border-transparent hover:border-slate-300"
+                      >
+                        預覽
+                      </button>
+                      <button
                         onClick={() => navigate(`/supplier/trips/edit/${trip.id}`)}
                         className="px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-sm rounded-md transition-colors font-medium"
                       >
@@ -186,6 +194,13 @@ const SupplierTripList: React.FC = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {previewTripId && (
+        <TripPreviewModal 
+          tripId={previewTripId} 
+          onClose={() => setPreviewTripId(null)} 
+        />
       )}
     </>
   );
