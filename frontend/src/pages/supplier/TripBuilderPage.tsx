@@ -400,11 +400,11 @@ export default function TripBuilderPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">{isEditing ? '編輯行程' : '新增行程'}</h1>
           <button 
-            disabled={saving}
-            onClick={saveTrip}
-            className="px-6 py-2 bg-slate-800 text-white rounded-lg shadow font-medium hover:bg-slate-900 disabled:opacity-50"
+            type="button"
+            onClick={() => navigate('/supplier/dashboard')}
+            className="px-6 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg shadow-sm font-medium hover:bg-slate-50 transition-colors"
           >
-            {saving ? '儲存中...' : '儲存行程'}
+            返回上頁
           </button>
         </div>
 
