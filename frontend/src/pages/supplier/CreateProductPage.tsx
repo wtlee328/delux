@@ -7,6 +7,7 @@ import 'react-quill/dist/quill.snow.css';
 import axios from 'axios';
 import axiosInstance from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
 
 interface FormData {
   產品標題: string;
@@ -387,35 +388,25 @@ const CreateProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex gap-4 justify-end mt-4">
-              <button
-                type="button"
-                onClick={() => navigate('/supplier/dashboard')}
-                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
-                disabled={isSubmitting}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={(e) => handleSubmit(e, '草稿')}
-                className="px-6 py-2.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? '儲存中...' : '儲存為草稿'}
-              </button>
-              <button
-                type="submit"
-                onClick={(e) => handleSubmit(e, '待審核')}
-                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? '提交中...' : '提交審核'}
-              </button>
-            </div>
+            {/* Page bottom padding for fixed footer */}
+            <div className="h-24"></div>
           </form>
         </div>
       </main>
+
+      <DraftStatusFooter
+        status="草稿"
+        onSaveDraft={() => {
+          const e = { preventDefault: () => {} } as React.FormEvent;
+          handleSubmit(e, '草稿');
+        }}
+        onSubmitForReview={() => {
+          const e = { preventDefault: () => {} } as React.FormEvent;
+          handleSubmit(e, '待審核');
+        }}
+        isSubmitting={isSubmitting}
+        itemType="產品"
+      />
     </div>
   );
 };

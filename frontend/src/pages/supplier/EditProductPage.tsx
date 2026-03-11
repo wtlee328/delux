@@ -4,6 +4,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -510,56 +511,30 @@ const EditProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex gap-4 justify-end mt-4">
-              <button
-                type="button"
-                onClick={() => navigate('/supplier/dashboard')}
-                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
-                disabled={isSubmitting}
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? '更新中...' : '儲存變更'}
-              </button>
-            </div>
-
-            {(currentStatus === '草稿' || currentStatus === '需要修改') && (
-              <div className="mt-4 p-6 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                <p className="text-slate-600 mb-4">
-                  {currentStatus === '需要修改' ? '此產品需要修改，請更新後重新提交審核' : '此產品為草稿狀態'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange('待審核')}
-                  className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                  disabled={isSubmitting}
-                >
-                  提交審核
-                </button>
-              </div>
-            )}
-
-            {currentStatus === '待審核' && (
-              <div className="mt-4 p-6 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                <p className="text-slate-600 mb-4">此產品正在審核中</p>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange('草稿')}
-                  className="px-6 py-2.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isSubmitting}
-                >
-                  撤回至草稿
-                </button>
-              </div>
-            )}
+            {/* Page bottom padding for fixed footer */}
+            <div className="h-24"></div>
           </form>
         </div>
       </main>
+
+      <DraftStatusFooter
+        status={currentStatus}
+        rejectionReason={rejectionReason}
+        onSaveDraft={() => {
+          // EditProductPage has a form with onSubmit={handleSubmit}
+          // We can just call handleSubmit manually if we have the event or just trigger the button
+          const editBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+          if (editBtn) editBtn.click();
+          else {
+            const e = { preventDefault: () => {} } as React.FormEvent;
+            handleSubmit(e);
+          }
+        }}
+        onSubmitForReview={() => handleStatusChange('待審核')}
+        onWithdraw={() => handleStatusChange('草稿')}
+        isSubmitting={isSubmitting}
+        itemType="產品"
+      />
     </div>
   );
 };

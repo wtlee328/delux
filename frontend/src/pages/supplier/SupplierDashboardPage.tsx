@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import SupplierTripList from './SupplierTripList';
+import FilterBar from '../../components/supplier/FilterBar';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -16,6 +18,7 @@ interface Product {
 
 const SupplierDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'products' | 'trips'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +92,7 @@ const SupplierDashboardPage: React.FC = () => {
 
     // Filtering
     if (filterDestination) {
-      result = result.filter(p => p.destination.toLowerCase().includes(filterDestination.toLowerCase()));
+      result = result.filter(p => p.destination === filterDestination);
     }
     if (filterCategory) {
       result = result.filter(p => p.category === filterCategory);
@@ -114,6 +117,10 @@ const SupplierDashboardPage: React.FC = () => {
     return result;
   }, [products, filterDestination, filterCategory, filterStatus, sortConfig]);
 
+  const uniqueDestinations = React.useMemo(() => {
+    return Array.from(new Set(products.map(p => p.destination))).filter(Boolean).sort();
+  }, [products]);
+
   const categoryMap: Record<string, string> = {
     'landmark': '地標',
     'accommodation': '住宿',
@@ -121,16 +128,51 @@ const SupplierDashboardPage: React.FC = () => {
     'transportation': '交通'
   };
 
-  const uniqueCategories = Array.from(new Set(products.map(p => p.category)))
-    .filter(Boolean)
-    .filter(c => c !== 'activity');
+  const categories = React.useMemo(() => {
+    const uniqueCats = Array.from(new Set(products.map(p => p.category)))
+      .filter(Boolean)
+      .filter(c => c !== 'activity');
+    return uniqueCats.map(c => ({ value: c, label: categoryMap[c] || c }));
+  }, [products]);
+
   const uniqueStatuses = Array.from(new Set(products.map(p => p.status))).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar title="供應商控制台" />
+      
+      {/* Tab Navigation */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="flex gap-8">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`py-4 font-medium text-sm transition-colors border-b-2 ${
+                activeTab === 'products'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              景點 (Products)
+            </button>
+            <button
+              onClick={() => setActiveTab('trips')}
+              className={`py-4 font-medium text-sm transition-colors border-b-2 ${
+                activeTab === 'trips'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              行程 (Trips)
+            </button>
+          </div>
+        </div>
+      </div>
+
       <main className="p-8 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        {activeTab === 'products' ? (
+          <>
+            <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">我的產品</h2>
           <button
             onClick={() => navigate('/supplier/tours/new')}
@@ -141,58 +183,26 @@ const SupplierDashboardPage: React.FC = () => {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-slate-500 uppercase">目的地</label>
-            <input
-              type="text"
-              placeholder="搜尋目的地..."
-              value={filterDestination}
-              onChange={(e) => setFilterDestination(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex flex-col gap-1 min-w-[150px]">
-            <label className="text-xs font-bold text-slate-500 uppercase">類別</label>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">全部類別</option>
-              {uniqueCategories.map(c => (
-                <option key={c} value={c}>{categoryMap[c] || c}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 min-w-[150px]">
-            <label className="text-xs font-bold text-slate-500 uppercase">狀態</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">全部狀態</option>
-              {uniqueStatuses.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          {(filterDestination || filterCategory || filterStatus) && (
-            <div className="flex items-end pb-1">
-              <button
-                onClick={() => {
-                  setFilterDestination('');
-                  setFilterCategory('');
-                  setFilterStatus('');
-                }}
-                className="text-sm text-red-500 hover:text-red-700 font-medium"
-              >
-                清除篩選
-              </button>
-            </div>
-          )}
-        </div>
+        <FilterBar
+          destinations={uniqueDestinations}
+          categories={categories}
+          statuses={uniqueStatuses}
+          filters={{
+            destination: filterDestination,
+            category: filterCategory,
+            status: filterStatus
+          }}
+          onFilterChange={(key, value) => {
+            if (key === 'destination') setFilterDestination(value);
+            if (key === 'category') setFilterCategory(value);
+            if (key === 'status') setFilterStatus(value);
+          }}
+          onClear={() => {
+            setFilterDestination('');
+            setFilterCategory('');
+            setFilterStatus('');
+          }}
+        />
 
         {loading && <p className="text-center text-slate-500 py-8">載入中...</p>}
 
@@ -288,6 +298,10 @@ const SupplierDashboardPage: React.FC = () => {
               <p className="p-8 text-center text-slate-500">沒有符合篩選條件的產品</p>
             )}
           </div>
+        )}
+          </>
+        ) : (
+          <SupplierTripList />
         )}
       </main>
     </div>
