@@ -163,15 +163,23 @@ npm run migrate:dev
 
 ### Step 4: Trigger Live Deployment
 
-Deploy to Production backend and frontend via CLI scripts, or allow the GitHub
-Action `push to main` trigger to fire up the production Docker build and
-Firebase hosting update.
+> [!IMPORTANT]
+> **Production deployment should ideally be automated via GitHub Actions by pushing to the `main` branch.**
+> 
+> Manually deploying to production using local scripts without pushing your changes to GitHub is **STRICTLY PROHIBITED** as it leads to "hidden" code in production that is missing from the repository.
 
-```bash
-# Example manual production switch
-npm run build # Defaults to .env.production
-firebase deploy --only hosting --project delux-plus-prod
-```
+1.  **Automated**: Pushing to `main` triggers `.github/workflows/deploy-backend.yml` and `deploy-frontend.yml`.
+2.  **Manual (Emergency ONLY)**: If you MUST deploy manually, you are **REQUIRED** to push your changes to GitHub first:
+    ```bash
+    git checkout main
+    git merge staging
+    git push origin main  # MUST BE DONE FIRST
+    
+    # Then run local scripts if necessary
+    cd deployment
+    ./deploy-backend.sh
+    ./deploy-frontend.sh
+    ```
 
 ### Step 5: Post-Deployment Smoke Test
 

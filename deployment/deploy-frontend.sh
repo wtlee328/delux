@@ -30,6 +30,32 @@ echo "=== Delux+ Frontend Deployment ==="
 echo "Project: $PROJECT_ID"
 echo ""
 
+# Check if deploying to production and ensure code is pushed
+if [[ "$PROJECT_ID" == *"prod"* ]]; then
+    echo "⚠️  PRODUCTION DEPLOYMENT DETECTED"
+    
+    # Check for uncommitted changes
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "Error: You have uncommitted changes. Please commit and push to main before deploying to production."
+        exit 1
+    fi
+    
+    # Check for unpushed commits
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo "Error: You are not on the 'main' branch. Production deployment must happen from 'main'."
+        exit 1
+    fi
+    
+    UNPUSHED=$(git cherry -v origin/main 2>/dev/null || echo "")
+    if [ -n "$UNPUSHED" ]; then
+        echo "Error: You have unpushed commits. Please push to origin/main before deploying to production."
+        exit 1
+    fi
+    
+    echo "✅ Git state is clean and pushed. Proceeding with production deployment..."
+fi
+
 # Navigate to project root
 cd "$(dirname "$0")/.."
 

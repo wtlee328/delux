@@ -37,6 +37,32 @@ echo "Region: $REGION"
 echo "Image: $IMAGE_NAME"
 echo ""
 
+# Check if deploying to production and ensure code is pushed
+if [[ "$PROJECT_ID" == *"prod"* ]]; then
+    echo "⚠️  PRODUCTION DEPLOYMENT DETECTED"
+    
+    # Check for uncommitted changes
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "Error: You have uncommitted changes. Please commit and push to main before deploying to production."
+        exit 1
+    fi
+    
+    # Check for unpushed commits
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo "Error: You are not on the 'main' branch. Production deployment must happen from 'main'."
+        exit 1
+    fi
+    
+    UNPUSHED=$(git cherry -v origin/main 2>/dev/null || echo "")
+    if [ -n "$UNPUSHED" ]; then
+        echo "Error: You have unpushed commits. Please push to origin/main before deploying to production."
+        exit 1
+    fi
+    
+    echo "✅ Git state is clean and pushed. Proceeding with production deployment..."
+fi
+
 # Set the project
 echo "Setting GCP project..."
 gcloud config set project "$PROJECT_ID"
@@ -68,6 +94,7 @@ gcloud run deploy "$SERVICE_NAME" \
     --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-delux-plus-products}" \
     --set-secrets="DB_PASSWORD=delux-db-password:latest" \
     --set-secrets="JWT_SECRET=delux-jwt-secret:latest" \
+    --set-env-vars="CORS_ORIGIN=${CORS_ORIGIN:-*}" \
     --memory=512Mi \
     --cpu=1 \
     --timeout=300 \
