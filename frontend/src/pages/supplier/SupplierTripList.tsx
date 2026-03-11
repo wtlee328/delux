@@ -57,7 +57,7 @@ const SupplierTripList: React.FC = () => {
   }, [trips, filterDestination, filterCategory, filterStatus]);
 
   const uniqueDestinations = React.useMemo(() => {
-    return Array.from(new Set(trips.map(t => t.destination))).filter(Boolean).sort();
+    return Array.from(new Set(trips.map(t => t.destination))).filter(d => Boolean(d) && d !== '待定').sort();
   }, [trips]);
 
   const categories = React.useMemo(() => {

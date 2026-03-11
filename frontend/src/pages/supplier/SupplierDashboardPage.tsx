@@ -118,7 +118,7 @@ const SupplierDashboardPage: React.FC = () => {
   }, [products, filterDestination, filterCategory, filterStatus, sortConfig]);
 
   const uniqueDestinations = React.useMemo(() => {
-    return Array.from(new Set(products.map(p => p.destination))).filter(Boolean).sort();
+    return Array.from(new Set(products.map(p => p.destination))).filter(d => Boolean(d) && d !== '待定').sort();
   }, [products]);
 
   const categoryMap: Record<string, string> = {

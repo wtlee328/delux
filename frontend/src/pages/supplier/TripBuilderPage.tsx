@@ -387,7 +387,7 @@ export default function TripBuilderPage() {
     }
   };
 
-  const uniqueDestinations = Array.from(new Set(products.map(p => p.destination).filter(Boolean)));
+  const uniqueDestinations = Array.from(new Set(products.map(p => p.destination).filter(d => Boolean(d) && d !== '待定')));
   const getProductsByCategory = (cat: string) => products.filter(p => p.category === cat && (!destination || p.destination === destination));
 
   if (loading) return <div className="p-8 text-center text-slate-500">載入中...</div>;
