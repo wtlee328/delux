@@ -60,7 +60,7 @@ const TripPreviewModal: React.FC<TripPreviewModalProps> = ({ tripId, onClose }) 
           <div className="pr-8">
             <h2 className="text-2xl font-bold text-slate-800 leading-tight">{trip.name}</h2>
             <div className="flex flex-wrap gap-2 mt-3 text-sm font-medium text-slate-600">
-              <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">{trip.destination}</span>
+              <span className="bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-full">{trip.destination}</span>
               <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full">{trip.category}</span>
               <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full">{trip.daysCount} 天</span>
             </div>
@@ -89,7 +89,7 @@ const TripPreviewModal: React.FC<TripPreviewModalProps> = ({ tripId, onClose }) 
                           <React.Fragment key={item.id}>
                             <span className="font-semibold text-slate-800 text-lg">{item.productTitle}</span>
                             {idx < day.items.length - 1 && (
-                              <ArrowRight className="text-indigo-400" size={18} strokeWidth={2.5} />
+                              <ArrowRight className="text-slate-400" size={18} strokeWidth={2.5} />
                             )}
                           </React.Fragment>
                         ))

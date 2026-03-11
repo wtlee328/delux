@@ -402,7 +402,7 @@ export default function TripBuilderPage() {
           <button 
             disabled={saving}
             onClick={saveTrip}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow font-medium hover:bg-indigo-700 disabled:opacity-50"
+            className="px-6 py-2 bg-slate-800 text-white rounded-lg shadow font-medium hover:bg-slate-900 disabled:opacity-50"
           >
             {saving ? '儲存中...' : '儲存行程'}
           </button>
@@ -418,7 +418,7 @@ export default function TripBuilderPage() {
                 type="text" 
                 value={name} 
                 onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none" 
                 placeholder="例如：東京五日遊"
               />
             </div>
@@ -429,7 +429,7 @@ export default function TripBuilderPage() {
                 value={daysCountInput} 
                 onChange={e => setDaysCountInput(e.target.value)}
                 onBlur={handleDaysCountInputBlur}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
               />
             </div>
             <div className="md:col-span-3">
@@ -446,7 +446,7 @@ export default function TripBuilderPage() {
                     setDestination(e.target.value);
                   }
                 }}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none bg-white"
               >
                 <option value="" disabled>請選擇目的地</option>
                 {uniqueDestinations.map(dest => (
@@ -463,7 +463,7 @@ export default function TripBuilderPage() {
               <select 
                 value={category} 
                 onChange={e => setCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none bg-white"
               >
                 <option value="團體旅遊">團體旅遊</option>
                 <option value="半自助">半自助</option>
@@ -501,7 +501,7 @@ export default function TripBuilderPage() {
                       <div key={mealStr} className="p-4 bg-slate-50 rounded-lg border border-slate-100">
                         <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
                         <select 
-                          className="w-full text-sm border border-slate-300 rounded-lg p-2 mb-2 bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full text-sm border border-slate-300 rounded-lg p-2 mb-2 bg-white outline-none focus:ring-2 focus:ring-slate-800"
                           value={(day[idKey] as string | null) ? String(day[idKey]) : ((day[customKey] as string | null) || '')}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -568,7 +568,7 @@ export default function TripBuilderPage() {
                   </DndContext>
                   
                   <select 
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-slate-800"
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '__add_new__') {
@@ -599,7 +599,7 @@ export default function TripBuilderPage() {
                   <h4 className="font-bold text-slate-700 mb-2">住宿</h4>
                   <div className="flex gap-4 items-center">
                     <select 
-                      className="flex-1 p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800"
                       value={day.hotelId ? String(day.hotelId) : (day.hotelCustom || '')}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -639,7 +639,7 @@ export default function TripBuilderPage() {
                 <div>
                   <h4 className="font-bold text-slate-700 mb-2">當日備註</h4>
                   <textarea 
-                    className="w-full text-sm p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" 
+                    className="w-full text-sm p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-slate-800" 
                     rows={2}
                     value={day.notes || ''}
                     onChange={(e) => handleDayChange(day.dayIndex, 'notes', e.target.value)}
@@ -677,7 +677,7 @@ export default function TripBuilderPage() {
             
             <input 
               type="text" 
-              className="w-full p-2 border border-slate-300 rounded mb-4 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full p-2 border border-slate-300 rounded mb-4 focus:ring-2 focus:ring-slate-800 outline-none"
               placeholder="產品名稱 *"
               value={newProductTitle}
               onChange={e => setNewProductTitle(e.target.value)}
@@ -688,7 +688,7 @@ export default function TripBuilderPage() {
               <button 
                 onClick={handleCreateInlineProduct}
                 disabled={!newProductTitle.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white rounded font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-slate-800 text-white rounded font-medium disabled:opacity-50"
               >
                 建立並加入
               </button>

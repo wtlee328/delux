@@ -132,7 +132,7 @@ const AdminTripDetailPage: React.FC = () => {
                           <React.Fragment key={item.id}>
                             <span className="font-semibold text-slate-800 text-lg">{item.productTitle || item.productId}</span>
                             {idx < day.items.length - 1 && (
-                              <ArrowRight className="text-indigo-400" size={18} strokeWidth={2.5} />
+                              <ArrowRight className="text-slate-400" size={18} strokeWidth={2.5} />
                             )}
                           </React.Fragment>
                         ))
