@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, ArrowRight, Utensils, BedDouble, Info } from 'lucide-react';
+import { X, ArrowRight, Utensils, BedDouble, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from '../../config/axios';
 
 interface TripPreviewModalProps {
@@ -11,6 +11,7 @@ const TripPreviewModal: React.FC<TripPreviewModalProps> = ({ tripId, onClose }) 
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchTrip = async () => {
@@ -125,13 +126,21 @@ const TripPreviewModal: React.FC<TripPreviewModalProps> = ({ tripId, onClose }) 
                     {/* Notes */}
                     {day.notes && (
                       <div className="mt-4 p-4 bg-blue-50/60 rounded-lg border border-blue-100 text-sm">
-                        <div className="flex items-center gap-2 font-bold text-blue-900 mb-2">
+                        <button 
+                          onClick={() => setExpandedDays(prev => ({ ...prev, [day.id]: !prev[day.id] }))}
+                          className="flex items-center gap-2 font-bold text-blue-900 w-full text-left"
+                        >
                           <Info size={16} className="text-blue-500" />
-                          備註 / Note
-                        </div>
-                        <div className="text-slate-700 whitespace-pre-wrap ml-6 leading-relaxed">
-                          {day.notes}
-                        </div>
+                          詳細行程
+                          <span className="ml-auto text-blue-500">
+                            {expandedDays[day.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </span>
+                        </button>
+                        {expandedDays[day.id] && (
+                          <div className="text-slate-700 whitespace-pre-wrap ml-6 mt-3 leading-relaxed">
+                            {day.notes}
+                          </div>
+                        )}
                       </div>
                     )}
 
