@@ -3,6 +3,7 @@ import multer from 'multer';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { createProduct, getProductsBySupplier, getProductById, updateProduct, updateProductStatus, ProductStatus } from '../services/productService';
 import { uploadCoverImage } from '../services/storageService';
+import { createTrip, getTripsBySupplier, getTripById, updateTrip, deleteTrip, updateTripStatus, TripStatus } from '../services/tripService';
 
 const router = Router();
 
@@ -188,7 +189,6 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
   }
 });
 
-export default router;
 
 /**
  * PUT /api/supplier/tours/:id/status
@@ -249,3 +249,142 @@ router.delete('/tours/:id', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+/**
+ * POST /api/supplier/trips
+ * Create a new supplier trip
+ */
+router.post('/trips', async (req: Request, res: Response) => {
+  try {
+    const { name, destination, category, daysCount, days } = req.body;
+    const supplierId = req.user!.userId;
+
+    if (!name || !category || typeof destination !== 'string' || typeof daysCount !== 'number' || !days) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
+    }
+
+    const trip = await createTrip({ supplierId, name, destination, category, daysCount, days });
+    res.status(201).json(trip);
+  } catch (error) {
+    console.error('Create trip error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/supplier/trips
+ * Get all trips for the authenticated supplier
+ */
+router.get('/trips', async (req: Request, res: Response) => {
+  try {
+    const supplierId = req.user!.userId;
+    const trips = await getTripsBySupplier(supplierId);
+    res.json(trips);
+  } catch (error) {
+    console.error('Get supplier trips error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/supplier/trips/:id
+ * Get a specific trip for editing
+ */
+router.get('/trips/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const supplierId = req.user!.userId;
+    const trip = await getTripById(id, supplierId);
+    res.json(trip);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    if (message.includes('not found')) {
+      res.status(404).json({ error: message });
+      return;
+    }
+    console.error('Get trip error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/supplier/trips/:id
+ * Update an existing trip
+ */
+router.put('/trips/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const supplierId = req.user!.userId;
+    const { name, destination, category, daysCount, days } = req.body;
+
+    const trip = await updateTrip(id, supplierId, { name, destination, category, daysCount, days });
+    res.json(trip);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    if (message.includes('not found')) {
+      res.status(404).json({ error: message });
+      return;
+    }
+    console.error('Update trip error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/supplier/trips/:id
+ * Delete a trip
+ */
+router.delete('/trips/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const supplierId = req.user!.userId;
+    
+    await deleteTrip(id, supplierId);
+    res.status(204).send();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    if (message.includes('not found')) {
+      res.status(404).json({ error: message });
+      return;
+    }
+    console.error('Delete trip error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/supplier/trips/:id/status
+ * Update trip status (submit for review)
+ */
+router.put('/trips/:id/status', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const supplierId = req.user!.userId;
+
+    // Validate status - suppliers can only submit for review
+    const validStatuses: TripStatus[] = ['草稿', '審核中'];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ error: '無效的狀態。供應商僅能將行程設為草稿或提交審核。' });
+      return;
+    }
+
+    const trip = await updateTripStatus(id, status, supplierId);
+    res.json(trip);
+  } catch (error: any) {
+    const message = error.message;
+    if (message.includes('尚未審核通過的產品')) {
+      res.status(400).json({ error: message });
+      return;
+    }
+    if (message.includes('not found')) {
+      res.status(404).json({ error: message });
+      return;
+    }
+    console.error('Update trip status error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;
