@@ -89,8 +89,7 @@ const AgencyTourDetailPage: React.FC = () => {
                 }}
               />
               <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 absolute inset-0 ${(!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? '' : 'hidden'}`}>
-                <ImageOff size={64} className="mb-4 opacity-50" />
-                <span className="text-lg font-medium">沒有圖片</span>
+                <ImageOff size={64} className="opacity-50" />
               </div>
             </div>
             <div className="p-8">

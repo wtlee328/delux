@@ -168,8 +168,7 @@ const AgencyDashboardPage: React.FC = () => {
                     }}
                   />
                   <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 group-hover:scale-105 transition-transform duration-300 absolute inset-0 ${(!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? '' : 'hidden'}`}>
-                    <ImageOff size={32} className="mb-2 opacity-50" />
-                    <span className="text-xs font-medium">沒有圖片</span>
+                    <ImageOff size={32} className="opacity-50" />
                   </div>
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-slate-700 shadow-sm">
                     {categoryLabels[product.category] || product.category}
