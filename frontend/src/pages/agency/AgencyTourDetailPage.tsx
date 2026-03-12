@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import { ImageOff } from 'lucide-react';
 
 interface ProductDetail {
   id: string;
@@ -75,11 +76,18 @@ const AgencyTourDetailPage: React.FC = () => {
 
         {!loading && !error && product && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <img
-              src={product.coverImageUrl}
-              alt={product.title}
-              className="w-full max-h-[500px] object-cover"
-            />
+            {product.coverImageUrl ? (
+              <img
+                src={product.coverImageUrl}
+                alt={product.title}
+                className="w-full h-[400px] object-cover"
+              />
+            ) : (
+              <div className="w-full h-[400px] flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+                <ImageOff size={64} className="mb-4 opacity-50" />
+                <span className="text-lg font-medium">沒有圖片</span>
+              </div>
+            )}
             <div className="p-8">
               <h2 className="text-3xl font-bold text-slate-800 mb-8">{product.title}</h2>
 

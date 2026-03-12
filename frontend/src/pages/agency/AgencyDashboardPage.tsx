@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DestinationMenu, { DESTINATION_GROUPS } from '../../components/DestinationMenu';
-import { Search, MapPin } from 'lucide-react'; 
+import { Search, MapPin, ImageOff } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Product {
@@ -156,11 +156,18 @@ const AgencyDashboardPage: React.FC = () => {
                 className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={product.coverImageUrl}
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  {product.coverImageUrl ? (
+                    <img
+                      src={product.coverImageUrl}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 group-hover:scale-105 transition-transform duration-300">
+                      <ImageOff size={32} className="mb-2 opacity-50" />
+                      <span className="text-xs font-medium">沒有圖片</span>
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-slate-700 shadow-sm">
                     {categoryLabels[product.category] || product.category}
                   </div>

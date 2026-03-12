@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import TopBar from '../../components/TopBar';
+import { ImageOff } from 'lucide-react';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -166,11 +167,18 @@ const AdminTourDetailPage: React.FC = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="w-full h-[400px] bg-slate-100 overflow-hidden relative">
-            <img
-              src={product.coverImageUrl}
-              alt={product.title}
-              className="w-full h-full object-cover"
-            />
+            {product.coverImageUrl ? (
+              <img
+                src={product.coverImageUrl}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+                <ImageOff size={64} className="mb-4 opacity-50" />
+                <span className="text-lg font-medium">沒有圖片</span>
+              </div>
+            )}
           </div>
 
           <div className="p-8 border-b border-slate-100">
