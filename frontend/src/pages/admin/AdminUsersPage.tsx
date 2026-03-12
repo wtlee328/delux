@@ -228,6 +228,12 @@ const AdminUsersPage: React.FC = () => {
           >
             產品管理
           </button>
+          <button
+            onClick={() => navigate('/admin/trips')}
+            className="px-6 py-2.5 text-slate-500 hover:text-slate-700 font-medium transition-all"
+          >
+            行程管理
+          </button>
         </nav>
       </div>
       <main className="p-8 max-w-7xl mx-auto">

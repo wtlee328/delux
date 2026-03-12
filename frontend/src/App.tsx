@@ -7,9 +7,12 @@ import RoleSelectionPage from './pages/RoleSelectionPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminToursPage from './pages/admin/AdminToursPage';
 import AdminTourDetailPage from './pages/admin/AdminTourDetailPage';
+import AdminTripsPage from './pages/admin/AdminTripsPage';
+import AdminTripDetailPage from './pages/admin/AdminTripDetailPage';
 import SupplierDashboardPage from './pages/supplier/SupplierDashboardPage';
 import CreateProductPage from './pages/supplier/CreateProductPage';
 import EditProductPage from './pages/supplier/EditProductPage';
+import TripBuilderPage from './pages/supplier/TripBuilderPage';
 import AgencyDashboardPage from './pages/agency/AgencyDashboardPage';
 import AgencyTourDetailPage from './pages/agency/AgencyTourDetailPage';
 import ItineraryPlannerPage from './pages/agency/ItineraryPlannerPage';
@@ -76,6 +79,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/trips"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                    <AdminTripsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/trips/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                    <AdminTripDetailPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Supplier routes */}
               <Route
@@ -99,6 +118,22 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['supplier']}>
                     <EditProductPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supplier/trips/new"
+                element={
+                  <ProtectedRoute allowedRoles={['supplier']}>
+                    <TripBuilderPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supplier/trips/edit/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['supplier']}>
+                    <TripBuilderPage />
                   </ProtectedRoute>
                 }
               />
