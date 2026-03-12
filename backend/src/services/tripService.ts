@@ -320,12 +320,10 @@ export async function updateTripStatus(
         SELECT p.title 
         FROM products p
         WHERE p.id IN (
-          // Day items
           SELECT product_id FROM supplier_trip_day_items WHERE trip_day_id IN (
             SELECT id FROM supplier_trip_days WHERE trip_id = $1
           )
           UNION
-          // Meals/Hotels
           SELECT breakfast_id FROM supplier_trip_days WHERE trip_id = $1 AND breakfast_id IS NOT NULL
           UNION
           SELECT lunch_id FROM supplier_trip_days WHERE trip_id = $1 AND lunch_id IS NOT NULL
