@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import TopBar from '../../components/TopBar';
+import { ImageOff } from 'lucide-react';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -167,10 +168,19 @@ const AdminTourDetailPage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="w-full h-[400px] bg-slate-100 overflow-hidden relative">
             <img
-              src={product.coverImageUrl}
+              src={product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined' ? undefined : product.coverImageUrl}
               alt={product.title}
               className="w-full h-full object-cover"
+              style={{ display: (!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? 'none' : 'block' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const next = e.currentTarget.nextElementSibling;
+                if (next) next.classList.remove('hidden');
+              }}
             />
+            <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 absolute inset-0 ${(!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? '' : 'hidden'}`}>
+              <ImageOff size={64} className="opacity-50" />
+            </div>
           </div>
 
           <div className="p-8 border-b border-slate-100">

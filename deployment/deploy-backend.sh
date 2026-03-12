@@ -92,6 +92,7 @@ gcloud run deploy "$SERVICE_NAME" \
     --set-env-vars="DB_USER=${DB_USER:-delux_admin}" \
     --set-env-vars="GCS_PROJECT_ID=$PROJECT_ID" \
     --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-delux-plus-products}" \
+    --set-env-vars="CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}" \
     --set-secrets="DB_PASSWORD=delux-db-password:latest" \
     --set-secrets="JWT_SECRET=delux-jwt-secret:latest" \
     --set-env-vars="CORS_ORIGIN=${CORS_ORIGIN:-*}" \

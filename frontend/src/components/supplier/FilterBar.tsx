@@ -35,7 +35,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         <select
           value={filters.destination}
           onChange={(e) => onFilterChange('destination', e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
         >
           <option value="">全部目的地</option>
           {destinations.map(d => (
@@ -50,7 +50,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.category}
             onChange={(e) => onFilterChange('category', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
           >
             <option value="">全部類別</option>
             {categories.map(c => (
@@ -65,7 +65,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         <select
           value={filters.status}
           onChange={(e) => onFilterChange('status', e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
         >
           <option value="">全部狀態</option>
           {statuses.map(s => (

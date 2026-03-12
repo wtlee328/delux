@@ -118,7 +118,7 @@ const SupplierDashboardPage: React.FC = () => {
   }, [products, filterDestination, filterCategory, filterStatus, sortConfig]);
 
   const uniqueDestinations = React.useMemo(() => {
-    return Array.from(new Set(products.map(p => p.destination))).filter(Boolean).sort();
+    return Array.from(new Set(products.map(p => p.destination))).filter(d => Boolean(d) && d !== '待定').sort();
   }, [products]);
 
   const categoryMap: Record<string, string> = {
@@ -149,21 +149,21 @@ const SupplierDashboardPage: React.FC = () => {
               onClick={() => setActiveTab('products')}
               className={`py-4 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === 'products'
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-slate-800 text-slate-800'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              景點 (Products)
+              景點
             </button>
             <button
               onClick={() => setActiveTab('trips')}
               className={`py-4 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === 'trips'
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-slate-800 text-slate-800'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              行程 (Trips)
+              行程
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import { ImageOff } from 'lucide-react';
 
 interface ProductDetail {
   id: string;
@@ -75,11 +76,22 @@ const AgencyTourDetailPage: React.FC = () => {
 
         {!loading && !error && product && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <img
-              src={product.coverImageUrl}
-              alt={product.title}
-              className="w-full max-h-[500px] object-cover"
-            />
+            <div className="w-full h-[400px] relative bg-slate-100 overflow-hidden">
+              <img
+                src={product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined' ? undefined : product.coverImageUrl}
+                alt={product.title}
+                className="w-full h-full object-cover"
+                style={{ display: (!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? 'none' : 'block' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const next = e.currentTarget.nextElementSibling;
+                  if (next) next.classList.remove('hidden');
+                }}
+              />
+              <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 absolute inset-0 ${(!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? '' : 'hidden'}`}>
+                <ImageOff size={64} className="opacity-50" />
+              </div>
+            </div>
             <div className="p-8">
               <h2 className="text-3xl font-bold text-slate-800 mb-8">{product.title}</h2>
 

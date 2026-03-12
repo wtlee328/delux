@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DestinationMenu, { DESTINATION_GROUPS } from '../../components/DestinationMenu';
-import { Search, MapPin } from 'lucide-react'; 
+import { Search, MapPin, ImageOff } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Product {
@@ -157,10 +157,19 @@ const AgencyDashboardPage: React.FC = () => {
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={product.coverImageUrl}
+                    src={product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined' ? undefined : product.coverImageUrl}
                     alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={{ display: (!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? 'none' : 'block' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const next = e.currentTarget.nextElementSibling;
+                      if (next) next.classList.remove('hidden');
+                    }}
                   />
+                  <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 group-hover:scale-105 transition-transform duration-300 absolute inset-0 ${(!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? '' : 'hidden'}`}>
+                    <ImageOff size={32} className="opacity-50" />
+                  </div>
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-slate-700 shadow-sm">
                     {categoryLabels[product.category] || product.category}
                   </div>

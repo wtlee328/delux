@@ -73,7 +73,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
               type="button"
               onClick={onSubmitForReview}
               disabled={isSubmitting}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+              className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
               提交審核
             </button>
