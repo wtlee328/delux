@@ -324,6 +324,7 @@ export default function TripBuilderPage() {
       const payload = {
         name,
         destination,
+        category,
         daysCount,
         days: days.map(d => ({
           ...d,
