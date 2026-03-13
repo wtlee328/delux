@@ -129,7 +129,7 @@ const AgencyDashboardPage: React.FC = () => {
               onClick={() => navigate('/agency/trips')}
               className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
             >
-              <span className="material-symbols-outlined text-lg">folder_shared</span> 我的行情庫
+              <span className="material-symbols-outlined text-lg">folder_shared</span> 我的行程庫
             </button>
             {searchTerm && (
               <button
