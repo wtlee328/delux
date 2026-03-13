@@ -1,5 +1,8 @@
 name: Deploy Frontend to Firebase Hosting
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
@@ -14,8 +17,6 @@ jobs:
   deploy:
     name: Deploy to Firebase Hosting
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
