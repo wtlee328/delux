@@ -19,20 +19,23 @@ router.get('/suppliers', async (req: Request, res: Response) => {
     const { destination } = req.query;
     console.log(`[API] Fetching suppliers for destination: ${destination || 'none'}`);
     
-    let query = "SELECT id, name FROM users WHERE role = 'supplier' AND (is_deleted = FALSE OR is_deleted IS NULL)";
+    let query = "";
     let values: any[] = [];
     
     if (destination && typeof destination === 'string') {
-      // Return only suppliers who have products in the specified destination
+      // Return any user (supplier or admin) who has published products in the specified destination
       query = `
         SELECT DISTINCT u.id, u.name 
         FROM users u 
         INNER JOIN products p ON u.id = p.supplier_id 
-        WHERE u.role = 'supplier' 
-        AND (u.is_deleted = FALSE OR u.is_deleted IS NULL)
+        WHERE (u.is_deleted = FALSE OR u.is_deleted IS NULL)
         AND p.destination = $1
+        AND p.status = '已發佈'
       `;
       values = [destination];
+    } else {
+      // Default: Return all active suppliers
+      query = "SELECT id, name FROM users WHERE role = 'supplier' AND (is_deleted = FALSE OR is_deleted IS NULL)";
     }
     
     query += " ORDER BY name";
