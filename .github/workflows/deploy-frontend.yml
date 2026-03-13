@@ -15,7 +15,6 @@ jobs:
     name: Deploy to Firebase Hosting
     runs-on: ubuntu-latest
     env:
-      # Opt into Node.24 to resolve deprecation warnings
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
@@ -25,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24" # Upgraded from 20
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -33,11 +32,16 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Create environment file
         working-directory: ./frontend
         run: |
           if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
-            echo "VITE_API_BASE_URL=https://delux-plus-backend-staging-ecjhimf22a-de.a.run.app" > .env.staging
+            echo "VITE_API_BASE_URL=https://delux-plus-staging-488508.web.app" > .env.staging
           else
             echo "VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}" > .env.production
           fi
@@ -52,14 +56,13 @@ jobs:
           fi
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          # Precisely map project IDs based on branch to ensure target matches project
-          projectId: ${{ github.ref == 'refs/heads/main' && secrets.GCP_PROJECT_ID || 'delux-plus-staging-488508' }}
-          target: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+        run: |
+          npm install -g firebase-tools
+          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            npx firebase-tools deploy --only hosting:staging --project delux-plus-staging-488508 --non-interactive
+          else
+            npx firebase-tools deploy --only hosting:prod --project ${{ secrets.GCP_PROJECT_ID }} --non-interactive
+          fi
 
       - name: Deployment Summary
         run: |
