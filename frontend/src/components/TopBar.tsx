@@ -177,7 +177,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
                                     className="w-full px-3 py-2.5 text-left flex items-center gap-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-all text-sm font-bold group"
                                 >
                                     <LogOut size={18} className="text-slate-400 group-hover:text-slate-600" />
-                                    登出系統
+                                    登出
                                 </button>
                             </div>
                         </div>
