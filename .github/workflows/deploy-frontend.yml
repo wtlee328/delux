@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22" # Using stable Node 22
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -33,6 +33,7 @@ jobs:
         run: npm ci
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -55,18 +56,34 @@ jobs:
             npm run build:prod
           fi
 
+      - name: Verify build artifacts
+        run: |
+          echo "Verifying dist folder content..."
+          ls -R frontend/dist | head -n 20
+          if [ ! -f frontend/dist/index.html ]; then
+            echo "Error: index.html not found in frontend/dist"
+            exit 1
+          fi
+
       - name: Deploy to Firebase Hosting
         run: |
-          npm install -g firebase-tools
+          # Use npx without -g to avoid sudo/path issues in runner
+          # Explicitly pass the credentials file produced by the auth action
+          export GOOGLE_APPLICATION_CREDENTIALS="${{ steps.auth.outputs.credentials_file_path }}"
+          
           if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
-            npx firebase-tools deploy --only hosting:staging --project delux-plus-staging-488508 --non-interactive
+            npx firebase-tools deploy --only hosting:staging --project delux-plus-staging-488508 --non-interactive --debug
           else
-            npx firebase-tools deploy --only hosting:prod --project ${{ secrets.GCP_PROJECT_ID }} --non-interactive
+            npx firebase-tools deploy --only hosting:prod --project ${{ secrets.GCP_PROJECT_ID }} --non-interactive --debug
           fi
 
       - name: Deployment Summary
+        if: always()
         run: |
-          echo "✅ Frontend deployed successfully to ${{ github.ref_name }}!"
-          URL=${{ github.ref == 'refs/heads/main' && 'https://delux-plus-prod.web.app' || 'https://delux-plus-staging-488508.web.app' }}
-          echo "🔗 URL: $URL"
-          echo "📦 Build: ${{ github.sha }}"
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Frontend deployed successfully to ${{ github.ref_name }}!"
+            URL=${{ github.ref == 'refs/heads/main' && 'https://delux-plus-prod.web.app' || 'https://delux-plus-staging-488508.web.app' }}
+            echo "🔗 URL: $URL"
+          else
+            echo "❌ Deployment failed. Check the 'Deploy to Firebase Hosting' step logs for details."
+          fi
