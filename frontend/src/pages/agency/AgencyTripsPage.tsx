@@ -4,7 +4,6 @@ import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import { useToast } from '../../components/Toast';
 import { 
-  Calendar, 
   MapPin, 
   Clock, 
   MoreVertical, 
@@ -13,7 +12,6 @@ import {
   Plus, 
   Search,
   Filter,
-  ChevronRight,
   Plane
 } from 'lucide-react';
 
@@ -80,164 +78,184 @@ const AgencyTripsPage: React.FC = () => {
       <TopBar title="我的行程庫" />
 
       <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* Header Section with Glassy Cards */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
-              我的行程 <span className="text-blue-600">管理</span>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+              我的行程庫
             </h1>
-            <p className="text-slate-500 font-medium">查看、編輯與管理您為客戶規劃的所有精彩旅程</p>
+            <p className="text-sm text-slate-500 font-medium mt-1">管理您為客戶規劃的所有行程草稿與範本</p>
           </div>
           
           <button
             onClick={() => navigate('/agency/itinerary-planner')}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl font-bold shadow-xl shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
           >
-            <Plus size={20} strokeWidth={3} />
+            <Plus size={18} strokeWidth={3} />
             開始規劃新行程
           </button>
         </div>
 
         {/* Search and Filters */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
-          <div className="lg:col-span-3 relative group">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-              <Search size={22} />
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex-1 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-600 transition-colors">
+              <Search size={20} />
             </div>
             <input
               type="text"
               placeholder="搜尋行程名稱或目的地..."
-              className="w-full bg-white border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-slate-700 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-lg shadow-sm"
+              className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-12 pr-6 text-slate-700 font-medium focus:border-slate-400 focus:ring-0 transition-all outline-none text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="bg-white border-2 border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-slate-300 transition-colors">
-            <div className="flex items-center gap-3 text-slate-600 font-bold uppercase tracking-wider text-xs">
-              <Filter size={18} className="text-slate-400" />
-              篩選排序
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-6 shadow-sm">
+            <div className="flex items-center gap-2 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+              <Filter size={14} />
+              排序
             </div>
-            <label className="text-slate-400">最新優先</label>
+            <select className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 p-0 cursor-pointer">
+              <option>最新優先</option>
+              <option>最舊優先</option>
+            </select>
           </div>
         </div>
 
-        {/* Itinerary Grid */}
+        {/* Itinerary List */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-[32px] h-[320px] animate-pulse border-2 border-slate-50" />
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white rounded-2xl h-24 animate-pulse border border-slate-100" />
             ))}
           </div>
         ) : filteredItineraries.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItineraries.map((itinerary) => (
-              <div 
-                key={itinerary.id}
-                onClick={() => navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`)}
-                className="group relative bg-white rounded-[32px] border-2 border-slate-100 p-8 hover:border-blue-300 hover:shadow-[0_20px_50px_rgba(37,99,235,0.08)] transition-all duration-500 cursor-pointer flex flex-col"
-              >
-                {/* Status Badge */}
-                <div className="absolute top-6 left-6">
-                  <span className="px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ring-blue-600/20">
-                    {itinerary.status === 'draft' ? '草稿' : '已發佈'}
-                  </span>
-                </div>
+          <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 bg-slate-50/50 border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="col-span-5">行程名稱</div>
+              <div className="col-span-2 text-center">目的地</div>
+              <div className="col-span-1 text-center">天數</div>
+              <div className="col-span-2 text-center">最後更新</div>
+              <div className="col-span-1 text-center">狀態</div>
+              <div className="col-span-1 text-right">操作</div>
+            </div>
 
-                {/* Actions Dropdown */}
-                <div className="absolute top-6 right-6">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveDropdown(activeDropdown === itinerary.id ? null : itinerary.id);
-                    }}
-                    className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors"
-                  >
-                    <MoreVertical size={20} />
-                  </button>
-                  
-                  {activeDropdown === itinerary.id && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-10" 
+            <div className="divide-y divide-slate-100">
+              {filteredItineraries.map((itinerary) => (
+                <div 
+                  key={itinerary.id}
+                  onClick={() => navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`)}
+                  className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 hover:bg-slate-50 transition-colors cursor-pointer items-center"
+                >
+                  {/* Name */}
+                  <div className="col-span-5 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all duration-300">
+                      <Plane size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 group-hover:text-slate-900 transition-colors">
+                        {itinerary.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-medium md:hidden mt-1">{itinerary.destination || '未設定'}</p>
+                    </div>
+                  </div>
+
+                  {/* Destination */}
+                  <div className="col-span-2 text-center hidden md:block">
+                    <div className="flex items-center justify-center gap-1.5 text-sm text-slate-600 font-medium">
+                      <MapPin size={14} className="text-slate-400" />
+                      {itinerary.destination || '—'}
+                    </div>
+                  </div>
+
+                  {/* Days */}
+                  <div className="col-span-1 text-center hidden md:block">
+                    <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 text-xs font-bold ring-1 ring-inset ring-slate-200/50">
+                      {itinerary.daysCount}天
+                    </div>
+                  </div>
+
+                  {/* Date */}
+                  <div className="col-span-2 text-center hidden md:block">
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-medium">
+                      <Clock size={14} />
+                      {new Date(itinerary.updatedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-1 text-center hidden md:block">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ${
+                      itinerary.status === 'draft' 
+                        ? 'bg-slate-50 text-slate-500 ring-slate-200' 
+                        : 'bg-green-50 text-green-600 ring-green-600/20'
+                    }`}>
+                      {itinerary.status === 'draft' ? '草稿' : '已發佈'}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-1 text-right flex justify-end">
+                    <div className="relative" ref={activeDropdown === itinerary.id ? (ref) => ref : null}>
+                      <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveDropdown(null);
+                          setActiveDropdown(activeDropdown === itinerary.id ? null : itinerary.id);
                         }}
-                      />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-20 animate-in fade-in slide-in-from-top-2">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`);
-                          }}
-                          className="w-full px-5 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-                        >
-                          <ExternalLink size={16} className="text-slate-400" />
-                          開啟編輯
-                        </button>
-                        <button 
-                          onClick={(e) => handleDelete(itinerary.id, e)}
-                          className="w-full px-5 py-2.5 text-left text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                          刪除行程
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="mt-10">
-                  <div className="flex items-center gap-2 text-slate-400 mb-3">
-                    <MapPin size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">{itinerary.destination || '未設定目的地'}</span>
-                  </div>
-                  
-                  <h3 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors mb-4 line-clamp-2 leading-tight">
-                    {itinerary.name}
-                  </h3>
-
-                  <div className="flex flex-wrap gap-4 mt-auto">
-                    <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                      <Calendar size={14} className="text-blue-500" />
-                      <span className="text-xs font-bold text-slate-600">{itinerary.daysCount} 天</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                      <Clock size={14} className="text-slate-400" />
-                      <span className="text-xs font-bold text-slate-500">
-                        {new Date(itinerary.updatedAt).toLocaleDateString()} 更新
-                      </span>
+                        className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+                      
+                      {activeDropdown === itinerary.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(null);
+                            }}
+                          />
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-20 animate-in fade-in slide-in-from-top-2">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                            >
+                              <ExternalLink size={16} className="text-slate-400" />
+                              編輯行程
+                            </button>
+                            <button 
+                              onClick={(e) => handleDelete(itinerary.id, e)}
+                              className="w-full px-4 py-2 text-left text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                              刪除行程
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-
-                {/* Footer Link */}
-                <div className="mt-10 pt-6 border-t border-slate-50 flex items-center justify-between">
-                   <div className="flex -space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600">DE</div>
-                   </div>
-                   <div className="flex items-center gap-2 text-blue-600 text-sm font-black group-hover:translate-x-1 transition-transform">
-                      編輯詳情
-                      <ChevronRight size={16} strokeWidth={3} />
-                   </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="max-w-md mx-auto text-center py-20">
-            <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-8 animate-bounce">
-              <Plane size={40} className="text-blue-400 -rotate-45" />
+          <div className="max-w-md mx-auto text-center py-20 px-6">
+            <div className="w-20 h-20 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-8">
+              <Plane size={32} className="text-slate-300 -rotate-45" />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-4">尚未建立行程</h2>
-            <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-              您還沒有儲存任何行程。立即開始規劃您的第一趟精彩旅程吧！
+            <h2 className="text-xl font-bold text-slate-800 mb-3">尚未建立行程</h2>
+            <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed">
+              您還沒有儲存任何外部行程草稿。<br/>立即開始規劃您的第一趟精彩旅程吧！
             </p>
             <button
               onClick={() => navigate('/agency/itinerary-planner')}
-              className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-blue-200 hover:scale-105 transition-transform"
+              className="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-slate-200 hover:scale-105 transition-all text-sm"
             >
               開啟行程規劃器
             </button>
