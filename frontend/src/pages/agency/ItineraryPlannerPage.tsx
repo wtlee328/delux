@@ -232,7 +232,8 @@ const ItineraryPlannerPage: React.FC = () => {
     const fetchSuppliers = async () => {
       try {
         setLoadingSuppliers(true);
-        const res = await axios.get('/api/agency/suppliers');
+        const params = initialDestination ? { destination: initialDestination } : {};
+        const res = await axios.get('/api/agency/suppliers', { params });
         setSuppliers(res.data);
       } catch (err) {
         console.error('Failed to fetch suppliers:', err);
@@ -241,7 +242,7 @@ const ItineraryPlannerPage: React.FC = () => {
       }
     };
     fetchSuppliers();
-  }, []);
+  }, [initialDestination]);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected

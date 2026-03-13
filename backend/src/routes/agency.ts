@@ -12,13 +12,31 @@ router.use(requireRole(['agency']));
 
 /**
  * GET /api/agency/suppliers
- * Get list of all suppliers
+ * Get list of all suppliers, optionally filtered by destination
  */
 router.get('/suppliers', async (req: Request, res: Response) => {
   try {
-    const result = await pool.query(
-      "SELECT id, name FROM users WHERE role = 'supplier' AND (is_deleted = FALSE OR is_deleted IS NULL) ORDER BY name"
-    );
+    const { destination } = req.query;
+    
+    let query = "SELECT id, name FROM users WHERE role = 'supplier' AND (is_deleted = FALSE OR is_deleted IS NULL)";
+    let values: any[] = [];
+    
+    if (destination && typeof destination === 'string') {
+      // Return only suppliers who have products in the specified destination
+      query = `
+        SELECT DISTINCT u.id, u.name 
+        FROM users u 
+        INNER JOIN products p ON u.id = p.supplier_id 
+        WHERE u.role = 'supplier' 
+        AND (u.is_deleted = FALSE OR u.is_deleted IS NULL)
+        AND p.destination = $1
+      `;
+      values = [destination];
+    }
+    
+    query += " ORDER BY name";
+    
+    const result = await pool.query(query, values);
     res.json(result.rows);
   } catch (error) {
     console.error('Get suppliers error:', error);
