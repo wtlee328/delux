@@ -124,14 +124,22 @@ const AgencyDashboardPage: React.FC = () => {
         {/* Header with Itinerary Planning Button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">探索產品與行程</h2>
-          {searchTerm && (
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate(`/agency/itinerary-planner?destination=${encodeURIComponent(searchTerm)}`)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-right-4"
+              onClick={() => navigate('/agency/trips')}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold transition-all hover:bg-slate-50 flex items-center gap-2 shadow-sm"
             >
-              <span className="material-symbols-outlined text-lg">assignment</span> 行程規劃
+              <span className="material-symbols-outlined text-lg">folder_shared</span> 我的行情庫
             </button>
-          )}
+            {searchTerm && (
+              <button
+                onClick={() => navigate(`/agency/itinerary-planner?destination=${encodeURIComponent(searchTerm)}`)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-right-4"
+              >
+                <span className="material-symbols-outlined text-lg">assignment</span> 行程規劃
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Unified Search & Filter Section */}

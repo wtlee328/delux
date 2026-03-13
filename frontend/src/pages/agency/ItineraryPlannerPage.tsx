@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
@@ -26,9 +26,14 @@ import { Product, TimelineDay } from '../../types/itinerary';
 
 const ItineraryPlannerPage: React.FC = () => {
   const { showSuccess } = useToast();
+  const { id: routeId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialDestination = searchParams.get('destination');
   const tripId = searchParams.get('tripId');
+  const itineraryId = routeId || searchParams.get('itineraryId');
+  const [itineraryName, setItineraryName] = useState<string>('');
+  const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -179,6 +184,45 @@ const ItineraryPlannerPage: React.FC = () => {
 
     loadTrip();
   }, [tripId]);
+
+  // Itinerary (Own Draft) preloading logic
+  useEffect(() => {
+    if (!itineraryId) return;
+
+    const loadItinerary = async () => {
+      try {
+        setLoadingItinerary(true);
+        const res = await axios.get(`/api/itinerary/${itineraryId}`);
+        const it = res.data;
+
+        setItineraryName(it.name);
+        
+        if (it.startDate) setStartDate(new Date(it.startDate));
+        if (it.endDate) setEndDate(new Date(it.endDate));
+
+        const timelineData: TimelineDay[] = it.timelineData.map((day: any) => ({
+          ...day,
+          items: day.items.map((item: any) => ({
+            ...item,
+            // Ensure necessary fields exist
+            productType: item.productType || 'landmark'
+          }))
+        }));
+
+        setTimeline(timelineData);
+
+        setTimeout(() => {
+          timelineRef.current?.scrollToDay(1);
+        }, 300);
+      } catch (err) {
+        console.error('Failed to load itinerary:', err);
+      } finally {
+        setLoadingItinerary(false);
+      }
+    };
+
+    loadItinerary();
+  }, [itineraryId]);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected
@@ -354,17 +398,30 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleSaveItinerary = async (name: string) => {
     try {
       setSaveStatus('儲存中...');
-      await axios.post('/api/itinerary', {
+      const payload = {
         name,
-        timeline: timeline.map(day => ({
-          dayNumber: day.dayNumber,
-          items: day.items.map(item => ({
-            id: item.id,
-            title: item.title,
-            notes: item.notes,
-          })),
-        })),
-      });
+        destination: initialDestination || timeline[0]?.items[0]?.destination || '',
+        daysCount: timeline.length,
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        timeline: timeline,
+      };
+
+      let response;
+      if (itineraryId) {
+        response = await axios.put(`/api/itinerary/${itineraryId}`, payload);
+      } else {
+        response = await axios.post('/api/itinerary', payload);
+      }
+      
+      const savedItinerary = response.data;
+      setItineraryName(savedItinerary.name);
+      
+      // If it was a new save, navigate to the edit URL to prevent double creation on next save
+      if (!itineraryId && savedItinerary.id) {
+        navigate(`/agency/itinerary-planner/${savedItinerary.id}`, { replace: true });
+      }
+
       setSaveStatus('儲存成功！');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
@@ -591,6 +648,7 @@ const ItineraryPlannerPage: React.FC = () => {
           isOpen={isSaveModalOpen}
           onClose={() => setIsSaveModalOpen(false)}
           onSave={handleSaveItinerary}
+          defaultName={itineraryName || tripTemplateName || ''}
         />
 
         {previewProduct && (
@@ -608,6 +666,15 @@ const ItineraryPlannerPage: React.FC = () => {
             />
           ) : null}
         </DragOverlay>
+
+        {loadingItinerary && (
+          <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-600 font-bold">載入行程中...</p>
+            </div>
+          </div>
+        )}
       </div>
     </DndContext>
   );
