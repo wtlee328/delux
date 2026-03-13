@@ -233,6 +233,7 @@ const ItineraryPlannerPage: React.FC = () => {
       try {
         setLoadingSuppliers(true);
         const params = initialDestination ? { destination: initialDestination } : {};
+        console.log('[DEBUG] Fetching suppliers with params:', params);
         const res = await axios.get('/api/agency/suppliers', { params });
         setSuppliers(res.data);
       } catch (err) {
