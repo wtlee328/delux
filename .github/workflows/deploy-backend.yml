@@ -19,6 +19,8 @@ env:
   DB_NAME: ${{ github.ref == 'refs/heads/main' && secrets.DB_NAME || 'delux_plus_staging' }}
   GCS_BUCKET_NAME: ${{ github.ref == 'refs/heads/main' && secrets.GCS_BUCKET_NAME || 'delux-plus-products-staging' }}
   FRONTEND_URL: ${{ github.ref == 'refs/heads/main' && secrets.FRONTEND_URL || 'https://delux-plus-staging-488508.web.app' }}
+  # Opt into Node.24 to resolve deprecation warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   deploy:
