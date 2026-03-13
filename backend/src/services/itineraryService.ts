@@ -8,6 +8,7 @@ interface CreateItineraryData {
   daysCount?: number;
   startDate?: string;
   endDate?: string;
+  restrictedSupplierName?: string;
 }
 
 interface Itinerary {
@@ -19,6 +20,7 @@ interface Itinerary {
   daysCount?: number;
   startDate?: Date;
   endDate?: Date;
+  restrictedSupplierName?: string;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -33,22 +35,23 @@ const mapRowToItinerary = (row: any): Itinerary => ({
   daysCount: row.daysCount,
   startDate: row.startDate,
   endDate: row.endDate,
+  restrictedSupplierName: row.restrictedSupplierName,
   status: row.status,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
 
 export const createItinerary = async (data: CreateItineraryData): Promise<Itinerary> => {
-  const { name, agencyUserId, timeline, destination, daysCount, startDate, endDate } = data;
+  const { name, agencyUserId, timeline, destination, daysCount, startDate, endDate, restrictedSupplierName } = data;
 
   const result = await pool.query(
-    `INSERT INTO itineraries (name, agency_user_id, timeline_data, destination, days_count, start_date, end_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO itineraries (name, agency_user_id, timeline_data, destination, days_count, start_date, end_date, restricted_supplier_name)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, name, agency_user_id as "agencyUserId", 
                timeline_data as "timelineData", destination, days_count as "daysCount",
-               start_date as "startDate", end_date as "endDate", status,
+               start_date as "startDate", end_date as "endDate", restricted_supplier_name as "restrictedSupplierName", status,
                created_at as "createdAt", updated_at as "updatedAt"`,
-    [name, agencyUserId, JSON.stringify(timeline), destination, daysCount, startDate, endDate]
+    [name, agencyUserId, JSON.stringify(timeline), destination, daysCount, startDate, endDate, restrictedSupplierName]
   );
 
   return mapRowToItinerary(result.rows[0]);
@@ -58,7 +61,7 @@ export const getItinerariesByAgency = async (agencyUserId: string): Promise<Itin
   const result = await pool.query(
     `SELECT id, name, agency_user_id as "agencyUserId", 
             timeline_data as "timelineData", destination, days_count as "daysCount",
-            start_date as "startDate", end_date as "endDate", status,
+            start_date as "startDate", end_date as "endDate", restricted_supplier_name as "restrictedSupplierName", status,
             created_at as "createdAt", updated_at as "updatedAt"
      FROM itineraries
      WHERE agency_user_id = $1
@@ -73,7 +76,7 @@ export const getItineraryById = async (id: string, agencyUserId: string): Promis
   const result = await pool.query(
     `SELECT id, name, agency_user_id as "agencyUserId", 
             timeline_data as "timelineData", destination, days_count as "daysCount",
-            start_date as "startDate", end_date as "endDate", status,
+            start_date as "startDate", end_date as "endDate", restricted_supplier_name as "restrictedSupplierName", status,
             created_at as "createdAt", updated_at as "updatedAt"
      FROM itineraries
      WHERE id = $1 AND agency_user_id = $2`,
@@ -94,6 +97,7 @@ export const updateItinerary = async (
     daysCount?: number;
     startDate?: string;
     endDate?: string;
+    restrictedSupplierName?: string;
     status?: string;
   }
 ): Promise<Itinerary | null> => {
@@ -131,6 +135,11 @@ export const updateItinerary = async (
     values.push(data.endDate);
   }
 
+  if (data.restrictedSupplierName !== undefined) {
+    updates.push(`restricted_supplier_name = $${paramCount++}`);
+    values.push(data.restrictedSupplierName);
+  }
+
   if (data.status !== undefined) {
     updates.push(`status = $${paramCount++}`);
     values.push(data.status);
@@ -148,7 +157,7 @@ export const updateItinerary = async (
     WHERE id = $${paramCount++} AND agency_user_id = $${paramCount++}
     RETURNING id, name, agency_user_id as "agencyUserId", 
               timeline_data as "timelineData", destination, days_count as "daysCount",
-              start_date as "startDate", end_date as "endDate", status,
+              start_date as "startDate", end_date as "endDate", restricted_supplier_name as "restrictedSupplierName", status,
               created_at as "createdAt", updated_at as "updatedAt"
   `;
   
