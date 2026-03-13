@@ -52,6 +52,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [restrictedSupplierName, setRestrictedSupplierName] = useState<string | null>(null);
   const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [tempSupplierId, setTempSupplierId] = useState<string>('');
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -718,27 +719,38 @@ const ItineraryPlannerPage: React.FC = () => {
                     <p className="text-sm text-slate-400 font-bold">獲取供應商名單...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto px-2 custom-scrollbar">
-                    {suppliers.map(s => (
-                      <button
-                        key={s.id}
-                        onClick={() => setRestrictedSupplierName(s.name)}
-                        className="group flex items-center justify-between p-5 bg-slate-50 hover:bg-blue-600 rounded-2xl border-2 border-slate-100 hover:border-blue-500 transition-all duration-300 text-left"
+                  <div className="flex flex-col gap-6 max-w-sm mx-auto">
+                    <div className="relative group">
+                      <select
+                        value={tempSupplierId}
+                        onChange={(e) => setTempSupplierId(e.target.value)}
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 px-6 text-slate-700 font-bold appearance-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none cursor-pointer text-lg hover:bg-slate-100/50"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">business</span>
-                          </div>
-                          <span className="font-bold text-slate-700 group-hover:text-white transition-colors">{s.name}</span>
-                        </div>
-                        <span className="material-symbols-outlined text-slate-300 group-hover:text-white/50 transition-colors">chevron_right</span>
-                      </button>
-                    ))}
-                    {suppliers.length === 0 && !loadingSuppliers && (
-                      <div className="col-span-full py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-medium">
-                        目前沒有可用的供應商
+                        <option value="" disabled>請選擇供應商...</option>
+                        {suppliers.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <span className="material-symbols-outlined text-3xl">expand_more</span>
                       </div>
-                    )}
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-medium px-2 italic">
+                      * 選擇後將無法在規劃中途更改供應商
+                    </p>
+                    
+                    <button
+                      onClick={() => {
+                        const s = suppliers.find(sup => sup.id === tempSupplierId);
+                        if (s) setRestrictedSupplierName(s.name);
+                      }}
+                      disabled={!tempSupplierId}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    >
+                      開始規劃
+                      <span className="material-symbols-outlined font-bold">arrow_forward</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -746,9 +758,9 @@ const ItineraryPlannerPage: React.FC = () => {
               <div className="bg-slate-50 p-6 flex justify-center border-t border-slate-100">
                  <button 
                   onClick={() => navigate('/agency/dashboard')}
-                  className="text-slate-400 font-bold hover:text-slate-600 transition-colors flex items-center gap-2"
+                  className="text-slate-400 font-bold hover:text-slate-600 transition-colors flex items-center gap-2 text-sm"
                 >
-                  <span className="material-symbols-outlined">arrow_back</span>
+                  <span className="material-symbols-outlined text-lg">arrow_back</span>
                   回到控制台
                 </button>
               </div>
