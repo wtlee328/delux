@@ -144,7 +144,6 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
                                         onClick={() => setIsDropdownOpen(false)}
                                         className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold group"
                                     >
-                                        <span className="material-symbols-outlined text-xl text-slate-400 group-hover:text-blue-500 transition-colors">travel_explore</span>
                                         我的行程庫
                                     </Link>
                                 )}
@@ -175,9 +174,9 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
                             <div className="mt-1 pt-1 border-t border-slate-100 px-1">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full px-3 py-2.5 text-left flex items-center gap-3 text-red-500 hover:bg-red-50 rounded-lg transition-all text-sm font-bold group"
+                                    className="w-full px-3 py-2.5 text-left flex items-center gap-3 text-slate-600 hover:bg-slate-50 rounded-lg transition-all text-sm font-bold group"
                                 >
-                                    <LogOut size={18} className="text-red-400 group-hover:text-red-500" />
+                                    <LogOut size={18} className="text-slate-400 group-hover:text-slate-600" />
                                     登出系統
                                 </button>
                             </div>
