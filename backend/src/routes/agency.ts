@@ -17,6 +17,7 @@ router.use(requireRole(['agency']));
 router.get('/suppliers', async (req: Request, res: Response) => {
   try {
     const { destination } = req.query;
+    console.log(`[API] Fetching suppliers for destination: ${destination || 'none'}`);
     
     let query = "SELECT id, name FROM users WHERE role = 'supplier' AND (is_deleted = FALSE OR is_deleted IS NULL)";
     let values: any[] = [];
