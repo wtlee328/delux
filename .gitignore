@@ -9,6 +9,7 @@ gcs-keyfile.json
 # Service account keys - NEVER COMMIT THESE!
 *-key.json
 *-keyfile.json
+delux-plus-staging-*.json
 github-actions-key.json
 firebase-github-actions-key.json
 .github/*.json

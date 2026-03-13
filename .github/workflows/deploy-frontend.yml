@@ -24,19 +24,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Using stable Node 22
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
-
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Create environment file
         working-directory: ./frontend
@@ -56,34 +50,33 @@ jobs:
             npm run build:prod
           fi
 
-      - name: Verify build artifacts
+      - name: Write Firebase SA key to file
         run: |
-          echo "Verifying dist folder content..."
-          ls -R frontend/dist | head -n 20
-          if [ ! -f frontend/dist/index.html ]; then
-            echo "Error: index.html not found in frontend/dist"
-            exit 1
+          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING }}' > "${{ runner.temp }}/firebase-sa-key.json"
+          else
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${{ runner.temp }}/firebase-sa-key.json"
           fi
 
       - name: Deploy to Firebase Hosting
         run: |
-          # Use npx without -g to avoid sudo/path issues in runner
-          # Explicitly pass the credentials file produced by the auth action
-          export GOOGLE_APPLICATION_CREDENTIALS="${{ steps.auth.outputs.credentials_file_path }}"
-          
-          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
-            npx firebase-tools deploy --only hosting:staging --project delux-plus-staging-488508 --non-interactive --debug
-          else
-            npx firebase-tools deploy --only hosting:prod --project ${{ secrets.GCP_PROJECT_ID }} --non-interactive --debug
-          fi
+          export GOOGLE_APPLICATION_CREDENTIALS="${{ runner.temp }}/firebase-sa-key.json"
+          npx firebase-tools deploy \
+            --only hosting:${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
+            --project ${{ github.ref == 'refs/heads/main' && secrets.GCP_PROJECT_ID || 'delux-plus-staging-488508' }} \
+            --non-interactive
+
+      - name: Cleanup SA key
+        if: always()
+        run: rm -f "${{ runner.temp }}/firebase-sa-key.json"
 
       - name: Deployment Summary
-        if: always()
+        if: success()
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Frontend deployed successfully to ${{ github.ref_name }}!"
-            URL=${{ github.ref == 'refs/heads/main' && 'https://delux-plus-prod.web.app' || 'https://delux-plus-staging-488508.web.app' }}
-            echo "🔗 URL: $URL"
+          echo "✅ Frontend deployed successfully to ${{ github.ref_name }}!"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🔗 URL: https://delux-plus-prod.web.app"
           else
-            echo "❌ Deployment failed. Check the 'Deploy to Firebase Hosting' step logs for details."
+            echo "🔗 URL: https://delux-plus-staging-488508.web.app"
           fi
+          echo "📦 Build: ${{ github.sha }}"
