@@ -84,23 +84,22 @@ const LoginPage: React.FC = () => {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-16">
             <img src="/logo.png" alt="Delux+" className="h-10 w-auto invert brightness-0" />
-            <span className="text-white text-xl font-bold tracking-tight">Delux+</span>
           </div>
 
           <div className="max-w-md">
             <h1 className="text-5xl font-black text-white leading-tight mb-8 tracking-tight">
-              Empowering the Next <br />
-              <span className="text-slate-400">Generation</span> of Travel.
+              引領旅遊產業 <br />
+              <span className="text-slate-400">數位轉型</span>
             </h1>
             <p className="text-slate-400 text-lg font-medium leading-relaxed mb-12">
-              The premier B2B2B supply chain ecosystem for travel agents and suppliers to discover, plan, and grow together.
+              全方位的 B2B2B 旅遊供應鏈生態系，連接供應商與旅行社，共同打造精彩旅程。
             </p>
 
             <div className="space-y-6">
               {[
-                { label: 'Smart Itinerary Planning', icon: 'auto_awesome' },
-                { label: 'Global Supplier Network', icon: 'hub' },
-                { label: 'Automated Operations', icon: 'settings_suggest' }
+                { label: '智慧化行程規劃系統', icon: 'auto_awesome' },
+                { label: '全球供應商夥伴網路', icon: 'hub' },
+                { label: '自動化業務營運管理', icon: 'settings_suggest' }
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4 text-white/80 group">
                   <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
@@ -116,7 +115,7 @@ const LoginPage: React.FC = () => {
         <div className="relative z-10 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           <span className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
-            Delux+ Operating System v1.2.4
+            Delux+ 智慧營運系統 v1.2.4
           </span>
         </div>
       </div>
@@ -127,7 +126,6 @@ const LoginPage: React.FC = () => {
           {/* Mobile Logo Only */}
           <div className="lg:hidden flex items-center gap-3 mb-12">
             <img src="/logo.png" alt="Delux+" className="h-8 w-auto" />
-            <span className="text-slate-900 text-lg font-bold tracking-tight">Delux+</span>
           </div>
 
           <div className="mb-12">
