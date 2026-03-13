@@ -30,6 +30,7 @@ interface ResourceLibraryProps {
   startDate: Date | null;
   endDate: Date | null;
   onDateRangeChange: (start: Date | null, end: Date | null) => void;
+  restrictToSupplierName?: string | null;
 }
 
 const DraggableProduct = ({
@@ -146,7 +147,6 @@ const DraggableProduct = ({
             <span style={{ color: '#b2bec3' }}>|</span>
             <span style={{ color: '#636e72' }}>{product.supplierName}</span>
           </div>
-          {/* Price removed as requested */}
         </div>
       </div>
     </div>
@@ -159,7 +159,8 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
   initialDestination,
   startDate,
   endDate,
-  onDateRangeChange
+  onDateRangeChange,
+  restrictToSupplierName
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,7 +218,12 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
     const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       destination.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = activeTab === 'all' || product.productType === activeTab;
-    const matchesSupplier = selectedSupplier === 'all' || product.supplierName === selectedSupplier;
+    
+    // If restricted to a specific supplier, only show those. Otherwise use the dropdown.
+    const matchesSupplier = restrictToSupplierName 
+      ? product.supplierName === restrictToSupplierName
+      : (selectedSupplier === 'all' || product.supplierName === selectedSupplier);
+      
     return matchesSearch && matchesType && matchesSupplier;
   });
 
@@ -238,41 +244,47 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '140px' }}>
             <div style={styles.destinationLabel}>供應商</div>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select
-                value={selectedSupplier}
-                onChange={(e) => setSelectedSupplier(e.target.value)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  color: '#1f2937',
-                  paddingRight: '1.5rem',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  appearance: 'none',
-                  width: '100%',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden'
-                }}
-              >
-                <option value="all">全部供應商</option>
-                {uniqueSuppliers.map(supplier => (
-                  <option key={supplier} value={supplier}>{supplier}</option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined" style={{
-                position: 'absolute',
-                right: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '1.25rem',
-                color: '#9ca3af',
-                pointerEvents: 'none'
-              }}>
-                arrow_drop_down
-              </span>
+              {restrictToSupplierName ? (
+                <div style={styles.destinationName}>{restrictToSupplierName}</div>
+              ) : (
+                <>
+                  <select
+                    value={selectedSupplier}
+                    onChange={(e) => setSelectedSupplier(e.target.value)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#1f2937',
+                      paddingRight: '1.5rem',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      appearance: 'none',
+                      width: '100%',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <option value="all">全部供應商</option>
+                    {uniqueSuppliers.map(supplier => (
+                      <option key={supplier} value={supplier}>{supplier}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined" style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: '1.25rem',
+                    color: '#9ca3af',
+                    pointerEvents: 'none'
+                  }}>
+                    arrow_drop_down
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

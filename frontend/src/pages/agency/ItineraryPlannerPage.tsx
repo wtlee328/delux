@@ -44,6 +44,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [loadingTrip, setLoadingTrip] = useState(false);
   const [tripTemplateName, setTripTemplateName] = useState<string | null>(null);
+  const [restrictedSupplierName, setRestrictedSupplierName] = useState<string | null>(null);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -108,6 +109,7 @@ const ItineraryPlannerPage: React.FC = () => {
         const trip = res.data;
 
         setTripTemplateName(trip.name);
+        setRestrictedSupplierName(trip.supplierName || null);
 
         // Auto-set dates based on trip's daysCount
         const tomorrow = new Date();
@@ -383,6 +385,12 @@ const ItineraryPlannerPage: React.FC = () => {
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+      if (diffDays > 30) {
+        alert('行程天數上限為 30 天，請重新選擇日期。');
+        setEndDate(null);
+        return;
+      }
+
       setTimeline(prev => {
         const newTimeline: TimelineDay[] = [];
         for (let i = 0; i < diffDays; i++) {
@@ -425,7 +433,23 @@ const ItineraryPlannerPage: React.FC = () => {
 
   const handleClearItinerary = () => {
     if (window.confirm('確定要清除所有行程嗎？此動作無法復原。')) {
-      setTimeline(prev => prev.map(day => ({ ...day, items: [] })));
+      setTimeline(prev => prev.map(day => ({ 
+        ...day, 
+        items: [],
+        breakfastId: null,
+        breakfastCustom: null,
+        breakfastTitle: null,
+        lunchId: null,
+        lunchCustom: null,
+        lunchTitle: null,
+        dinnerId: null,
+        dinnerCustom: null,
+        dinnerTitle: null,
+        hotelId: null,
+        hotelCustom: null,
+        hotelTitle: null,
+        notes: null
+      })));
       showSuccess('已清除行程');
     }
   };
@@ -493,6 +517,7 @@ const ItineraryPlannerPage: React.FC = () => {
               startDate={startDate}
               endDate={endDate}
               onDateRangeChange={handleDateRangeChange}
+              restrictToSupplierName={restrictedSupplierName}
             />
           </div>
 

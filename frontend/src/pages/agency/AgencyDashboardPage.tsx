@@ -115,8 +115,6 @@ const AgencyDashboardPage: React.FC = () => {
 
   const displayProducts = filteredProducts;
 
-  // Available daysCount values for filter pills
-  const availableDaysCounts = Array.from(new Set(trips.map(t => t.daysCount))).sort((a, b) => a - b);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -136,121 +134,165 @@ const AgencyDashboardPage: React.FC = () => {
           )}
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-          <div className="flex flex-col gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+        {/* Unified Search & Filter Section */}
+        <div className="relative mb-12">
+          <div className="bg-white/70 backdrop-blur-md p-1.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/50 flex flex-col md:flex-row items-center gap-1">
+            
+            {/* Search Input Part */}
+            <div className="relative flex-1 w-full group">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <Search className="w-5 h-5" />
+              </div>
               <input
                 type="text"
-                placeholder="搜尋行程名稱或目的地..."
-                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                placeholder="搜尋行程名稱、目的地或供應商..."
+                className="w-full pl-14 pr-6 py-4 bg-transparent border-none focus:ring-0 text-lg text-slate-800 placeholder:text-slate-400 font-medium"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
 
-            {/* Popular Destinations */}
-            {popularDestinations.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-sm text-slate-500 font-medium">熱門目的地:</span>
-                {popularDestinations.map(dest => (
-                  <button
-                    key={dest}
-                    onClick={() => handleSearchChange(dest)}
-                    className={`px-3 py-1 rounded-full text-sm transition-colors border ${searchTerm === dest
-                      ? 'bg-blue-50 text-blue-600 border-blue-200'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
-                      }`}
+            {/* Divider (Desktop only) */}
+            <div className="hidden md:block w-px h-10 bg-slate-200/60 mx-2" />
+
+            {/* Days Filter Part */}
+            <div className="relative w-full md:w-auto min-w-[180px] group border-t md:border-t-0 border-slate-100 pb-2 md:pb-0">
+              <div className="flex items-center px-4 md:px-2 gap-3">
+                <div className="text-slate-400 group-hover:text-blue-500 transition-colors">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">行程天數</div>
+                  <select
+                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-slate-700 cursor-pointer appearance-none"
+                    value={daysFilter || ''}
+                    onChange={(e) => setDaysFilter(e.target.value ? Number(e.target.value) : null)}
                   >
-                    {dest}
-                  </button>
-                ))}
+                    <option value="">全部天數</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 21].map(d => (
+                      <option key={d} value={d}>{d} 天行程</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="text-slate-300 pointer-events-none pr-2">
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                </div>
               </div>
+            </div>
+
+            {/* Clear/Action Button */}
+            {(searchTerm || daysFilter) && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setDaysFilter(null);
+                  setSearchParams({});
+                }}
+                className="p-3 mr-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
+                title="清除所有篩選"
+              >
+                <span className="material-symbols-outlined">restart_alt</span>
+              </button>
             )}
           </div>
+
+          {/* Quick Shortcuts */}
+          {popularDestinations.length > 0 && !searchTerm && (
+            <div className="mt-4 flex flex-wrap gap-2 items-center px-2 animate-in fade-in slide-in-from-top-2 duration-500">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mr-2">熱門搜尋</span>
+              {popularDestinations.map(dest => (
+                <button
+                  key={dest}
+                  onClick={() => handleSearchChange(dest)}
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:shadow-sm transition-all duration-200"
+                >
+                  {dest}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Recommended Trips Section */}
         {!loading && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Compass className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-bold text-slate-800">推薦行程</h3>
-                {searchTerm && <span className="text-sm text-slate-500">– {searchTerm}</span>}
-              </div>
-
-              {/* Days Filter Pills */}
-              {availableDaysCounts.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-500">天數:</span>
-                  <button
-                    onClick={() => setDaysFilter(null)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-                      daysFilter === null
-                        ? 'bg-slate-800 text-white border-slate-800'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
-                    }`}
-                  >
-                    全部
-                  </button>
-                  {availableDaysCounts.map(dc => (
-                    <button
-                      key={dc}
-                      onClick={() => setDaysFilter(daysFilter === dc ? null : dc)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-                        daysFilter === dc
-                          ? 'bg-slate-800 text-white border-slate-800'
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
-                      }`}
-                    >
-                      {dc}天
-                    </button>
-                  ))}
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                  <Compass className="w-5 h-5" />
                 </div>
-              )}
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">精選推薦行程</h3>
+                  <div className="text-sm text-slate-500 font-medium">
+                    {searchTerm ? `搜尋結果: ${searchTerm}` : '供應商上架之精品行程範本'}
+                    {daysFilter && ` • ${daysFilter} 天`}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-sm text-slate-400 font-medium">
+                找到 {trips.length} 個行程
+              </div>
             </div>
 
             {loadingTrips ? (
-              <div className="text-center py-8 text-slate-400 text-sm">載入推薦行程中...</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="bg-white rounded-2xl h-[160px] animate-pulse border border-slate-100" />
+                ))}
+              </div>
             ) : trips.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {trips.map(trip => (
                   <div
                     key={trip.id}
                     onClick={() => navigate(`/agency/itinerary-planner?tripId=${trip.id}`)}
-                    className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group"
+                    className="group bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-200/60 p-5 hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] hover:border-blue-300 transition-all duration-300 cursor-pointer flex flex-col justify-between"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h4 className="font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-100">
+                          {trip.category}
+                        </div>
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold ring-1 ring-inset ring-blue-600/10">
+                          <Calendar className="w-3 h-3" />
+                          {trip.daysCount}天
+                        </div>
+                      </div>
+
+                      <h4 className="font-bold text-slate-800 text-lg leading-tight mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                         {trip.name}
                       </h4>
-                      <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md whitespace-nowrap ml-2">
-                        {trip.daysCount}天
-                      </span>
+
+                      <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {trip.destination}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-2">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {trip.destination}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
-                      <span>供應商: {trip.supplierName}</span>
-                      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{trip.category}</span>
+                    <div className="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between">
+                      <div className="text-[11px] text-slate-400 font-medium">
+                        供應商: <span className="text-slate-600">{trip.supplierName}</span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-xl border border-dashed border-slate-200">
-                {searchTerm ? `「${searchTerm}」目前無推薦行程` : '目前無推薦行程'}
+              <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 text-slate-300 mb-4">
+                  <Compass size={32} />
+                </div>
+                <h4 className="text-slate-700 font-bold">未找到符合條件的行程</h4>
+                <p className="text-slate-500 text-sm mt-1">請嘗試調整搜尋字詞或天數篩選</p>
               </div>
             )}
           </div>
         )}
+
 
         {/* Product Grid */}
         <div className="flex items-center gap-2 mb-4">

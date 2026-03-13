@@ -202,6 +202,18 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                         </span>
                     </div>
                 </div>
+
+                {/* Expand/Collapse Arrow */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 1rem',
+                    color: '#b2bec3',
+                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
+                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}>
+                    <span className="material-symbols-outlined">expand_more</span>
+                </div>
             </div>
 
             {/* Expanded Content */}

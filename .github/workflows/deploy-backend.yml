@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-backend.yml'
@@ -12,8 +13,12 @@ on:
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: asia-east1
-  SERVICE_NAME: delux-plus-backend
-  IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/delux-plus-backend
+  # Determine environment variables based on branch
+  SERVICE_NAME: ${{ github.ref == 'refs/heads/main' && 'delux-plus-backend' || 'delux-plus-backend-staging' }}
+  IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ github.ref == 'refs/heads/main' && 'delux-plus-backend' || 'delux-plus-backend-staging' }}
+  DB_NAME: ${{ github.ref == 'refs/heads/main' && secrets.DB_NAME || 'delux_plus_staging' }}
+  GCS_BUCKET_NAME: ${{ github.ref == 'refs/heads/main' && secrets.GCS_BUCKET_NAME || 'delux-plus-products-staging' }}
+  FRONTEND_URL: ${{ github.ref == 'refs/heads/main' && secrets.FRONTEND_URL || 'https://delux-plus-staging-488508.web.app' }}
 
 jobs:
   deploy:
@@ -57,10 +62,10 @@ jobs:
             --set-secrets="DB_PASSWORD=delux-db-password:latest,JWT_SECRET=delux-jwt-secret:latest" \
             --set-env-vars="DB_HOST=/cloudsql/${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }}" \
             --set-env-vars="DB_PORT=5432" \
-            --set-env-vars="DB_NAME=${{ secrets.DB_NAME }}" \
+            --set-env-vars="DB_NAME=${{ env.DB_NAME }}" \
             --set-env-vars="DB_USER=${{ secrets.DB_USER }}" \
-            --set-env-vars="GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}" \
-            --set-env-vars="CORS_ORIGIN=${{ secrets.FRONTEND_URL }}" \
+            --set-env-vars="GCS_BUCKET_NAME=${{ env.GCS_BUCKET_NAME }}" \
+            --set-env-vars="CORS_ORIGIN=${{ env.FRONTEND_URL }}" \
             --add-cloudsql-instances=${{ secrets.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }} \
             --service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
             --memory=512Mi \
@@ -80,12 +85,13 @@ jobs:
 
       - name: Test Health Endpoint
         run: |
-          sleep 10
+          sleep 15
           curl -f ${{ steps.get-url.outputs.url }}/health || exit 1
 
       - name: Deployment Summary
         run: |
-          echo "✅ Backend deployed successfully!"
+          echo "✅ Backend deployed successfully to ${{ github.ref_name }}!"
           echo "🔗 URL: ${{ steps.get-url.outputs.url }}"
           echo "📦 Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
           echo "🌍 Region: ${{ env.GCP_REGION }}"
+          echo "🗄️ Database: ${{ env.DB_NAME }}"

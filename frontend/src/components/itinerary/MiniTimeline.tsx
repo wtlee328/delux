@@ -101,6 +101,7 @@ const styles = {
         alignItems: 'center',
         gap: '40px',
         padding: '0 40px',
+        width: 'fit-content',
         minWidth: '100%',
         height: '100%',
         position: 'relative' as const,
