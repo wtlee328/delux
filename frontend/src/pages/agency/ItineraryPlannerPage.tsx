@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   DndContext,
@@ -22,37 +22,13 @@ import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
 import './ItineraryPlanner.css';
 import TopBar from '../../components/TopBar';
-
-interface Product {
-  id: string;
-  title: string;
-  destination: string;
-  category: string;
-  coverImageUrl: string;
-  netPrice: number;
-  supplierName: string;
-  productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
-  notes?: string;
-  location?: {
-    lat: number;
-    lng: number;
-  };
-  timelineId?: string; // Unique ID for timeline items
-  startTime?: string; // Format: "HH:mm"
-  duration?: number; // Duration in minutes
-}
-
-interface TimelineDay {
-  dayNumber: number;
-  items: Product[];
-  date?: string; // Format: "MM/DD"
-  dayOfWeek?: string; // e.g., "Mon", "Tue"
-}
+import { Product, TimelineDay } from '../../types/itinerary';
 
 const ItineraryPlannerPage: React.FC = () => {
   const { showSuccess } = useToast();
   const [searchParams] = useSearchParams();
   const initialDestination = searchParams.get('destination');
+  const tripId = searchParams.get('tripId');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -66,6 +42,8 @@ const ItineraryPlannerPage: React.FC = () => {
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [loadingTrip, setLoadingTrip] = useState(false);
+  const [tripTemplateName, setTripTemplateName] = useState<string | null>(null);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -111,6 +89,94 @@ const ItineraryPlannerPage: React.FC = () => {
       return { ...item, startTime, duration };
     });
   };
+
+  // Handler for structured day field changes (meals, hotel, notes)
+  const handleDayFieldChange = useCallback((dayNumber: number, field: string, value: any) => {
+    setTimeline(prev => prev.map(day =>
+      day.dayNumber === dayNumber ? { ...day, [field]: value } : day
+    ));
+  }, []);
+
+  // Trip preloading logic
+  useEffect(() => {
+    if (!tripId) return;
+
+    const loadTrip = async () => {
+      try {
+        setLoadingTrip(true);
+        const res = await axios.get(`/api/agency/trips/${tripId}`);
+        const trip = res.data;
+
+        setTripTemplateName(trip.name);
+
+        // Auto-set dates based on trip's daysCount
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const endDateCalc = new Date(tomorrow);
+        endDateCalc.setDate(endDateCalc.getDate() + trip.daysCount - 1);
+
+        setStartDate(tomorrow);
+        setEndDate(endDateCalc);
+
+        // Build timeline from trip data
+        const newTimeline: TimelineDay[] = [];
+        for (let i = 0; i < trip.daysCount; i++) {
+          const currentDate = new Date(tomorrow);
+          currentDate.setDate(currentDate.getDate() + i);
+          const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+          const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDate.getDay()];
+
+          const tripDay = trip.days?.find((d: any) => d.dayIndex === i + 1);
+
+          const items: Product[] = tripDay?.items?.map((item: any) => ({
+            id: item.productId,
+            title: item.productTitle || '未知產品',
+            destination: trip.destination || '',
+            category: 'landmark',
+            coverImageUrl: '',
+            netPrice: 0,
+            supplierName: trip.supplierName || '',
+            productType: 'landmark' as const,
+            timelineId: `${item.productId}-${Date.now()}-${Math.random()}`,
+            duration: 60,
+          })) || [];
+
+          newTimeline.push({
+            dayNumber: i + 1,
+            items: recalculateTimes(items),
+            date: dateStr,
+            dayOfWeek,
+            // Structured fields from supplier trip
+            breakfastId: tripDay?.breakfastId || null,
+            breakfastCustom: tripDay?.breakfastCustom || null,
+            breakfastTitle: tripDay?.breakfastTitle || null,
+            lunchId: tripDay?.lunchId || null,
+            lunchCustom: tripDay?.lunchCustom || null,
+            lunchTitle: tripDay?.lunchTitle || null,
+            dinnerId: tripDay?.dinnerId || null,
+            dinnerCustom: tripDay?.dinnerCustom || null,
+            dinnerTitle: tripDay?.dinnerTitle || null,
+            hotelId: tripDay?.hotelId || null,
+            hotelCustom: tripDay?.hotelCustom || null,
+            hotelTitle: tripDay?.hotelTitle || null,
+            notes: tripDay?.notes || null,
+          });
+        }
+
+        setTimeline(newTimeline);
+
+        setTimeout(() => {
+          timelineRef.current?.scrollToDay(1);
+        }, 200);
+      } catch (err) {
+        console.error('Failed to load trip template:', err);
+      } finally {
+        setLoadingTrip(false);
+      }
+    };
+
+    loadTrip();
+  }, [tripId]);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected
@@ -325,13 +391,26 @@ const ItineraryPlannerPage: React.FC = () => {
           const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
           const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDate.getDay()];
 
-          // Preserve existing items if they exist for this day index
+          // Preserve existing items and structured fields if they exist for this day index
           const existingDay = prev.find(d => d.dayNumber === i + 1);
           newTimeline.push({
             dayNumber: i + 1,
             items: existingDay ? existingDay.items : [],
             date: dateStr,
-            dayOfWeek: dayOfWeek
+            dayOfWeek: dayOfWeek,
+            breakfastId: existingDay?.breakfastId,
+            breakfastCustom: existingDay?.breakfastCustom,
+            breakfastTitle: existingDay?.breakfastTitle,
+            lunchId: existingDay?.lunchId,
+            lunchCustom: existingDay?.lunchCustom,
+            lunchTitle: existingDay?.lunchTitle,
+            dinnerId: existingDay?.dinnerId,
+            dinnerCustom: existingDay?.dinnerCustom,
+            dinnerTitle: existingDay?.dinnerTitle,
+            hotelId: existingDay?.hotelId,
+            hotelCustom: existingDay?.hotelCustom,
+            hotelTitle: existingDay?.hotelTitle,
+            notes: existingDay?.notes,
           });
         }
         return newTimeline;
@@ -432,12 +511,25 @@ const ItineraryPlannerPage: React.FC = () => {
                 </div>
               </div>
             ) : null}
+            {loadingTrip && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <p className="text-slate-500">載入行程範本中...</p>
+              </div>
+            )}
+            {tripTemplateName && (
+              <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-sm text-blue-700">
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>info</span>
+                基於供應商行程範本：<strong>{tripTemplateName}</strong>
+              </div>
+            )}
             <TimelineContainer
               ref={timelineRef}
               timeline={timeline}
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
+              products={availableProducts}
+              onDayFieldChange={handleDayFieldChange}
             />
           </div>
 

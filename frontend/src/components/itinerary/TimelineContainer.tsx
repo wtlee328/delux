@@ -10,6 +10,8 @@ interface TimelineContainerProps {
     onEdit?: (dayNumber: number, itemId: string) => void;
     onPreview: (product: Product) => void;
     onAddDay?: () => void;
+    products?: Product[];
+    onDayFieldChange?: (dayNumber: number, field: string, value: any) => void;
 }
 
 export interface TimelineContainerRef {
@@ -33,6 +35,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         onEdit,
         onPreview,
         onAddDay,
+        products,
+        onDayFieldChange,
     },
     ref
 ) => {
@@ -98,6 +102,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 onPreview={onPreview}
                                 isExpanded={!!expandedDays[day.dayNumber]}
                                 onToggle={() => toggleDay(day.dayNumber)}
+                                products={products}
+                                onDayFieldChange={onDayFieldChange}
                             />
                         </div>
                     ))}

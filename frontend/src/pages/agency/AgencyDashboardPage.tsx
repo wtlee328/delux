@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DestinationMenu, { DESTINATION_GROUPS } from '../../components/DestinationMenu';
-import { Search, MapPin, ImageOff } from 'lucide-react';
+import { Search, MapPin, ImageOff, Calendar, Compass } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Product {
@@ -16,13 +16,26 @@ interface Product {
   supplierName: string;
 }
 
+interface SupplierTrip {
+  id: string;
+  name: string;
+  destination: string;
+  category: string;
+  daysCount: number;
+  supplierName: string;
+  createdAt: string;
+}
+
 const AgencyDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [trips, setTrips] = useState<SupplierTrip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTrips, setLoadingTrips] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const urlDestination = searchParams.get('destination');
   const [searchTerm, setSearchTerm] = useState(urlDestination || '');
+  const [daysFilter, setDaysFilter] = useState<number | null>(null);
 
   // Update searchTerm when URL changes
   useEffect(() => {
@@ -46,6 +59,11 @@ const AgencyDashboardPage: React.FC = () => {
     fetchProducts();
   }, []);
 
+  // Fetch trips when search changes
+  useEffect(() => {
+    fetchTrips();
+  }, [searchTerm, daysFilter]);
+
   const fetchProducts = async () => {
     try {
       const response = await axios.get('/api/agency/tours');
@@ -54,6 +72,22 @@ const AgencyDashboardPage: React.FC = () => {
       console.error('Failed to fetch products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTrips = async () => {
+    try {
+      setLoadingTrips(true);
+      const params: Record<string, string> = {};
+      if (searchTerm) params.search = searchTerm;
+      if (daysFilter) params.daysCount = String(daysFilter);
+
+      const response = await axios.get('/api/agency/trips', { params });
+      setTrips(response.data);
+    } catch (error) {
+      console.error('Failed to fetch trips:', error);
+    } finally {
+      setLoadingTrips(false);
     }
   };
 
@@ -67,23 +101,22 @@ const AgencyDashboardPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter(product => {
-    if (!searchTerm) return true; // Show all if no search
-
+    if (!searchTerm) return true;
     const lowerSearch = searchTerm.toLowerCase();
     const lowerDest = product.destination.toLowerCase();
-    
-    // Check if search matches a region group
+
     const matchedGroup = DESTINATION_GROUPS.find(g => g.region === searchTerm);
     if (matchedGroup) {
-      // If searchTerm is a region (e.g., "中國西南"), match if product destination is in this group
       return matchedGroup.items.some(item => item === product.destination) || lowerDest.includes(lowerSearch);
     }
 
-    return lowerDest.includes(lowerSearch);
+    return lowerDest.includes(lowerSearch) || product.title.toLowerCase().includes(lowerSearch);
   });
 
-  // "Filter and display only the product cards that match the selected destination."
   const displayProducts = filteredProducts;
+
+  // Available daysCount values for filter pills
+  const availableDaysCounts = Array.from(new Set(trips.map(t => t.daysCount))).sort((a, b) => a - b);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -92,7 +125,7 @@ const AgencyDashboardPage: React.FC = () => {
       <main className="p-8 max-w-7xl mx-auto">
         {/* Header with Itinerary Planning Button */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-800">探索產品</h2>
+          <h2 className="text-2xl font-bold text-slate-800">探索產品與行程</h2>
           {searchTerm && (
             <button
               onClick={() => navigate(`/agency/itinerary-planner?destination=${encodeURIComponent(searchTerm)}`)}
@@ -110,7 +143,7 @@ const AgencyDashboardPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="輸入目的地..."
+                placeholder="搜尋行程名稱或目的地..."
                 className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -138,13 +171,99 @@ const AgencyDashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Recommended Trips Section */}
+        {!loading && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Compass className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-bold text-slate-800">推薦行程</h3>
+                {searchTerm && <span className="text-sm text-slate-500">– {searchTerm}</span>}
+              </div>
+
+              {/* Days Filter Pills */}
+              {availableDaysCounts.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm text-slate-500">天數:</span>
+                  <button
+                    onClick={() => setDaysFilter(null)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                      daysFilter === null
+                        ? 'bg-slate-800 text-white border-slate-800'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    全部
+                  </button>
+                  {availableDaysCounts.map(dc => (
+                    <button
+                      key={dc}
+                      onClick={() => setDaysFilter(daysFilter === dc ? null : dc)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                        daysFilter === dc
+                          ? 'bg-slate-800 text-white border-slate-800'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                      }`}
+                    >
+                      {dc}天
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {loadingTrips ? (
+              <div className="text-center py-8 text-slate-400 text-sm">載入推薦行程中...</div>
+            ) : trips.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {trips.map(trip => (
+                  <div
+                    key={trip.id}
+                    onClick={() => navigate(`/agency/itinerary-planner?tripId=${trip.id}`)}
+                    className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h4 className="font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {trip.name}
+                      </h4>
+                      <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md whitespace-nowrap ml-2">
+                        {trip.daysCount}天
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-2">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {trip.destination}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                      <span>供應商: {trip.supplierName}</span>
+                      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{trip.category}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-xl border border-dashed border-slate-200">
+                {searchTerm ? `「${searchTerm}」目前無推薦行程` : '目前無推薦行程'}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Product Grid */}
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-lg font-bold text-slate-800">產品目錄</h3>
+          {searchTerm && <span className="text-sm text-slate-500">– {searchTerm} ({displayProducts.length})</span>}
+        </div>
+
         {loading ? (
           <div className="text-center py-12 text-slate-500">載入中...</div>
         ) : displayProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <MapPin className="w-12 h-12 mb-4 text-slate-300" />
-            <h3 className="text-lg font-medium text-slate-700 mb-2">此目的地目前尚無相關行程</h3>
+            <h3 className="text-lg font-medium text-slate-700 mb-2">此目的地目前尚無相關產品</h3>
             <p className="text-slate-500">請嘗試選擇其他目的地，或稍後再回來查看。</p>
           </div>
         ) : (
@@ -189,7 +308,6 @@ const AgencyDashboardPage: React.FC = () => {
                     <div className="text-sm text-slate-500">
                       供應商: {product.supplierName}
                     </div>
-                    {/* Price removed as requested */}
                   </div>
                 </div>
               </div>
