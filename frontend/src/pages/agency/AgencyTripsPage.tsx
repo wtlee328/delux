@@ -12,7 +12,8 @@ import {
   Plus, 
   Search,
   Filter,
-  Plane
+  Plane,
+  ArrowLeft
 } from 'lucide-react';
 
 interface Itinerary {
@@ -77,7 +78,15 @@ const AgencyTripsPage: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC]">
       <TopBar title="我的行程庫" />
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
+      <main className="max-w-7xl mx-auto px-6 py-6">
+        <button
+          onClick={() => navigate('/agency/dashboard')}
+          className="flex items-center gap-2 text-slate-400 hover:text-slate-800 transition-colors mb-6 group font-bold text-sm"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          返回
+        </button>
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>

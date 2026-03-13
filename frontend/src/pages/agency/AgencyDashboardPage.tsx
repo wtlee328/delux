@@ -224,18 +224,10 @@ const AgencyDashboardPage: React.FC = () => {
         {/* Recommended Trips Section */}
         {!loading && (
           <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                  <Compass className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">精選推薦行程</h3>
-                  <div className="text-sm text-slate-500 font-medium">
-                    {searchTerm ? `搜尋結果: ${searchTerm}` : '供應商上架之精品行程範本'}
-                    {daysFilter && ` • ${daysFilter} 天`}
-                  </div>
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800">精選推薦行程</h3>
+                {searchTerm && <span className="text-sm text-slate-500">– {searchTerm} ({trips.length})</span>}
               </div>
               
               <div className="text-sm text-slate-400 font-medium">
