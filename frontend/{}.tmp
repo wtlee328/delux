@@ -1,0 +1,1442 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import SupplierDashboardPage from '../pages/supplier/SupplierDashboardPage';
+import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/Toast';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/SupplierDashboardPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/SupplierDashboardPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const renderSupplierDashboard = () => {
+  const mockUser = {
+    id: '1',
+    email: 'supplier@test.com',
+    name: 'Test Supplier',
+    role: 'supplier' as const,
+  };
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('user', JSON.stringify(mockUser));
+
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <SupplierDashboardPage />
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('SupplierDashboardPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+  });
+
+  it('renders product list with status badges', async () => {
+    const mockProducts = [
+      {
+        id: '1',
+        title: 'Tokyo Tour',
+        status: 'published',
+        createdAt: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: '2',
+        title: 'Osaka Adventure',
+        status: 'pending',
+        createdAt: '2024-01-02T00:00:00Z',
+      },
+    ];
+
+    mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+    renderSupplierDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tokyo Tour')).toBeInTheDocument();
+      expect(screen.getByText('Osaka Adventure')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('已發佈')).toBeInTheDocument();
+    expect(screen.getByText('待審核')).toBeInTheDocument();
+  });
+
+  it('displays loading state while fetching products', () => {
+    mockedAxios.get.mockImplementation(() => new Promise(() => {}));
+
+    renderSupplierDashboard();
+
+    expect(screen.getByText('載入中...')).toBeInTheDocument();
+  });
+
+  it('displays error message when fetch fails', async () => {
+    mockedAxios.get.mockRejectedValueOnce({
+      response: {
+        data: { message: '載入產品失敗' },
+      },
+    });
+
+    renderSupplierDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('載入產品失敗')).toBeInTheDocument();
+    });
+  });
+
+  it('displays empty state when no products exist', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+    renderSupplierDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('尚無產品')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /建立第一個產品/i })).toBeInTheDocument();
+    });
+  });
+
+  it('navigates to create product page when clicking new product button', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+    renderSupplierDashboard();
+    const user = userEvent.setup();
+
+    await waitFor(() => {
+      expect(screen.getByText('尚無產品')).toBeInTheDocument();
+    });
+
+    const createButton = screen.getByRole('button', { name: /建立第一個產品/i });
+    await user.click(createButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/supplier/tours/new');
+  });
+
+  it('navigates to edit page when clicking edit button', async () => {
+    const mockProducts = [
+      {
+        id: '1',
+        title: 'Tokyo Tour',
+        status: 'published',
+        createdAt: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+    renderSupplierDashboard();
+    const user = userEvent.setup();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tokyo Tour')).toBeInTheDocument();
+    });
+
+    const editButton = screen.getByRole('button', { name: /編輯/i });
+    await user.click(editButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/supplier/tours/edit/1');
+  });
+
+  it('displays products in table format with correct columns', async () => {
+    const mockProducts = [
+      {
+        id: '1',
+        title: 'Tokyo Tour',
+        status: 'published',
+        createdAt: '2024-01-15T00:00:00Z',
+      },
+    ];
+
+    mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+    renderSupplierDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('產品標題')).toBeInTheDocument();
+      expect(screen.getByText('狀態')).toBeInTheDocument();
+      expect(screen.getByText('建立日期')).toBeInTheDocument();
+      expect(screen.getByText('操作')).toBeInTheDocument();
+    });
+  });
+
+  it('formats creation date correctly', async () => {
+    const mockProducts = [
+      {
+        id: '1',
+        title: 'Tokyo Tour',
+        status: 'published',
+        createdAt: '2024-01-15T00:00:00Z',
+      },
+    ];
+
+    mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+    renderSupplierDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tokyo Tour')).toBeInTheDocument();
+    });
+
+    const formattedDate = new Date('2024-01-15T00:00:00Z').toLocaleDateString('zh-TW');
+    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+  });
+
+  it('navigates to create product page from action bar button', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+    renderSupplierDashboard();
+    const user = userEvent.setup();
+
+    await waitFor(() => {
+      expect(screen.getByText('我的產品')).toBeInTheDocument();
+    });
+
+    const createButtons = screen.getAllByRole('button', { name: /新增產品/i });
+    await user.click(createButtons[0]);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/supplier/tours/new');
+  });
+});
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import AgencyDashboardPage from '../pages/agency/AgencyDashboardPage';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/AgencyDashboardPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/AgencyDashboardPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const mockAgencyUser = {
+  id: '1',
+  email: 'agency@test.com',
+  name: 'Agency User',
+  role: 'agency' as const,
+};
+
+const mockProducts = [
+  {
+    id: '1',
+    title: '東京五日遊',
+    destination: 'Tokyo',
+    durationDays: 5,
+    coverImageUrl: 'https://example.com/tokyo.jpg',
+    netPrice: 25000,
+    supplierName: 'Tokyo Tours',
+  },
+  {
+    id: '2',
+    title: '大阪美食之旅',
+    destination: 'Osaka',
+    durationDays: 3,
+    coverImageUrl: 'https://example.com/osaka.jpg',
+    netPrice: 18000,
+    supplierName: 'Osaka Adventures',
+  },
+];
+
+const renderAgencyDashboardPage = () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('user', JSON.stringify(mockAgencyUser));
+  
+  mockedAxios.defaults = { headers: { common: {} } };
+  
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <AgencyDashboardPage />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('AgencyDashboardPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+  });
+
+  describe('Product Card Rendering', () => {
+    it('renders product cards with 封面圖, 產品標題, 天數, 供應商名稱, 淨價', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('天數：5天')).toBeInTheDocument();
+      expect(screen.getByText('供應商：Tokyo Tours')).toBeInTheDocument();
+      expect(screen.getByText('NT$25,000')).toBeInTheDocument();
+      
+      expect(screen.getByText('大阪美食之旅')).toBeInTheDocument();
+      expect(screen.getByText('天數：3天')).toBeInTheDocument();
+      expect(screen.getByText('供應商：Osaka Adventures')).toBeInTheDocument();
+      expect(screen.getByText('NT$18,000')).toBeInTheDocument();
+
+      const images = screen.getAllByRole('img');
+      expect(images[0]).toHaveAttribute('src', 'https://example.com/tokyo.jpg');
+      expect(images[1]).toHaveAttribute('src', 'https://example.com/osaka.jpg');
+    });
+
+    it('fetches products from GET /api/agency/tours', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/agency/tours?');
+      });
+    });
+
+    it('displays loading state while fetching products', () => {
+      mockedAxios.get.mockImplementation(() => new Promise(() => {}));
+
+      renderAgencyDashboardPage();
+
+      expect(screen.getByText('載入中...')).toBeInTheDocument();
+    });
+
+    it('displays error message when fetch fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      renderAgencyDashboardPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('無法載入產品列表')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Product Filtering', () => {
+    it('applies destination filter via API query parameters', async () => {
+      mockedAxios.get.mockResolvedValue({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+      const user = userEvent.setup();
+
+      // Wait for products to load first (which populates the dropdown options)
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      // Clear the mock to track the next call
+      mockedAxios.get.mockClear();
+      mockedAxios.get.mockResolvedValue({ data: [mockProducts[0]] });
+
+      const destinationSelect = screen.getByLabelText('目的地：') as HTMLSelectElement;
+      await user.selectOptions(destinationSelect, 'Tokyo');
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/agency/tours?destination=Tokyo');
+      });
+    });
+
+    it('applies duration filter via API query parameters', async () => {
+      mockedAxios.get.mockResolvedValue({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('天數：')).toBeInTheDocument();
+      });
+
+      const durationSelect = screen.getByLabelText('天數：') as HTMLSelectElement;
+      await user.selectOptions(durationSelect, '5');
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/agency/tours?durationDays=5');
+      });
+    });
+
+    it('applies multiple filters simultaneously', async () => {
+      mockedAxios.get.mockResolvedValue({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('目的地：')).toBeInTheDocument();
+      });
+
+      const destinationSelect = screen.getByLabelText('目的地：') as HTMLSelectElement;
+      const durationSelect = screen.getByLabelText('天數：') as HTMLSelectElement;
+
+      await user.selectOptions(destinationSelect, 'Tokyo');
+      await user.selectOptions(durationSelect, '5');
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/agency/tours?destination=Tokyo&durationDays=5');
+      });
+    });
+
+    it('displays "no products found" message when filters return empty results', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+      renderAgencyDashboardPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('找不到符合條件的產品')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Product Detail Navigation', () => {
+    it('navigates to product detail page when clicking on a card', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAgencyDashboardPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const productCard = screen.getByText('東京五日遊').closest('div');
+      if (productCard) {
+        await user.click(productCard);
+      }
+
+      expect(mockNavigate).toHaveBeenCalledWith('/agency/tours/1');
+    });
+  });
+});
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import AdminTourDetailPage from '../pages/admin/AdminTourDetailPage';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/AdminTourDetailPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/AdminTourDetailPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock react-router-dom hooks
+const mockNavigate = vi.fn();
+const mockParams = { id: '1' };
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useParams: () => mockParams,
+  };
+});
+
+const mockAdminUser = {
+  id: '1',
+  email: 'admin@test.com',
+  name: 'Admin User',
+  role: 'admin' as const,
+};
+
+const mockProduct = {
+  id: '1',
+  title: '東京五日遊',
+  destination: '東京',
+  durationDays: 5,
+  description: '<p>這是一個精彩的東京之旅</p>',
+  coverImageUrl: 'https://example.com/image.jpg',
+  netPrice: 25000,
+  status: 'pending',
+  supplierName: 'Tokyo Tours',
+  createdAt: '2024-01-01T00:00:00Z',
+};
+
+const renderAdminTourDetailPage = () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('user', JSON.stringify(mockAdminUser));
+  
+  mockedAxios.defaults = { headers: { common: {} } };
+  
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <AdminTourDetailPage />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('AdminTourDetailPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+    mockParams.id = '1';
+  });
+
+  describe('Product Detail Display', () => {
+    it('displays all product details', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+
+      renderAdminTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Tokyo Tours')).toBeInTheDocument();
+      expect(screen.getByText('東京')).toBeInTheDocument();
+      expect(screen.getByText('5 天')).toBeInTheDocument();
+      expect(screen.getByText('NT$25,000')).toBeInTheDocument();
+      expect(screen.getAllByText('待審核').length).toBeGreaterThan(0);
+      
+      const description = screen.getByText('這是一個精彩的東京之旅');
+      expect(description).toBeInTheDocument();
+      
+      const image = screen.getByAltText('東京五日遊') as HTMLImageElement;
+      expect(image.src).toBe('https://example.com/image.jpg');
+    });
+
+    it('fetches product details from GET /api/admin/tours/:id', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+
+      renderAdminTourDetailPage();
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/admin/tours/1');
+      });
+    });
+
+    it('displays loading state while fetching product', () => {
+      mockedAxios.get.mockImplementation(() => new Promise(() => {}));
+
+      renderAdminTourDetailPage();
+
+      expect(screen.getByText('載入中...')).toBeInTheDocument();
+    });
+
+    it('displays error message when fetch fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      renderAdminTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('無法載入產品詳情')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Product Status Update', () => {
+    it('displays status update buttons', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+
+      renderAdminTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const pendingButton = screen.getByRole('button', { name: '待審核' });
+      const publishedButton = screen.getByRole('button', { name: '已發佈' });
+
+      expect(pendingButton).toBeInTheDocument();
+      expect(publishedButton).toBeInTheDocument();
+    });
+
+    it('updates status to published when clicking 已發佈 button', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+      mockedAxios.put.mockResolvedValueOnce({ 
+        data: { ...mockProduct, status: 'published' } 
+      });
+
+      renderAdminTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const publishedButton = screen.getByRole('button', { name: '已發佈' });
+      await user.click(publishedButton);
+
+      await waitFor(() => {
+        expect(mockedAxios.put).toHaveBeenCalledWith('/api/admin/tours/1/status', {
+          status: 'published',
+        });
+      });
+    });
+
+    it('updates status to pending when clicking 待審核 button', async () => {
+      const publishedProduct = { ...mockProduct, status: 'published' };
+      mockedAxios.get.mockResolvedValueOnce({ data: publishedProduct });
+      mockedAxios.put.mockResolvedValueOnce({ 
+        data: { ...publishedProduct, status: 'pending' } 
+      });
+
+      renderAdminTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const pendingButton = screen.getByRole('button', { name: '待審核' });
+      await user.click(pendingButton);
+
+      await waitFor(() => {
+        expect(mockedAxios.put).toHaveBeenCalledWith('/api/admin/tours/1/status', {
+          status: 'pending',
+        });
+      });
+    });
+
+    it('displays success message after status update', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+      mockedAxios.put.mockResolvedValueOnce({ 
+        data: { ...mockProduct, status: 'published' } 
+      });
+
+      renderAdminTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const publishedButton = screen.getByRole('button', { name: '已發佈' });
+      await user.click(publishedButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('狀態更新成功')).toBeInTheDocument();
+      });
+    });
+
+    it('displays error message when status update fails', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+      mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+
+      renderAdminTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const publishedButton = screen.getByRole('button', { name: '已發佈' });
+      await user.click(publishedButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('更新狀態失敗')).toBeInTheDocument();
+      });
+    });
+
+    it('updates UI immediately after status change', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProduct });
+      mockedAxios.put.mockResolvedValueOnce({ 
+        data: { ...mockProduct, status: 'published' } 
+      });
+
+      renderAdminTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      // Initially shows 待審核
+      expect(screen.getAllByText('待審核').length).toBeGreaterThan(0);
+
+      const publishedButton = screen.getByRole('button', { name: '已發佈' });
+      await user.click(publishedButton);
+
+      await waitFor(() => {
+        // After update, should show 已發佈
+        const statusElements = screen.getAllByText('已發佈');
+        expect(statusElements.length).toBeGreaterThan(0);
+      });
+    });
+  });
+});
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import AdminToursPage from '../pages/admin/AdminToursPage';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/AdminToursPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/AdminToursPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const mockAdminUser = {
+  id: '1',
+  email: 'admin@test.com',
+  name: 'Admin User',
+  role: 'admin' as const,
+};
+
+const mockProducts = [
+  {
+    id: '1',
+    title: '東京五日遊',
+    supplierName: 'Tokyo Tours',
+    status: 'pending',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    title: '大阪美食之旅',
+    supplierName: 'Osaka Adventures',
+    status: 'published',
+    createdAt: '2024-01-02T00:00:00Z',
+  },
+];
+
+const renderAdminToursPage = () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('user', JSON.stringify(mockAdminUser));
+  
+  mockedAxios.defaults = { headers: { common: {} } };
+  
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <AdminToursPage />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('AdminToursPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+  });
+
+  describe('Product List Rendering', () => {
+    it('renders product list with 產品標題, 供應商名稱, and status columns', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAdminToursPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Tokyo Tours')).toBeInTheDocument();
+      expect(screen.getByText('待審核')).toBeInTheDocument();
+      
+      expect(screen.getByText('大阪美食之旅')).toBeInTheDocument();
+      expect(screen.getByText('Osaka Adventures')).toBeInTheDocument();
+      expect(screen.getByText('已發佈')).toBeInTheDocument();
+    });
+
+    it('fetches products from GET /api/admin/tours', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAdminToursPage();
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/admin/tours');
+      });
+    });
+
+    it('displays loading state while fetching products', () => {
+      mockedAxios.get.mockImplementation(() => new Promise(() => {}));
+
+      renderAdminToursPage();
+
+      expect(screen.getByText('載入中...')).toBeInTheDocument();
+    });
+
+    it('displays error message when fetch fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      renderAdminToursPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('無法載入產品列表')).toBeInTheDocument();
+      });
+    });
+
+    it('displays empty message when no products exist', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: [] });
+
+      renderAdminToursPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('尚無產品')).toBeInTheDocument();
+      });
+    });
+
+    it('navigates to product detail when clicking on a product', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProducts });
+
+      renderAdminToursPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const productRow = screen.getByText('東京五日遊').closest('tr');
+      if (productRow) {
+        await user.click(productRow);
+      }
+
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/tours/1');
+    });
+  });
+});
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import LoginPage from '../pages/LoginPage';
+import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/Toast';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/LoginPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/LoginPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const renderLoginPage = () => {
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('LoginPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+  });
+
+  it('renders login form with email and password fields', () => {
+    renderLoginPage();
+    
+    expect(screen.getByLabelText(/電子郵件/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/密碼/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /登入/i })).toBeInTheDocument();
+  });
+
+  it('validates required fields', async () => {
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    await user.click(submitButton);
+    
+    // Custom validation should show error messages
+    await waitFor(() => {
+      expect(screen.getByText(/電子郵件為必填/i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles successful login and redirects admin to /admin/users', async () => {
+    const mockUser = {
+      id: '1',
+      email: 'admin@test.com',
+      name: 'Admin User',
+      role: 'admin',
+    };
+    
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        token: 'test-token',
+        user: mockUser,
+      },
+    });
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'admin@test.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
+    
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith('/api/auth/login', {
+        email: 'admin@test.com',
+        password: 'password123',
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/users');
+    });
+    
+    expect(localStorage.getItem('token')).toBe('test-token');
+    expect(localStorage.getItem('user')).toBe(JSON.stringify(mockUser));
+  });
+
+  it('handles successful login and redirects supplier to /supplier/dashboard', async () => {
+    const mockUser = {
+      id: '2',
+      email: 'supplier@test.com',
+      name: 'Supplier User',
+      role: 'supplier',
+    };
+    
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        token: 'test-token',
+        user: mockUser,
+      },
+    });
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'supplier@test.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
+    
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/supplier/dashboard');
+    });
+  });
+
+  it('handles successful login and redirects agency to /agency/dashboard', async () => {
+    const mockUser = {
+      id: '3',
+      email: 'agency@test.com',
+      name: 'Agency User',
+      role: 'agency',
+    };
+    
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        token: 'test-token',
+        user: mockUser,
+      },
+    });
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'agency@test.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
+    
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/agency/dashboard');
+    });
+  });
+
+  it('displays error message for invalid credentials', async () => {
+    mockedAxios.post.mockRejectedValueOnce({
+      response: {
+        status: 401,
+        data: { message: 'Invalid credentials' },
+      },
+    });
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'wrong@test.com');
+    await user.type(passwordInput, 'wrongpassword');
+    await user.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('電子郵件或密碼無效');
+    });
+    
+    expect(localStorage.getItem('token')).toBeNull();
+  });
+
+  it('displays generic error message for server errors', async () => {
+    mockedAxios.post.mockRejectedValueOnce({
+      response: {
+        status: 500,
+        data: { message: 'Server error' },
+      },
+    });
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'test@test.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('登入失敗，請稍後再試');
+    });
+  });
+
+  it('disables form during submission', async () => {
+    mockedAxios.post.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+
+    renderLoginPage();
+    const user = userEvent.setup();
+    
+    const emailInput = screen.getByLabelText(/電子郵件/i);
+    const passwordInput = screen.getByLabelText(/密碼/i);
+    const submitButton = screen.getByRole('button', { name: /登入/i });
+    
+    await user.type(emailInput, 'test@test.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
+    
+    expect(screen.getByRole('button', { name: /登入中/i })).toBeDisabled();
+    expect(emailInput).toBeDisabled();
+    expect(passwordInput).toBeDisabled();
+  });
+});
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import AgencyTourDetailPage from '../pages/agency/AgencyTourDetailPage';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      patch: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() }
+      },
+      defaults: { headers: { common: ./src/__tests__/AgencyTourDetailPage.test.tsx } }
+    })),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    },
+    defaults: { headers: { common: ./src/__tests__/AgencyTourDetailPage.test.tsx } }
+  }
+}));
+const mockedAxios = axios as any;
+
+mockedAxios.create = vi.fn(() => ({
+  interceptors: {
+    request: { use: vi.fn(), eject: vi.fn() },
+    response: { use: vi.fn(), eject: vi.fn() }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  patch: vi.fn(),
+  defaults: { headers: { common: {} } }
+}));
+
+// Mock useNavigate and useParams
+const mockNavigate = vi.fn();
+const mockParams = { id: 'product-123' };
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useParams: () => mockParams,
+  };
+});
+
+const mockAgencyUser = {
+  id: '1',
+  email: 'agency@test.com',
+  name: 'Agency User',
+  role: 'agency' as const,
+};
+
+const mockProductDetail = {
+  id: 'product-123',
+  title: '東京五日遊',
+  destination: 'Tokyo',
+  durationDays: 5,
+  description: '<p>這是一個精彩的<strong>東京之旅</strong>，包含<img src="https://example.com/image.jpg" />景點。</p>',
+  coverImageUrl: 'https://example.com/tokyo.jpg',
+  netPrice: 25000,
+  supplierName: 'Tokyo Tours',
+};
+
+const renderAgencyTourDetailPage = () => {
+  localStorage.setItem('token', 'test-token');
+  localStorage.setItem('user', JSON.stringify(mockAgencyUser));
+  
+  mockedAxios.defaults = { headers: { common: {} } };
+  
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        <AgencyTourDetailPage />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('AgencyTourDetailPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockNavigate.mockClear();
+  });
+
+  describe('Product Detail Display', () => {
+    it('displays complete product information', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProductDetail });
+
+      renderAgencyTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Tokyo')).toBeInTheDocument();
+      expect(screen.getByText('5天')).toBeInTheDocument();
+      expect(screen.getByText('Tokyo Tours')).toBeInTheDocument();
+      expect(screen.getByText('NT$25,000')).toBeInTheDocument();
+    });
+
+    it('renders rich text 產品描述 with formatting and images', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProductDetail });
+
+      renderAgencyTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('東京五日遊')).toBeInTheDocument();
+      });
+
+      const descriptionSection = screen.getByText('產品描述').parentElement;
+      expect(descriptionSection?.innerHTML).toContain('<strong>東京之旅</strong>');
+      expect(descriptionSection?.innerHTML).toContain('<img src="https://example.com/image.jpg"');
+    });
+
+    it('formats 淨價 in TWD currency format', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProductDetail });
+
+      renderAgencyTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('NT$25,000')).toBeInTheDocument();
+      });
+    });
+
+    it('fetches product details from GET /api/agency/tours/:id', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProductDetail });
+
+      renderAgencyTourDetailPage();
+
+      await waitFor(() => {
+        expect(mockedAxios.get).toHaveBeenCalledWith('/api/agency/tours/product-123');
+      });
+    });
+
+    it('displays loading state while fetching product', () => {
+      mockedAxios.get.mockImplementation(() => new Promise(() => {}));
+
+      renderAgencyTourDetailPage();
+
+      expect(screen.getByText('載入中...')).toBeInTheDocument();
+    });
+
+    it('displays error message when fetch fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      renderAgencyTourDetailPage();
+
+      await waitFor(() => {
+        expect(screen.getByText('無法載入產品詳情')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Navigation', () => {
+    it('navigates back to dashboard when clicking back button', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: mockProductDetail });
+
+      renderAgencyTourDetailPage();
+      const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByText(/返回產品列表/)).toBeInTheDocument();
+      });
+
+      const backButton = screen.getByText(/返回產品列表/);
+      await user.click(backButton);
+
+      expect(mockNavigate).toHaveBeenCalledWith('/agency/dashboard');
+    });
+  });
+});

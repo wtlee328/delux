@@ -50,6 +50,8 @@ const ItineraryPlannerPage: React.FC = () => {
   const [loadingTrip, setLoadingTrip] = useState(false);
   const [tripTemplateName, setTripTemplateName] = useState<string | null>(null);
   const [restrictedSupplierName, setRestrictedSupplierName] = useState<string | null>(null);
+  const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -196,6 +198,7 @@ const ItineraryPlannerPage: React.FC = () => {
         const it = res.data;
 
         setItineraryName(it.name);
+        setRestrictedSupplierName(it.restrictedSupplierName || null);
         
         if (it.startDate) setStartDate(new Date(it.startDate));
         if (it.endDate) setEndDate(new Date(it.endDate));
@@ -223,6 +226,22 @@ const ItineraryPlannerPage: React.FC = () => {
 
     loadItinerary();
   }, [itineraryId]);
+
+  // Fetch suppliers list
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        setLoadingSuppliers(true);
+        const res = await axios.get('/api/agency/suppliers');
+        setSuppliers(res.data);
+      } catch (err) {
+        console.error('Failed to fetch suppliers:', err);
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected
@@ -404,6 +423,7 @@ const ItineraryPlannerPage: React.FC = () => {
         daysCount: timeline.length,
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
+        restrictedSupplierName,
         timeline: timeline,
       };
 
@@ -672,6 +692,64 @@ const ItineraryPlannerPage: React.FC = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-slate-600 font-bold">載入行程中...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Supplier Selection Overlay */}
+        {!restrictedSupplierName && !loadingTrip && !loadingItinerary && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[110] flex items-center justify-center p-6">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                  <span className="material-symbols-outlined text-4xl">travel_explore</span>
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-4">選擇合作供應商</h2>
+                <p className="text-slate-500 font-medium mb-10">
+                  在開始規劃之前，請先選擇您要使用的行程資源供應商。<br/>
+                  這將會過濾出該供應商所提供的專屬地標、餐廳與住宿。
+                </p>
+
+                {loadingSuppliers ? (
+                  <div className="py-10 flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-slate-400 font-bold">獲取供應商名單...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto px-2 custom-scrollbar">
+                    {suppliers.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setRestrictedSupplierName(s.name)}
+                        className="group flex items-center justify-between p-5 bg-slate-50 hover:bg-blue-600 rounded-2xl border-2 border-slate-100 hover:border-blue-500 transition-all duration-300 text-left"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors">
+                            <span className="material-symbols-outlined text-xl">business</span>
+                          </div>
+                          <span className="font-bold text-slate-700 group-hover:text-white transition-colors">{s.name}</span>
+                        </div>
+                        <span className="material-symbols-outlined text-slate-300 group-hover:text-white/50 transition-colors">chevron_right</span>
+                      </button>
+                    ))}
+                    {suppliers.length === 0 && !loadingSuppliers && (
+                      <div className="col-span-full py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-medium">
+                        目前沒有可用的供應商
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-slate-50 p-6 flex justify-center border-t border-slate-100">
+                 <button 
+                  onClick={() => navigate('/agency/dashboard')}
+                  className="text-slate-400 font-bold hover:text-slate-600 transition-colors flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  回到控制台
+                </button>
+              </div>
             </div>
           </div>
         )}
