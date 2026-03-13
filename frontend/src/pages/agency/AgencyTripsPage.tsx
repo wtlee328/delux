@@ -131,8 +131,8 @@ const AgencyTripsPage: React.FC = () => {
             ))}
           </div>
         ) : filteredItineraries.length > 0 ? (
-          <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
-            <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 bg-slate-50/50 border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm relative">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 bg-slate-50/50 border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest rounded-t-[24px]">
               <div className="col-span-5">行程名稱</div>
               <div className="col-span-2 text-center">目的地</div>
               <div className="col-span-1 text-center">天數</div>
@@ -142,11 +142,13 @@ const AgencyTripsPage: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-100">
-              {filteredItineraries.map((itinerary) => (
+              {filteredItineraries.map((itinerary, index) => (
                 <div 
                   key={itinerary.id}
                   onClick={() => navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`)}
-                  className="group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 hover:bg-slate-50 transition-colors cursor-pointer items-center"
+                  className={`group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 hover:bg-slate-50 transition-colors cursor-pointer items-center ${
+                    index === filteredItineraries.length - 1 ? 'rounded-b-[24px]' : ''
+                  }`}
                 >
                   {/* Name */}
                   <div className="col-span-5 flex items-center gap-4">
@@ -197,7 +199,7 @@ const AgencyTripsPage: React.FC = () => {
 
                   {/* Actions */}
                   <div className="col-span-1 text-right flex justify-end">
-                    <div className="relative" ref={activeDropdown === itinerary.id ? (ref) => ref : null}>
+                    <div className="relative">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -211,13 +213,13 @@ const AgencyTripsPage: React.FC = () => {
                       {activeDropdown === itinerary.id && (
                         <>
                           <div 
-                            className="fixed inset-0 z-10" 
+                            className="fixed inset-0 z-[60]" 
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveDropdown(null);
                             }}
                           />
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-20 animate-in fade-in slide-in-from-top-2">
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-[70] animate-in fade-in slide-in-from-top-2">
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
