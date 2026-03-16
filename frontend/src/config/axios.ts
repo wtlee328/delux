@@ -39,7 +39,7 @@ if (axiosInstance.interceptors && axiosInstance.interceptors.response) {
       if (error.response?.status === 401 && window.location.pathname !== '/login') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        window.location.href = '/login?expired=true';
       }
       return Promise.reject(error);
     }

@@ -83,11 +83,15 @@ const LoginPage: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-white">
       {/* Left Section: Brand & Messaging (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 flex-col justify-between p-16 relative overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-white rounded-full blur-[100px]" />
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 relative overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/login-bg.jpg" 
+            alt="Background" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]" />
         </div>
 
         <div className="relative z-10">
@@ -128,40 +132,7 @@ const LoginPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Modern Geometric Network Pattern */}
-        <svg 
-          className="absolute -bottom-16 -right-16 w-[700px] h-[700px] text-white opacity-[0.03] pointer-events-none"
-          viewBox="0 0 200 200" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="0.5"
-        >
-          {/* Connecting Lines */}
-          <path d="M 150 50 L 100 80 L 120 140 L 170 120 Z" />
-          <path d="M 100 80 L 40 60 L 60 110 L 120 140" />
-          <path d="M 150 50 L 190 70 L 170 120" />
-          <path d="M 40 60 L 20 100 L 60 110" />
-          <path d="M 100 80 L 80 20 L 150 50" />
-          <path d="M 40 60 L 80 20" />
-          <path d="M 120 140 L 90 180 L 170 120" />
-          <path d="M 60 110 L 90 180" />
-          
-          {/* Nodes */}
-          <circle cx="150" cy="50" r="2" fill="currentColor" />
-          <circle cx="100" cy="80" r="3" fill="currentColor" />
-          <circle cx="120" cy="140" r="2.5" fill="currentColor" />
-          <circle cx="170" cy="120" r="1.5" fill="currentColor" />
-          <circle cx="40" cy="60" r="2" fill="currentColor" />
-          <circle cx="60" cy="110" r="3" fill="currentColor" />
-          <circle cx="190" cy="70" r="1" fill="currentColor" />
-          <circle cx="20" cy="100" r="1.5" fill="currentColor" />
-          <circle cx="80" cy="20" r="2" fill="currentColor" />
-          <circle cx="90" cy="180" r="2" fill="currentColor" />
-          
-          {/* Outer Decorative Rings */}
-          <circle cx="100" cy="100" r="90" strokeDasharray="2 6" strokeWidth="0.5" opacity="0.6" />
-          <circle cx="100" cy="100" r="130" strokeDasharray="4 8" strokeWidth="0.2" opacity="0.3" />
-        </svg>
+
       </div>
 
       {/* Right Section: Login Form */}
