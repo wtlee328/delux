@@ -128,43 +128,39 @@ const LoginPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Minimalist Airplane Graphic */}
+        {/* Modern Geometric Network Pattern */}
         <svg 
-          className="absolute -bottom-32 -right-20 w-[800px] h-[800px] text-white opacity-[0.04] pointer-events-none transform -rotate-12 transition-transform duration-1000 ease-out" 
+          className="absolute -bottom-16 -right-16 w-[700px] h-[700px] text-white opacity-[0.03] pointer-events-none"
+          viewBox="0 0 200 200" 
           fill="none" 
           stroke="currentColor" 
-          strokeWidth="1.2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          viewBox="0 0 200 200"
+          strokeWidth="0.5"
         >
-          {/* Center Line Pattern */}
-          <path d="M 200 0 V 200" strokeDasharray="2 6" opacity="0.2" />
-
-          {/* Vertical Fin */}
-          <path d="M 200 20 C 185 45 182 55 180 62" />
+          {/* Connecting Lines */}
+          <path d="M 150 50 L 100 80 L 120 140 L 170 120 Z" />
+          <path d="M 100 80 L 40 60 L 60 110 L 120 140" />
+          <path d="M 150 50 L 190 70 L 170 120" />
+          <path d="M 40 60 L 20 100 L 60 110" />
+          <path d="M 100 80 L 80 20 L 150 50" />
+          <path d="M 40 60 L 80 20" />
+          <path d="M 120 140 L 90 180 L 170 120" />
+          <path d="M 60 110 L 90 180" />
           
-          {/* Tail Wing */}
-          <path d="M 183 75 L 110 85 C 108 85.5 108 87 110 87 L 195 83" />
-
-          {/* Main Fuselage */}
-          <path d="M 200 60 A 40 50 0 0 0 200 160" />
-          <path d="M 200 70 A 30 40 0 0 0 200 150" opacity="0.5" />
+          {/* Nodes */}
+          <circle cx="150" cy="50" r="2" fill="currentColor" />
+          <circle cx="100" cy="80" r="3" fill="currentColor" />
+          <circle cx="120" cy="140" r="2.5" fill="currentColor" />
+          <circle cx="170" cy="120" r="1.5" fill="currentColor" />
+          <circle cx="40" cy="60" r="2" fill="currentColor" />
+          <circle cx="60" cy="110" r="3" fill="currentColor" />
+          <circle cx="190" cy="70" r="1" fill="currentColor" />
+          <circle cx="20" cy="100" r="1.5" fill="currentColor" />
+          <circle cx="80" cy="20" r="2" fill="currentColor" />
+          <circle cx="90" cy="180" r="2" fill="currentColor" />
           
-          {/* Main Wing */}
-          <path d="M 163 116 L 15 135 C 5 136 5 141 15 140 L 163 126" />
-          
-          {/* Wing Details */}
-          <path d="M 120 121 L 120 130" opacity="0.3" />
-          <path d="M 90 125 L 90 133" opacity="0.3" />
-          
-          {/* Engine Pylon */}
-          <path d="M 85 125 L 80 145 M 65 128 L 70 145" />
-
-          {/* Engine Fan */}
-          <ellipse cx="75" cy="154" rx="16" ry="14" />
-          <ellipse cx="75" cy="154" rx="6" ry="5" />
-          <path d="M 65 154 L 85 154 M 75 145 L 75 163" opacity="0.4" />
+          {/* Outer Decorative Rings */}
+          <circle cx="100" cy="100" r="90" strokeDasharray="2 6" strokeWidth="0.5" opacity="0.6" />
+          <circle cx="100" cy="100" r="130" strokeDasharray="4 8" strokeWidth="0.2" opacity="0.3" />
         </svg>
       </div>
 
