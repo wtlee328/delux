@@ -127,6 +127,45 @@ const LoginPage: React.FC = () => {
             Delux+ 智慧營運系統 v1.2.4
           </span>
         </div>
+
+        {/* Minimalist Airplane Graphic */}
+        <svg 
+          className="absolute -bottom-32 -right-20 w-[800px] h-[800px] text-white opacity-[0.04] pointer-events-none transform -rotate-12 transition-transform duration-1000 ease-out" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="1.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          viewBox="0 0 200 200"
+        >
+          {/* Center Line Pattern */}
+          <path d="M 200 0 V 200" strokeDasharray="2 6" opacity="0.2" />
+
+          {/* Vertical Fin */}
+          <path d="M 200 20 C 185 45 182 55 180 62" />
+          
+          {/* Tail Wing */}
+          <path d="M 183 75 L 110 85 C 108 85.5 108 87 110 87 L 195 83" />
+
+          {/* Main Fuselage */}
+          <path d="M 200 60 A 40 50 0 0 0 200 160" />
+          <path d="M 200 70 A 30 40 0 0 0 200 150" opacity="0.5" />
+          
+          {/* Main Wing */}
+          <path d="M 163 116 L 15 135 C 5 136 5 141 15 140 L 163 126" />
+          
+          {/* Wing Details */}
+          <path d="M 120 121 L 120 130" opacity="0.3" />
+          <path d="M 90 125 L 90 133" opacity="0.3" />
+          
+          {/* Engine Pylon */}
+          <path d="M 85 125 L 80 145 M 65 128 L 70 145" />
+
+          {/* Engine Fan */}
+          <ellipse cx="75" cy="154" rx="16" ry="14" />
+          <ellipse cx="75" cy="154" rx="6" ry="5" />
+          <path d="M 65 154 L 85 154 M 75 145 L 75 163" opacity="0.4" />
+        </svg>
       </div>
 
       {/* Right Section: Login Form */}
