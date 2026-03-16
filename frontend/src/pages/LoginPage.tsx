@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { validateLoginForm } from '../utils/validation';
@@ -12,7 +12,16 @@ const LoginPage: React.FC = () => {
 
   const { login, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showError, showSuccess } = useToast();
+
+  React.useEffect(() => {
+    if (searchParams.get('expired') === 'true') {
+      showError('您的登入狀態已過期，請重新登入');
+      searchParams.delete('expired');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, showError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
