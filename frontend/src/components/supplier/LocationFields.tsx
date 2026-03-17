@@ -67,23 +67,26 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
     }
   }, [latitude, longitude]);
 
-  const fetchSuggestions = useCallback(async (
+  const fetchSuggestions = useCallback((
     input: string, 
     setSuggestions: React.Dispatch<React.SetStateAction<any[]>>
   ) => {
-    if (!input.trim() || !window.google) {
+    if (!input.trim() || !window.google || !window.google.maps || !window.google.maps.places) {
       setSuggestions([]);
       return;
     }
     try {
-      const placesLib = await google.maps.importLibrary("places") as any;
-      if (!placesLib.AutocompleteSuggestion) return;
-      
-      const { suggestions } = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-        input,
-        language: 'zh-TW',
-      });
-      setSuggestions(suggestions || []);
+      const service = new window.google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        { input, language: 'zh-TW' },
+        (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(predictions);
+          } else {
+            setSuggestions([]);
+          }
+        }
+      );
     } catch (e) {
       console.error(e);
       setSuggestions([]);
@@ -111,25 +114,23 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
   }, [addressValue, address, fetchSuggestions]);
 
   const handleTitleSelect = async (suggestion: any) => {
-    const placePrediction = suggestion.placePrediction;
-    const titleText = placePrediction.text.text;
+    const titleText = suggestion.structured_formatting.main_text;
     setTitleValue(titleText);
     onTitleChange(titleText);
     setTitleSuggestions([]);
 
     try {
-      const place = placePrediction.toPlace();
-      await place.fetchFields({ fields: ['location', 'formattedAddress'] });
-      
-      const lat = place.location?.lat();
-      const lng = place.location?.lng();
-      
-      if (lat && lng) {
+      const geocoder = new window.google.maps.Geocoder();
+      const response = await geocoder.geocode({ address: suggestion.description });
+      if (response.results && response.results.length > 0) {
+        const location = response.results[0].geometry.location;
+        const lat = location.lat();
+        const lng = location.lng();
         onCoordinatesChange(lat, lng);
         setMapCenter({ lat, lng });
-      }
-      if (place.formattedAddress) {
-        onAddressChange(place.formattedAddress);
+        if (response.results[0].formatted_address) {
+          onAddressChange(response.results[0].formatted_address);
+        }
       }
     } catch (error) {
       console.error("Error fetching place: ", error);
@@ -137,20 +138,18 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
   };
 
   const handleAddressSelect = async (suggestion: any) => {
-    const placePrediction = suggestion.placePrediction;
-    const addressText = placePrediction.text.text;
+    const addressText = suggestion.description;
     setAddressValue(addressText);
     onAddressChange(addressText);
     setAddressSuggestions([]);
 
     try {
-      const place = placePrediction.toPlace();
-      await place.fetchFields({ fields: ['location'] });
-      
-      const lat = place.location?.lat();
-      const lng = place.location?.lng();
-      
-      if (lat && lng) {
+      const geocoder = new window.google.maps.Geocoder();
+      const response = await geocoder.geocode({ address: suggestion.description });
+      if (response.results && response.results.length > 0) {
+        const location = response.results[0].geometry.location;
+        const lat = location.lat();
+        const lng = location.lng();
         onCoordinatesChange(lat, lng);
         setMapCenter({ lat, lng });
       }
@@ -201,11 +200,12 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
           <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg top-full max-h-60 overflow-auto">
             {titleSuggestions.map((suggestion) => (
               <li
-                key={suggestion.placePrediction.placeId}
+                key={suggestion.place_id}
                 onClick={() => handleTitleSelect(suggestion)}
                 className="p-3 hover:bg-slate-50 cursor-pointer text-slate-700 border-b border-slate-50 last:border-0"
               >
-                <span className="font-bold">{suggestion.placePrediction.text.text}</span>
+                <span className="font-bold">{suggestion.structured_formatting.main_text}</span>
+                <small className="block text-slate-500">{suggestion.structured_formatting.secondary_text}</small>
               </li>
             ))}
           </ul>
@@ -239,11 +239,11 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
               <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg top-full max-h-60 overflow-auto">
                 {addressSuggestions.map((suggestion) => (
                   <li
-                    key={suggestion.placePrediction.placeId}
+                    key={suggestion.place_id}
                     onClick={() => handleAddressSelect(suggestion)}
                     className="p-3 hover:bg-slate-50 cursor-pointer text-slate-700 border-b border-slate-50 last:border-0"
                   >
-                    {suggestion.placePrediction.text.text}
+                    {suggestion.description}
                   </li>
                 ))}
               </ul>
