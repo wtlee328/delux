@@ -52,6 +52,11 @@ const ItineraryPlannerPage: React.FC = () => {
   const [restrictedSupplierName, setRestrictedSupplierName] = useState<string | null>(null);
   const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [destinations, setDestinations] = useState<string[]>([]);
+  const [loadingDestinations, setLoadingDestinations] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<string>('');
+  const [destinationSearch, setDestinationSearch] = useState('');
+  const [plannerStep, setPlannerStep] = useState<'destination' | 'supplier'>('destination');
   const [tempSupplierId, setTempSupplierId] = useState<string>('');
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
@@ -228,12 +233,32 @@ const ItineraryPlannerPage: React.FC = () => {
     loadItinerary();
   }, [itineraryId]);
 
-  // Fetch suppliers list
+  // Fetch destinations
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        setLoadingDestinations(true);
+        const res = await axios.get('/api/agency/destinations');
+        setDestinations(res.data);
+      } catch (err) {
+        console.error('Failed to fetch destinations:', err);
+      } finally {
+        setLoadingDestinations(false);
+      }
+    };
+    fetchDestinations();
+  }, []);
+
+  // Fetch suppliers list based on destination
   useEffect(() => {
     const fetchSuppliers = async () => {
+      // Don't fetch if we don't have a destination yet in step-by-step mode
+      if (plannerStep === 'supplier' && !selectedDestination && !initialDestination) return;
+
       try {
         setLoadingSuppliers(true);
-        const params = initialDestination ? { destination: initialDestination } : {};
+        const dest = selectedDestination || initialDestination || '';
+        const params = dest ? { destination: dest } : {};
         console.log('[DEBUG] Fetching suppliers with params:', params);
         const res = await axios.get('/api/agency/suppliers', { params });
         setSuppliers(res.data);
@@ -244,7 +269,7 @@ const ItineraryPlannerPage: React.FC = () => {
       }
     };
     fetchSuppliers();
-  }, [initialDestination]);
+  }, [initialDestination, selectedDestination, plannerStep]);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected
@@ -593,7 +618,7 @@ const ItineraryPlannerPage: React.FC = () => {
             <ResourceLibrary
               onProductHover={setHoveredProduct}
               setAvailableProducts={setAvailableProducts}
-              initialDestination={initialDestination || undefined}
+              initialDestination={selectedDestination || initialDestination || undefined}
               startDate={startDate}
               endDate={endDate}
               onDateRangeChange={handleDateRangeChange}
@@ -705,52 +730,129 @@ const ItineraryPlannerPage: React.FC = () => {
             <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
               <div className="p-10 text-center">
                 <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                  <span className="material-symbols-outlined text-4xl">travel_explore</span>
+                  <span className="material-symbols-outlined text-4xl">
+                    {plannerStep === 'destination' ? 'map' : 'travel_explore'}
+                  </span>
                 </div>
-                <h2 className="text-3xl font-black text-slate-900 mb-4">選擇合作供應商</h2>
+                <h2 className="text-3xl font-black text-slate-900 mb-4">
+                  {plannerStep === 'destination' ? '選擇行程目的地' : '選擇合作供應商'}
+                </h2>
                 <p className="text-slate-500 font-medium mb-10">
-                  在開始規劃之前，請先選擇您要使用的行程資源供應商。<br/>
-                  這將會過濾出該供應商所提供的專屬地標、餐廳與住宿。
+                  {plannerStep === 'destination' 
+                    ? '請選擇您要規劃的旅遊區域，我們將為您推薦當地的專業供應商。' 
+                    : `您已選擇「${selectedDestination || initialDestination}」，請選擇要使用的供應商。`}
                 </p>
 
-                {loadingSuppliers ? (
-                  <div className="py-10 flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-slate-400 font-bold">獲取供應商名單...</p>
+                {plannerStep === 'destination' ? (
+                  <div className="flex flex-col gap-6 max-w-sm mx-auto">
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <span className="material-symbols-outlined">search</span>
+                      </div>
+                      <input 
+                        type="text"
+                        placeholder="搜尋或選擇目的地..."
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 pl-12 pr-6 text-slate-700 font-bold focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-lg"
+                        value={destinationSearch}
+                        onChange={(e) => setDestinationSearch(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+                      {loadingDestinations ? (
+                        <div className="py-8 flex flex-col items-center gap-3">
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <p className="text-xs text-slate-400 font-bold tracking-widest uppercase">載入目的地...</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2">
+                          {destinations
+                            .filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase()))
+                            .map(dest => (
+                              <button
+                                key={dest}
+                                onClick={() => setSelectedDestination(dest)}
+                                className={`w-full text-left px-6 py-4 rounded-xl font-bold transition-all border-2 ${
+                                  selectedDestination === dest 
+                                    ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-sm' 
+                                    : 'bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-100'
+                                }`}
+                              >
+                                {dest}
+                              </button>
+                            ))
+                          }
+                          {destinations.filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase())).length === 0 && (
+                            <div className="py-10 text-center text-slate-400 italic">
+                               找不到符合的目的地
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setPlannerStep('supplier')}
+                      disabled={!selectedDestination && !initialDestination}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2 mt-4"
+                    >
+                      下一步
+                      <span className="material-symbols-outlined font-bold">arrow_forward</span>
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-6 max-w-sm mx-auto">
-                    <div className="relative group">
-                      <select
-                        value={tempSupplierId}
-                        onChange={(e) => setTempSupplierId(e.target.value)}
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 px-6 text-slate-700 font-bold appearance-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none cursor-pointer text-lg hover:bg-slate-100/50"
-                      >
-                        <option value="" disabled>請選擇供應商...</option>
-                        {suppliers.map(s => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                      <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                        <span className="material-symbols-outlined text-3xl">expand_more</span>
+                    {loadingSuppliers ? (
+                      <div className="py-10 flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm text-slate-400 font-bold">獲取供應商名單...</p>
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="relative group">
+                          <select
+                            value={tempSupplierId}
+                            onChange={(e) => setTempSupplierId(e.target.value)}
+                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 px-6 text-slate-700 font-bold appearance-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none cursor-pointer text-lg hover:bg-slate-100/50"
+                          >
+                            <option value="" disabled>請選擇供應商...</option>
+                            {suppliers.map(s => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                            <span className="material-symbols-outlined text-3xl">expand_more</span>
+                          </div>
+                        </div>
 
-                    <p className="text-xs text-slate-400 font-medium px-2 italic">
-                      * 選擇後將無法在規劃中途更改供應商
-                    </p>
-                    
-                    <button
-                      onClick={() => {
-                        const s = suppliers.find(sup => sup.id === tempSupplierId);
-                        if (s) setRestrictedSupplierName(s.name);
-                      }}
-                      disabled={!tempSupplierId}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
-                    >
-                      開始規劃
-                      <span className="material-symbols-outlined font-bold">arrow_forward</span>
-                    </button>
+                        {suppliers.length === 0 && !loadingSuppliers && (
+                          <p className="text-sm text-red-500 font-bold text-center">
+                            該目的地目前尚無合作供應商
+                          </p>
+                        )}
+
+                        <div className="flex gap-4 mt-6">
+                            <button
+                                onClick={() => setPlannerStep('destination')}
+                                className="flex-1 bg-white border-2 border-slate-200 text-slate-500 py-5 rounded-2xl font-black transition-all hover:bg-slate-50 active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined font-bold">arrow_back</span>
+                                上一步
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const s = suppliers.find(sup => sup.id === tempSupplierId);
+                                    if (s) setRestrictedSupplierName(s.name);
+                                }}
+                                disabled={!tempSupplierId}
+                                className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                            >
+                                開始規劃
+                                <span className="material-symbols-outlined font-bold">check_circle</span>
+                            </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
