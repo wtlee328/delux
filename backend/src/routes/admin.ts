@@ -173,7 +173,7 @@ router.get('/trips', async (req: Request, res: Response) => {
     // I should probably add a generic getAllTrips to tripService as well.
     // For now, let's use a specific one for review.
     const { default: pool } = await import('../config/database');
-    const result = await pool.query('SELECT * FROM supplier_trips ORDER BY created_at DESC');
+    const result = await pool.query("SELECT * FROM supplier_trips WHERE status != '草稿' ORDER BY created_at DESC");
     const mappedTrips = result.rows.map(row => ({
       id: row.id,
       supplierId: row.supplier_id,
@@ -186,7 +186,8 @@ router.get('/trips', async (req: Request, res: Response) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at
     }));
-    res.json(mappedTrips);
+    const filteredTrips = mappedTrips.filter(t => t.status !== '草稿');
+    res.json(filteredTrips);
   } catch (error) {
     console.error('Get all trips error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -223,6 +224,12 @@ router.get('/trips/:id', async (req: Request, res: Response) => {
     if (tripCheck.rows.length === 0) return res.status(404).json({ error: 'Trip not found' });
     
     const trip = await getTripById(id, tripCheck.rows[0].supplier_id);
+    
+    if (trip.status === '草稿') {
+      res.status(403).json({ error: 'Access denied: Draft trips can only be viewed by suppliers' });
+      return;
+    }
+
     res.json(trip);
   } catch (error) {
     console.error('Get trip error:', error);
@@ -253,7 +260,6 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
 
 /**
  * GET /api/admin/tours
@@ -263,7 +269,8 @@ router.get('/tours', async (req: Request, res: Response) => {
   try {
     const { getAllProducts } = await import('../services/productService');
     const products = await getAllProducts();
-    res.json(products);
+    const filteredProducts = products.filter(p => p.status !== '草稿');
+    res.json(filteredProducts);
   } catch (error) {
     console.error('Get all products error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -312,6 +319,12 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { getProductById } = await import('../services/productService');
     const product = await getProductById(id);
+    
+    if (product.status === '草稿') {
+      res.status(403).json({ error: 'Access denied: Draft products can only be viewed by suppliers' });
+      return;
+    }
+
     res.json(product);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to get product';
@@ -391,3 +404,5 @@ router.delete('/tours/:id', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+export default router;

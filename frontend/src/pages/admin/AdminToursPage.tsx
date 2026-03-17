@@ -155,7 +155,7 @@ const AdminToursPage: React.FC = () => {
   };
 
   const filteredProducts = React.useMemo(() => {
-    let result = [...products];
+    let result = products.filter(p => p.status !== '草稿');
 
     // Filtering
     if (filterSupplier) {
@@ -196,8 +196,11 @@ const AdminToursPage: React.FC = () => {
 
   const uniqueCategories = Array.from(new Set(products.map(p => p.category)))
     .filter(Boolean)
-    .filter(c => c !== 'activity'); // Filter out 'activity' if any remain in state temporarily
-  const uniqueStatuses = Array.from(new Set(products.map(p => p.status))).filter(Boolean);
+    .filter(c => c !== 'activity');
+
+  const uniqueStatuses = Array.from(new Set(products.map(p => p.status)))
+    .filter(Boolean)
+    .filter(s => s !== '草稿');
 
   const { user } = useAuth();
 

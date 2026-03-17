@@ -55,6 +55,7 @@ const AdminTripsPage: React.FC = () => {
   };
 
   const filteredTrips = trips.filter(trip => {
+    if (trip.status === '草稿') return false;
     if (filterDestination && !trip.destination.toLowerCase().includes(filterDestination.toLowerCase())) return false;
     if (filterStatus && trip.status !== filterStatus) return false;
     return true;
@@ -123,7 +124,6 @@ const AdminTripsPage: React.FC = () => {
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800"
           >
             <option value="">全部狀態</option>
-            <option value="草稿">草稿</option>
             <option value="審核中">審核中</option>
             <option value="已通過">已通過</option>
             <option value="已退回">已退回</option>

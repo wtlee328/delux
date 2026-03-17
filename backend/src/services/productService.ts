@@ -262,7 +262,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
-     WHERE p.is_deleted = FALSE OR p.is_deleted IS NULL
+     WHERE (p.is_deleted = FALSE OR p.is_deleted IS NULL) AND p.status != '草稿'
      ORDER BY p.created_at DESC`
   );
 
