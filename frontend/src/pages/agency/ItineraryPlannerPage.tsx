@@ -32,6 +32,8 @@ const ItineraryPlannerPage: React.FC = () => {
   const initialDestination = searchParams.get('destination');
   const tripId = searchParams.get('tripId');
   const itineraryId = routeId || searchParams.get('itineraryId');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [itineraryName, setItineraryName] = useState<string>('');
   const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
@@ -232,19 +234,18 @@ const ItineraryPlannerPage: React.FC = () => {
         setLoadingItinerary(false);
       }
     };
-
     loadItinerary();
   }, [itineraryId]);
 
-  // Fetch destinations
+  // Fetch unique destinations from published products
   useEffect(() => {
     const fetchDestinations = async () => {
+      setLoadingDestinations(true);
       try {
-        setLoadingDestinations(true);
-        const res = await axios.get('/api/agency/destinations');
-        setDestinations(res.data);
-      } catch (err) {
-        console.error('Failed to fetch destinations:', err);
+        const response = await axios.get('/api/agency/destinations');
+        setDestinations(response.data);
+      } catch (error) {
+        console.error('Failed to fetch destinations:', error);
       } finally {
         setLoadingDestinations(false);
       }
@@ -268,10 +269,10 @@ const ItineraryPlannerPage: React.FC = () => {
 
   // Fetch suppliers list based on destination
   useEffect(() => {
-    const fetchSuppliers = async () => {
-      // Don't fetch if we don't have a destination yet in step-by-step mode
-      if (plannerStep === 'supplier' && !selectedDestination && !initialDestination) return;
+    // Don't fetch if we don't have a destination yet in step-by-step mode
+    if (plannerStep === 'supplier' && !selectedDestination && !initialDestination) return;
 
+    const fetchSuppliers = async () => {
       try {
         setLoadingSuppliers(true);
         const dest = selectedDestination || initialDestination || '';
@@ -285,6 +286,7 @@ const ItineraryPlannerPage: React.FC = () => {
         setLoadingSuppliers(false);
       }
     };
+
     fetchSuppliers();
   }, [initialDestination, selectedDestination, plannerStep]);
 
@@ -495,9 +497,6 @@ const ItineraryPlannerPage: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
-
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
 
   const handleDateRangeChange = (start: Date | null, end: Date | null) => {
     setStartDate(start);
@@ -762,7 +761,7 @@ const ItineraryPlannerPage: React.FC = () => {
 
                 {plannerStep === 'destination' ? (
                   <div className="flex flex-col gap-6 max-w-sm mx-auto">
-                    <div className="relative searchable-dropdown">
+                    <div className="relative searchable-dropdown text-left">
                       <button 
                         type="button"
                         onClick={() => setIsDestinationMenuOpen(!isDestinationMenuOpen)}
@@ -802,10 +801,10 @@ const ItineraryPlannerPage: React.FC = () => {
                           
                           <div className="max-h-[240px] overflow-y-auto custom-scrollbar flex flex-col gap-1">
                             {loadingDestinations ? (
-                                <div className="py-8 flex flex-col items-center gap-3">
-                                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                    <p className="text-xs text-slate-400 font-bold tracking-widest uppercase">載入目的地...</p>
-                                </div>
+                              <div className="py-8 flex flex-col items-center gap-3">
+                                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-xs text-slate-400 font-bold tracking-widest uppercase">載入中...</p>
+                              </div>
                             ) : (
                               <>
                                 {destinations
@@ -860,7 +859,7 @@ const ItineraryPlannerPage: React.FC = () => {
                       </div>
                     ) : (
                       <>
-                        <div className="relative searchable-dropdown">
+                        <div className="relative searchable-dropdown text-left">
                           <button 
                             type="button"
                             onClick={() => setIsSupplierMenuOpen(!isSupplierMenuOpen)}
@@ -954,6 +953,7 @@ const ItineraryPlannerPage: React.FC = () => {
                                 className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
                             >
                                 開始規劃
+                                <span className="material-symbols-outlined font-bold">check_circle</span>
                             </button>
                         </div>
                       </>
