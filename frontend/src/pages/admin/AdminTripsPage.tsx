@@ -55,6 +55,7 @@ const AdminTripsPage: React.FC = () => {
   };
 
   const filteredTrips = trips.filter(trip => {
+    if (trip.status === '草稿') return false;
     if (filterDestination && !trip.destination.toLowerCase().includes(filterDestination.toLowerCase())) return false;
     if (filterStatus && trip.status !== filterStatus) return false;
     return true;
