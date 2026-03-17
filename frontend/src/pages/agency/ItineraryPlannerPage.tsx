@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
@@ -22,37 +22,18 @@ import MapView from '../../components/itinerary/MapView';
 import axios from '../../config/axios';
 import './ItineraryPlanner.css';
 import TopBar from '../../components/TopBar';
-
-interface Product {
-  id: string;
-  title: string;
-  destination: string;
-  category: string;
-  coverImageUrl: string;
-  netPrice: number;
-  supplierName: string;
-  productType: 'landmark' | 'accommodation' | 'food' | 'transportation';
-  notes?: string;
-  location?: {
-    lat: number;
-    lng: number;
-  };
-  timelineId?: string; // Unique ID for timeline items
-  startTime?: string; // Format: "HH:mm"
-  duration?: number; // Duration in minutes
-}
-
-interface TimelineDay {
-  dayNumber: number;
-  items: Product[];
-  date?: string; // Format: "MM/DD"
-  dayOfWeek?: string; // e.g., "Mon", "Tue"
-}
+import { Product, TimelineDay } from '../../types/itinerary';
 
 const ItineraryPlannerPage: React.FC = () => {
   const { showSuccess } = useToast();
+  const { id: routeId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialDestination = searchParams.get('destination');
+  const tripId = searchParams.get('tripId');
+  const itineraryId = routeId || searchParams.get('itineraryId');
+  const [itineraryName, setItineraryName] = useState<string>('');
+  const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState({
     library: true,
     timeline: true,
@@ -66,6 +47,12 @@ const ItineraryPlannerPage: React.FC = () => {
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [loadingTrip, setLoadingTrip] = useState(false);
+  const [tripTemplateName, setTripTemplateName] = useState<string | null>(null);
+  const [restrictedSupplierName, setRestrictedSupplierName] = useState<string | null>(null);
+  const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [tempSupplierId, setTempSupplierId] = useState<string>('');
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -111,6 +98,153 @@ const ItineraryPlannerPage: React.FC = () => {
       return { ...item, startTime, duration };
     });
   };
+
+  // Handler for structured day field changes (meals, hotel, notes)
+  const handleDayFieldChange = useCallback((dayNumber: number, field: string, value: any) => {
+    setTimeline(prev => prev.map(day =>
+      day.dayNumber === dayNumber ? { ...day, [field]: value } : day
+    ));
+  }, []);
+
+  // Trip preloading logic
+  useEffect(() => {
+    if (!tripId) return;
+
+    const loadTrip = async () => {
+      try {
+        setLoadingTrip(true);
+        const res = await axios.get(`/api/agency/trips/${tripId}`);
+        const trip = res.data;
+
+        setTripTemplateName(trip.name);
+        setRestrictedSupplierName(trip.supplierName || null);
+
+        // Auto-set dates based on trip's daysCount
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const endDateCalc = new Date(tomorrow);
+        endDateCalc.setDate(endDateCalc.getDate() + trip.daysCount - 1);
+
+        setStartDate(tomorrow);
+        setEndDate(endDateCalc);
+
+        // Build timeline from trip data
+        const newTimeline: TimelineDay[] = [];
+        for (let i = 0; i < trip.daysCount; i++) {
+          const currentDate = new Date(tomorrow);
+          currentDate.setDate(currentDate.getDate() + i);
+          const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+          const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDate.getDay()];
+
+          const tripDay = trip.days?.find((d: any) => d.dayIndex === i + 1);
+
+          const items: Product[] = tripDay?.items?.map((item: any) => ({
+            id: item.productId,
+            title: item.productTitle || '未知產品',
+            destination: trip.destination || '',
+            category: 'landmark',
+            coverImageUrl: '',
+            netPrice: 0,
+            supplierName: trip.supplierName || '',
+            productType: 'landmark' as const,
+            timelineId: `${item.productId}-${Date.now()}-${Math.random()}`,
+            duration: 60,
+          })) || [];
+
+          newTimeline.push({
+            dayNumber: i + 1,
+            items: recalculateTimes(items),
+            date: dateStr,
+            dayOfWeek,
+            // Structured fields from supplier trip
+            breakfastId: tripDay?.breakfastId || null,
+            breakfastCustom: tripDay?.breakfastCustom || null,
+            breakfastTitle: tripDay?.breakfastTitle || null,
+            lunchId: tripDay?.lunchId || null,
+            lunchCustom: tripDay?.lunchCustom || null,
+            lunchTitle: tripDay?.lunchTitle || null,
+            dinnerId: tripDay?.dinnerId || null,
+            dinnerCustom: tripDay?.dinnerCustom || null,
+            dinnerTitle: tripDay?.dinnerTitle || null,
+            hotelId: tripDay?.hotelId || null,
+            hotelCustom: tripDay?.hotelCustom || null,
+            hotelTitle: tripDay?.hotelTitle || null,
+            notes: tripDay?.notes || null,
+          });
+        }
+
+        setTimeline(newTimeline);
+
+        setTimeout(() => {
+          timelineRef.current?.scrollToDay(1);
+        }, 200);
+      } catch (err) {
+        console.error('Failed to load trip template:', err);
+      } finally {
+        setLoadingTrip(false);
+      }
+    };
+
+    loadTrip();
+  }, [tripId]);
+
+  // Itinerary (Own Draft) preloading logic
+  useEffect(() => {
+    if (!itineraryId) return;
+
+    const loadItinerary = async () => {
+      try {
+        setLoadingItinerary(true);
+        const res = await axios.get(`/api/itinerary/${itineraryId}`);
+        const it = res.data;
+
+        setItineraryName(it.name);
+        setRestrictedSupplierName(it.restrictedSupplierName || null);
+        
+        if (it.startDate) setStartDate(new Date(it.startDate));
+        if (it.endDate) setEndDate(new Date(it.endDate));
+
+        const timelineData: TimelineDay[] = it.timelineData.map((day: any) => ({
+          ...day,
+          items: day.items.map((item: any) => ({
+            ...item,
+            // Ensure necessary fields exist
+            productType: item.productType || 'landmark'
+          }))
+        }));
+
+        setTimeline(timelineData);
+
+        setTimeout(() => {
+          timelineRef.current?.scrollToDay(1);
+        }, 300);
+      } catch (err) {
+        console.error('Failed to load itinerary:', err);
+      } finally {
+        setLoadingItinerary(false);
+      }
+    };
+
+    loadItinerary();
+  }, [itineraryId]);
+
+  // Fetch suppliers list
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        setLoadingSuppliers(true);
+        const params = initialDestination ? { destination: initialDestination } : {};
+        console.log('[DEBUG] Fetching suppliers with params:', params);
+        const res = await axios.get('/api/agency/suppliers', { params });
+        setSuppliers(res.data);
+      } catch (err) {
+        console.error('Failed to fetch suppliers:', err);
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    fetchSuppliers();
+  }, [initialDestination]);
 
   const handleDragStart = (event: DragStartEvent) => {
     // Prevent dragging if dates are not selected
@@ -286,17 +420,31 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleSaveItinerary = async (name: string) => {
     try {
       setSaveStatus('儲存中...');
-      await axios.post('/api/itinerary', {
+      const payload = {
         name,
-        timeline: timeline.map(day => ({
-          dayNumber: day.dayNumber,
-          items: day.items.map(item => ({
-            id: item.id,
-            title: item.title,
-            notes: item.notes,
-          })),
-        })),
-      });
+        destination: initialDestination || timeline[0]?.items[0]?.destination || '',
+        daysCount: timeline.length,
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+        restrictedSupplierName,
+        timeline: timeline,
+      };
+
+      let response;
+      if (itineraryId) {
+        response = await axios.put(`/api/itinerary/${itineraryId}`, payload);
+      } else {
+        response = await axios.post('/api/itinerary', payload);
+      }
+      
+      const savedItinerary = response.data;
+      setItineraryName(savedItinerary.name);
+      
+      // If it was a new save, navigate to the edit URL to prevent double creation on next save
+      if (!itineraryId && savedItinerary.id) {
+        navigate(`/agency/itinerary-planner/${savedItinerary.id}`, { replace: true });
+      }
+
       setSaveStatus('儲存成功！');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
@@ -317,6 +465,12 @@ const ItineraryPlannerPage: React.FC = () => {
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+      if (diffDays > 30) {
+        alert('行程天數上限為 30 天，請重新選擇日期。');
+        setEndDate(null);
+        return;
+      }
+
       setTimeline(prev => {
         const newTimeline: TimelineDay[] = [];
         for (let i = 0; i < diffDays; i++) {
@@ -325,13 +479,26 @@ const ItineraryPlannerPage: React.FC = () => {
           const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
           const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDate.getDay()];
 
-          // Preserve existing items if they exist for this day index
+          // Preserve existing items and structured fields if they exist for this day index
           const existingDay = prev.find(d => d.dayNumber === i + 1);
           newTimeline.push({
             dayNumber: i + 1,
             items: existingDay ? existingDay.items : [],
             date: dateStr,
-            dayOfWeek: dayOfWeek
+            dayOfWeek: dayOfWeek,
+            breakfastId: existingDay?.breakfastId,
+            breakfastCustom: existingDay?.breakfastCustom,
+            breakfastTitle: existingDay?.breakfastTitle,
+            lunchId: existingDay?.lunchId,
+            lunchCustom: existingDay?.lunchCustom,
+            lunchTitle: existingDay?.lunchTitle,
+            dinnerId: existingDay?.dinnerId,
+            dinnerCustom: existingDay?.dinnerCustom,
+            dinnerTitle: existingDay?.dinnerTitle,
+            hotelId: existingDay?.hotelId,
+            hotelCustom: existingDay?.hotelCustom,
+            hotelTitle: existingDay?.hotelTitle,
+            notes: existingDay?.notes,
           });
         }
         return newTimeline;
@@ -346,7 +513,23 @@ const ItineraryPlannerPage: React.FC = () => {
 
   const handleClearItinerary = () => {
     if (window.confirm('確定要清除所有行程嗎？此動作無法復原。')) {
-      setTimeline(prev => prev.map(day => ({ ...day, items: [] })));
+      setTimeline(prev => prev.map(day => ({ 
+        ...day, 
+        items: [],
+        breakfastId: null,
+        breakfastCustom: null,
+        breakfastTitle: null,
+        lunchId: null,
+        lunchCustom: null,
+        lunchTitle: null,
+        dinnerId: null,
+        dinnerCustom: null,
+        dinnerTitle: null,
+        hotelId: null,
+        hotelCustom: null,
+        hotelTitle: null,
+        notes: null
+      })));
       showSuccess('已清除行程');
     }
   };
@@ -414,6 +597,7 @@ const ItineraryPlannerPage: React.FC = () => {
               startDate={startDate}
               endDate={endDate}
               onDateRangeChange={handleDateRangeChange}
+              restrictToSupplierName={restrictedSupplierName}
             />
           </div>
 
@@ -432,12 +616,25 @@ const ItineraryPlannerPage: React.FC = () => {
                 </div>
               </div>
             ) : null}
+            {loadingTrip && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <p className="text-slate-500">載入行程範本中...</p>
+              </div>
+            )}
+            {tripTemplateName && (
+              <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-sm text-blue-700">
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>info</span>
+                基於供應商行程範本：<strong>{tripTemplateName}</strong>
+              </div>
+            )}
             <TimelineContainer
               ref={timelineRef}
               timeline={timeline}
               onDelete={handleDeleteCard}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
+              products={availableProducts}
+              onDayFieldChange={handleDayFieldChange}
             />
           </div>
 
@@ -474,6 +671,7 @@ const ItineraryPlannerPage: React.FC = () => {
           isOpen={isSaveModalOpen}
           onClose={() => setIsSaveModalOpen(false)}
           onSave={handleSaveItinerary}
+          defaultName={itineraryName || tripTemplateName || ''}
         />
 
         {previewProduct && (
@@ -491,6 +689,84 @@ const ItineraryPlannerPage: React.FC = () => {
             />
           ) : null}
         </DragOverlay>
+
+        {loadingItinerary && (
+          <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-600 font-bold">載入行程中...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Supplier Selection Overlay */}
+        {!restrictedSupplierName && !loadingTrip && !loadingItinerary && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[110] flex items-center justify-center p-6">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                  <span className="material-symbols-outlined text-4xl">travel_explore</span>
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-4">選擇合作供應商</h2>
+                <p className="text-slate-500 font-medium mb-10">
+                  在開始規劃之前，請先選擇您要使用的行程資源供應商。<br/>
+                  這將會過濾出該供應商所提供的專屬地標、餐廳與住宿。
+                </p>
+
+                {loadingSuppliers ? (
+                  <div className="py-10 flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-slate-400 font-bold">獲取供應商名單...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-6 max-w-sm mx-auto">
+                    <div className="relative group">
+                      <select
+                        value={tempSupplierId}
+                        onChange={(e) => setTempSupplierId(e.target.value)}
+                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 px-6 text-slate-700 font-bold appearance-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none cursor-pointer text-lg hover:bg-slate-100/50"
+                      >
+                        <option value="" disabled>請選擇供應商...</option>
+                        {suppliers.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <span className="material-symbols-outlined text-3xl">expand_more</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-medium px-2 italic">
+                      * 選擇後將無法在規劃中途更改供應商
+                    </p>
+                    
+                    <button
+                      onClick={() => {
+                        const s = suppliers.find(sup => sup.id === tempSupplierId);
+                        if (s) setRestrictedSupplierName(s.name);
+                      }}
+                      disabled={!tempSupplierId}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    >
+                      開始規劃
+                      <span className="material-symbols-outlined font-bold">arrow_forward</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-slate-50 p-6 flex justify-center border-t border-slate-100">
+                 <button 
+                  onClick={() => navigate('/agency/dashboard')}
+                  className="text-slate-400 font-bold hover:text-slate-600 transition-colors flex items-center gap-2 text-sm"
+                >
+                  <span className="material-symbols-outlined text-lg">arrow_back</span>
+                  回到控制台
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DndContext>
   );

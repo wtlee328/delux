@@ -31,13 +31,13 @@ const RoleSelectionPage: React.FC = () => {
   const getRoleLabel = (role: string): string => {
     switch (role) {
       case 'super_admin':
-        return 'Super Admin';
+        return '系統管理員';
       case 'admin':
-        return '管理員';
+        return '後台管理員';
       case 'supplier':
-        return '供應商';
+        return '產品供應商';
       case 'agency':
-        return '旅行社';
+        return '分銷旅行社';
       default:
         return role;
     }
@@ -46,13 +46,13 @@ const RoleSelectionPage: React.FC = () => {
   const getRoleDescription = (role: string): string => {
     switch (role) {
       case 'super_admin':
-        return '系統最高權限管理';
+        return 'System oversight & global settings';
       case 'admin':
-        return '管理用戶和審核產品';
+        return 'Operations & user management';
       case 'supplier':
-        return '上傳和管理旅遊產品';
+        return 'Product publishing & inventory';
       case 'agency':
-        return '瀏覽和發現旅遊產品';
+        return 'Tour planning & reservations';
       default:
         return '';
     }
@@ -61,15 +61,15 @@ const RoleSelectionPage: React.FC = () => {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'super_admin':
-        return <span className="material-symbols-outlined text-4xl">security</span>;
+        return <span className="material-symbols-outlined text-3xl">verified_user</span>;
       case 'admin':
-        return <span className="material-symbols-outlined text-4xl">admin_panel_settings</span>;
+        return <span className="material-symbols-outlined text-3xl">settings_account_box</span>;
       case 'supplier':
-        return <span className="material-symbols-outlined text-4xl">storefront</span>;
+        return <span className="material-symbols-outlined text-3xl">hub</span>;
       case 'agency':
-        return <span className="material-symbols-outlined text-4xl">flight_takeoff</span>;
+        return <span className="material-symbols-outlined text-3xl">travel_explore</span>;
       default:
-        return <span className="material-symbols-outlined text-4xl">assignment</span>;
+        return <span className="material-symbols-outlined text-3xl">person</span>;
     }
   };
 
@@ -92,22 +92,10 @@ const RoleSelectionPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Selecting role:', role);
       const response = await axios.post('/api/auth/select-role', { role });
-      console.log('Role selection response:', response.data);
       const { token, user } = response.data;
-
-      console.log('New user role:', user.role);
-      console.log('New token (first 50 chars):', token.substring(0, 50));
-
-      // Update AuthContext directly (no page reload needed)
       updateUser(token, user);
-
-      const redirectPath = getRedirectPath(role);
-      console.log('Redirecting to:', redirectPath);
-
-      // Navigate without reloading - AuthContext is already updated
-      navigate(redirectPath, { replace: true });
+      navigate(getRedirectPath(role), { replace: true });
     } catch (error) {
       console.error('Role selection error:', error);
       showError('角色選擇失敗，請重試');
@@ -121,59 +109,81 @@ const RoleSelectionPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white h-16 border-b border-slate-200 shadow-sm px-6 flex justify-between items-center sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Delux+ Logo" className="h-8 w-auto" />
-          </div>
+    <div className="min-h-screen bg-[#FDFDFD] flex flex-col">
+      {/* Sleek Header */}
+      <header className="h-20 flex justify-between items-center px-8 sm:px-12">
+        <div className="flex items-center">
+          <img src="/logo.png" alt="Delux+" className="h-7 w-auto" />
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium text-sm">{userName}</span>
-          <div className="h-8 w-px bg-slate-200"></div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
-          >
-            <LogOut size={18} />
-            <span>登出</span>
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-slate-900 transition-colors text-sm font-bold group"
+        >
+          <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>登出</span>
+        </button>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-xl shadow-lg w-full max-w-2xl">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">選擇您的角色</h2>
-            <p className="text-slate-500">
-              歡迎回來！請選擇您要使用的角色以繼續
+      <main className="flex-1 flex flex-col items-center justify-center -mt-10 px-6">
+        <div className="w-full max-w-2xl">
+          {/* Welcome Text */}
+          <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">
+              Welcome Back
+            </span>
+            <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+              {userName || '使用者'}，請選擇登入角色
+            </h1>
+            <p className="text-slate-400 font-medium">
+              依據您所屬的權限，選擇合適的工作空間開始運作
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Role Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             {[...roles]
               .sort((a, b) => {
                 const order = ['agency', 'supplier', 'admin', 'super_admin'];
                 return order.indexOf(a) - order.indexOf(b);
               })
-              .map((role) => (
+              .map((role, index) => (
               <button
                 key={role}
-                onClick={() => handleRoleSelect(role)}
+                onClick={() => handleRoleSelect(role as any)}
                 disabled={isLoading}
-                className="flex flex-col items-center p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                style={{ animationDelay: `${index * 100}ms` }}
+                className="group relative flex flex-col items-start p-8 bg-white border border-slate-100 rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:bg-slate-900 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
               >
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">
+                {/* Icon Container */}
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 mb-8 group-hover:bg-white/10 group-hover:text-white transition-colors duration-300">
                   {getRoleIcon(role)}
                 </div>
-                <div className="text-lg font-bold text-slate-800 mb-1">
-                  {getRoleLabel(role)}
+
+                {/* Text Content */}
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-white transition-colors duration-300">
+                    {getRoleLabel(role)}
+                  </h3>
+                  <p className="text-sm text-slate-400 font-medium group-hover:text-slate-300 transition-colors duration-300 line-clamp-1">
+                    {getRoleDescription(role)}
+                  </p>
                 </div>
-                <div className="text-xs text-slate-500 text-center">
-                  {getRoleDescription(role)}
+
+                {/* Arrow */}
+                <div className="absolute bottom-8 right-8 overflow-hidden">
+                  <div className="transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500">
+                    <span className="material-symbols-outlined text-white text-xl">arrow_right_alt</span>
+                  </div>
                 </div>
               </button>
             ))}
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-16 text-center animate-in fade-in duration-1000 delay-500">
+            <p className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+              Delux+ Operations Center • v1.0.0
+            </p>
           </div>
         </div>
       </main>

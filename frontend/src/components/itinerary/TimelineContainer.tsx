@@ -10,6 +10,8 @@ interface TimelineContainerProps {
     onEdit?: (dayNumber: number, itemId: string) => void;
     onPreview: (product: Product) => void;
     onAddDay?: () => void;
+    products?: Product[];
+    onDayFieldChange?: (dayNumber: number, field: string, value: any) => void;
 }
 
 export interface TimelineContainerRef {
@@ -33,6 +35,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         onEdit,
         onPreview,
         onAddDay,
+        products,
+        onDayFieldChange,
     },
     ref
 ) => {
@@ -40,11 +44,9 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
     const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({});
     const [activeDay, setActiveDay] = useState(1);
 
-    // Initialize first day as expanded
+    // Initialize all as collapsed (per user request)
     useEffect(() => {
-        if (timeline.length > 0 && Object.keys(expandedDays).length === 0) {
-            setExpandedDays({ [timeline[0].dayNumber]: true });
-        }
+        setExpandedDays({});
     }, [timeline.length]);
 
     const toggleDay = (dayNumber: number) => {
@@ -54,9 +56,22 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         }));
     };
 
+    const isAllExpanded = timeline.length > 0 && timeline.every(day => expandedDays[day.dayNumber]);
+
+    const toggleAll = () => {
+        if (isAllExpanded) {
+            setExpandedDays({});
+        } else {
+            const all: Record<number, boolean> = {};
+            timeline.forEach(day => {
+                all[day.dayNumber] = true;
+            });
+            setExpandedDays(all);
+        }
+    };
+
     const scrollToDay = (dayNumber: number) => {
-        // Expand the day we are scrolling to
-        setExpandedDays(prev => ({ ...prev, [dayNumber]: true }));
+        // Only scroll, do not force expand (per user request)
         setActiveDay(dayNumber);
 
         // Find element and scroll
@@ -74,12 +89,26 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
     return (
         <div style={styles.container}>
             <div style={styles.header}>
-                <MiniTimeline
-                    days={timeline.map(d => ({ dayNumber: d.dayNumber, date: d.date }))}
-                    activeDay={activeDay}
-                    onDayClick={scrollToDay}
-                    colorThemes={dayColorThemes}
-                />
+                <div style={styles.headerTop}>
+                    <MiniTimeline
+                        days={timeline.map(d => ({ dayNumber: d.dayNumber, date: d.date }))}
+                        activeDay={activeDay}
+                        onDayClick={scrollToDay}
+                        colorThemes={dayColorThemes}
+                    />
+                    <button 
+                        onClick={toggleAll}
+                        style={styles.toggleAllBtn}
+                        title={isAllExpanded ? "全部收合" : "全部展開"}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                            {isAllExpanded ? 'unfold_less' : 'unfold_more'}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                            {isAllExpanded ? '收合' : '展開'}
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <div
@@ -98,6 +127,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 onPreview={onPreview}
                                 isExpanded={!!expandedDays[day.dayNumber]}
                                 onToggle={() => toggleDay(day.dayNumber)}
+                                products={products}
+                                onDayFieldChange={onDayFieldChange}
                             />
                         </div>
                     ))}
@@ -127,6 +158,40 @@ const styles = {
         flexShrink: 0,
         backgroundColor: 'transparent',
         zIndex: 10,
+        padding: '0 1.5rem',
+        paddingTop: '20px', // Optical alignment
+    },
+    headerTop: {
+        maxWidth: '800px',
+        margin: '0 auto',
+        display: 'flex',
+        alignItems: 'flex-start', // Align to top for manual nudge
+        justifyContent: 'space-between',
+        gap: '1rem',
+    },
+    toggleAllBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '6px 14px',
+        borderRadius: '20px',
+        backgroundColor: 'white',
+        border: '1px solid #e2e8f0',
+        color: '#64748b',
+        cursor: 'pointer',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        outline: 'none',
+        flexShrink: 0,
+        whiteSpace: 'nowrap' as const,
+        marginTop: '34px', // Manually align center of button with the 50px midline of the mini timeline
+        '&:hover': {
+            backgroundColor: '#f8fafc',
+            borderColor: '#cbd5e1',
+            color: '#1e293b',
+            transform: 'translateY(-1px)',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+        }
     },
     scrollArea: {
         flex: 1,
@@ -136,7 +201,7 @@ const styles = {
         scrollBehavior: 'smooth' as const,
     },
     contentWrapper: {
-        maxWidth: '800px', // Limit width for better readability on wide screens
+        maxWidth: '800px', 
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -163,3 +228,5 @@ const styles = {
         }
     }
 };
+
+export default TimelineContainer;

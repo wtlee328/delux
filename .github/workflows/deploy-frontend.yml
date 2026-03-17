@@ -1,9 +1,13 @@
 name: Deploy Frontend to Firebase Hosting
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
       - main
+      - staging
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
@@ -21,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -29,26 +33,51 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: Create production environment file
+      - name: Create environment file
         working-directory: ./frontend
         run: |
-          echo "VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}" > .env.production
+          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo "VITE_API_BASE_URL=https://delux-plus-staging-488508.web.app" > .env.staging
+          else
+            echo "VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}" > .env.production
+          fi
 
       - name: Build frontend
         working-directory: ./frontend
-        run: npm run build:prod
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            npm run build:staging
+          else
+            npm run build:prod
+          fi
+
+      - name: Write Firebase SA key to file
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING }}' > "${{ runner.temp }}/firebase-sa-key.json"
+          else
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${{ runner.temp }}/firebase-sa-key.json"
+          fi
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: ${{ secrets.GCP_PROJECT_ID }}
-          target: prod
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="${{ runner.temp }}/firebase-sa-key.json"
+          npx firebase-tools deploy \
+            --only hosting:${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
+            --project ${{ github.ref == 'refs/heads/main' && secrets.GCP_PROJECT_ID || 'delux-plus-staging-488508' }} \
+            --non-interactive
+
+      - name: Cleanup SA key
+        if: always()
+        run: rm -f "${{ runner.temp }}/firebase-sa-key.json"
 
       - name: Deployment Summary
+        if: success()
         run: |
-          echo "✅ Frontend deployed successfully!"
-          echo "🔗 URL: https://${{ secrets.GCP_PROJECT_ID }}.web.app"
+          echo "✅ Frontend deployed successfully to ${{ github.ref_name }}!"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🔗 URL: https://delux-plus-prod.web.app"
+          else
+            echo "🔗 URL: https://delux-plus-staging-488508.web.app"
+          fi
           echo "📦 Build: ${{ github.sha }}"

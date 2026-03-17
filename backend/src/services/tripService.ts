@@ -387,3 +387,154 @@ export async function getTripsByStatus(status: TripStatus): Promise<Trip[]> {
     updatedAt: row.updated_at
   }));
 }
+
+/**
+ * Get approved trips for agency view (no ownership check)
+ * Supports optional search (name/destination) and daysCount filter
+ */
+export async function getApprovedTrips(filters?: {
+  search?: string;
+  daysCount?: number;
+  destination?: string;
+}): Promise<(Trip & { supplierName: string })[]> {
+  const conditions = [`st.status = '已通過'`];
+  const values: any[] = [];
+  let paramCount = 1;
+
+  if (filters?.search) {
+    conditions.push(`(st.name ILIKE $${paramCount} OR st.destination ILIKE $${paramCount})`);
+    values.push(`%${filters.search}%`);
+    paramCount++;
+  }
+
+  if (filters?.daysCount) {
+    conditions.push(`st.days_count = $${paramCount}`);
+    values.push(filters.daysCount);
+    paramCount++;
+  }
+
+  if (filters?.destination) {
+    conditions.push(`st.destination ILIKE $${paramCount}`);
+    values.push(`%${filters.destination}%`);
+    paramCount++;
+  }
+
+  const result = await pool.query(
+    `SELECT st.*, u.name as supplier_name
+     FROM supplier_trips st
+     JOIN users u ON st.supplier_id = u.id
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY st.created_at DESC`,
+    values
+  );
+
+  return result.rows.map(row => ({
+    id: row.id,
+    supplierId: row.supplier_id,
+    name: row.name,
+    destination: row.destination,
+    category: row.category,
+    daysCount: row.days_count,
+    status: row.status as TripStatus,
+    rejectionReason: row.rejection_reason,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    supplierName: row.supplier_name
+  }));
+}
+
+/**
+ * Get approved trip by ID for agency view (no ownership check)
+ * Returns full trip details with days, items, meals, hotels, and product titles
+ */
+export async function getApprovedTripById(id: string): Promise<Trip & { supplierName: string }> {
+  const tripResult = await pool.query(
+    `SELECT st.*, u.name as supplier_name
+     FROM supplier_trips st
+     JOIN users u ON st.supplier_id = u.id
+     WHERE st.id = $1 AND st.status = '已通過'`,
+    [id]
+  );
+
+  if (tripResult.rows.length === 0) {
+    throw new Error('Trip not found');
+  }
+
+  const row = tripResult.rows[0];
+  const trip: Trip & { supplierName: string } = {
+    id: row.id,
+    supplierId: row.supplier_id,
+    name: row.name,
+    destination: row.destination,
+    category: row.category,
+    daysCount: row.days_count,
+    status: row.status as TripStatus,
+    rejectionReason: row.rejection_reason,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    supplierName: row.supplier_name,
+    days: []
+  };
+
+  // Fetch Days
+  const daysResult = await pool.query(
+    'SELECT * FROM supplier_trip_days WHERE trip_id = $1 ORDER BY day_index ASC',
+    [id]
+  );
+
+  for (const dayRow of daysResult.rows) {
+    const day: any = {
+      id: dayRow.id,
+      dayIndex: dayRow.day_index,
+      breakfastId: dayRow.breakfast_id,
+      breakfastCustom: dayRow.breakfast_custom,
+      lunchId: dayRow.lunch_id,
+      lunchCustom: dayRow.lunch_custom,
+      dinnerId: dayRow.dinner_id,
+      dinnerCustom: dayRow.dinner_custom,
+      hotelId: dayRow.hotel_id,
+      hotelCustom: dayRow.hotel_custom,
+      notes: dayRow.notes,
+      items: []
+    };
+
+    // Fetch items with product titles
+    const itemsResult = await pool.query(
+      `SELECT i.*, p.title as product_title
+       FROM supplier_trip_day_items i
+       LEFT JOIN products p ON i.product_id = p.id
+       WHERE i.trip_day_id = $1
+       ORDER BY i.sort_order ASC`,
+      [dayRow.id]
+    );
+
+    day.items = itemsResult.rows.map(itemRow => ({
+      id: itemRow.id,
+      productId: itemRow.product_id,
+      productTitle: itemRow.product_title,
+      sortOrder: itemRow.sort_order
+    }));
+
+    // Fetch meal and hotel product titles
+    const mealHotelIds = [dayRow.breakfast_id, dayRow.lunch_id, dayRow.dinner_id, dayRow.hotel_id].filter(Boolean);
+    if (mealHotelIds.length > 0) {
+      const productsResult = await pool.query(
+        'SELECT id, title FROM products WHERE id = ANY($1)',
+        [mealHotelIds]
+      );
+      const productMap = productsResult.rows.reduce((acc: any, p: any) => {
+        acc[p.id] = p.title;
+        return acc;
+      }, {});
+
+      if (dayRow.breakfast_id) day.breakfastTitle = productMap[dayRow.breakfast_id];
+      if (dayRow.lunch_id) day.lunchTitle = productMap[dayRow.lunch_id];
+      if (dayRow.dinner_id) day.dinnerTitle = productMap[dayRow.dinner_id];
+      if (dayRow.hotel_id) day.hotelTitle = productMap[dayRow.hotel_id];
+    }
+
+    trip.days!.push(day);
+  }
+
+  return trip;
+}

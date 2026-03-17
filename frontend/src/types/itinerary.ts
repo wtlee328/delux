@@ -26,4 +26,21 @@ export interface TimelineDay {
     items: Product[];
     date?: string; // Format: "MM/DD"
     dayOfWeek?: string; // e.g., "Mon", "Tue"
+    // Structured meals (aligned with supplier trip model)
+    breakfastId?: string | null;
+    breakfastCustom?: string | null;  // e.g. "酒店享用", "自理", "機上"
+    breakfastTitle?: string | null;
+    lunchId?: string | null;
+    lunchCustom?: string | null;
+    lunchTitle?: string | null;
+    dinnerId?: string | null;
+    dinnerCustom?: string | null;
+    dinnerTitle?: string | null;
+    // Structured hotel
+    hotelId?: string | null;
+    hotelCustom?: string | null;  // e.g. "五星或同級", "四星或同級", "三星或同級"
+    hotelTitle?: string | null;
+    // Notes
+    notes?: string | null;
 }
+

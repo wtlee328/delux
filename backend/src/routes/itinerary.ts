@@ -10,7 +10,7 @@ router.use(requireAuth, requireRole(['agency']));
 // Create a new itinerary
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { name, timeline } = req.body;
+    const { name, timeline, destination, daysCount, startDate, endDate, restrictedSupplierName } = req.body;
     const agencyUserId = req.user!.userId;
 
     if (!name || !timeline) {
@@ -21,6 +21,11 @@ router.post('/', async (req: Request, res: Response) => {
       name,
       agencyUserId,
       timeline,
+      destination,
+      daysCount,
+      startDate,
+      endDate,
+      restrictedSupplierName
     });
 
     res.status(201).json(itinerary);
@@ -65,12 +70,18 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, timeline } = req.body;
+    const { name, timeline, destination, daysCount, startDate, endDate, restrictedSupplierName, status } = req.body;
     const agencyUserId = req.user!.userId;
 
     const itinerary = await itineraryService.updateItinerary(id, agencyUserId, {
       name,
       timeline,
+      destination,
+      daysCount,
+      startDate,
+      endDate,
+      restrictedSupplierName,
+      status
     });
 
     if (!itinerary) {

@@ -29,5 +29,22 @@ if (axiosInstance.interceptors && axiosInstance.interceptors.request) {
   );
 }
 
+// Add a response interceptor to handle 401 errors globally
+if (axiosInstance.interceptors && axiosInstance.interceptors.response) {
+  axiosInstance.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      if (error.response?.status === 401 && window.location.pathname !== '/login') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login?expired=true';
+      }
+      return Promise.reject(error);
+    }
+  );
+}
+
 // Export configured instance
 export default axiosInstance;

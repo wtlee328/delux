@@ -1,4 +1,5 @@
 import React from 'react';
+import { ImageOff } from 'lucide-react';
 
 interface Product {
     id: string;
@@ -35,12 +36,32 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({ product, onCl
 
                 <div style={styles.imageContainer}>
                     <img
-                        src={product.coverImageUrl}
+                        src={product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined' ? undefined : product.coverImageUrl}
                         alt={product.title}
-                        style={styles.image}
+                        style={{
+                            ...styles.image,
+                            display: (!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? 'none' : 'block'
+                        }}
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const next = e.currentTarget.nextElementSibling;
+                            if (next) (next as HTMLElement).style.display = 'flex';
+                        }}
                     />
+                    <div style={{
+                        ...styles.image,
+                        display: (!product.coverImageUrl || product.coverImageUrl === 'null' || product.coverImageUrl === 'undefined') ? 'flex' : 'none',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f8fafc',
+                        color: '#94a3b8'
+                    }}>
+                        <ImageOff size={48} strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.5rem', letterSpacing: '0.05em' }}>暫無預覽圖</span>
+                    </div>
                     <div style={styles.typeBadge}>
-                        {product.productType}
+                        {categoryLabels[product.category] || product.category}
                     </div>
                 </div>
 
