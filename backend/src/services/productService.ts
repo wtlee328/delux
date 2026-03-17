@@ -12,6 +12,9 @@ export interface CreateProductRequest {
   hasTicket: boolean;
   ticketPrice?: number;
   duration: number;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UpdateProductRequest {
@@ -25,6 +28,9 @@ export interface UpdateProductRequest {
   hasTicket?: boolean;
   ticketPrice?: number;
   duration?: number;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
@@ -42,6 +48,9 @@ export interface Product {
   hasTicket: boolean;
   ticketPrice?: number;
   duration: number;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   status: ProductStatus;
   rejectionReason?: string;
   createdAt: Date;
@@ -69,23 +78,25 @@ export async function createProduct(
 ): Promise<Product> {
   const {
     supplierId, title, destination, category, description,
-    coverImageUrl, netPrice, hasShopping, hasTicket, ticketPrice, duration
+    coverImageUrl, netPrice, hasShopping, hasTicket, ticketPrice, duration,
+    address, latitude, longitude
   } = productData;
 
   const result = await pool.query(
     `INSERT INTO products (
        supplier_id, title, destination, category, description, 
        cover_image_url, net_price, has_shopping, has_ticket, 
-       ticket_price, duration, status
+       ticket_price, duration, status, address, latitude, longitude
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING id, supplier_id, title, destination, category, description, 
                cover_image_url, net_price, has_shopping, has_ticket, 
-               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
+               ticket_price, duration, status, rejection_reason, created_at, updated_at,
+               address, latitude, longitude`,
     [
       supplierId, title, destination, category, description,
       coverImageUrl, netPrice, hasShopping, hasTicket,
-      ticketPrice || null, duration, status
+      ticketPrice || null, duration, status, address || null, latitude || null, longitude || null
     ]
   );
 
@@ -104,6 +115,9 @@ export async function createProduct(
     hasTicket: product.has_ticket,
     ticketPrice: product.ticket_price ? parseFloat(product.ticket_price) : undefined,
     duration: parseFloat(product.duration),
+    address: product.address,
+    latitude: product.latitude ? parseFloat(product.latitude) : undefined,
+    longitude: product.longitude ? parseFloat(product.longitude) : undefined,
     status: product.status,
     createdAt: product.created_at,
     updatedAt: product.updated_at,
@@ -178,6 +192,18 @@ export async function updateProduct(
     updates.push(`duration = $${paramCount++}`);
     values.push(productData.duration);
   }
+  if (productData.address !== undefined) {
+    updates.push(`address = $${paramCount++}`);
+    values.push(productData.address);
+  }
+  if (productData.latitude !== undefined) {
+    updates.push(`latitude = $${paramCount++}`);
+    values.push(productData.latitude);
+  }
+  if (productData.longitude !== undefined) {
+    updates.push(`longitude = $${paramCount++}`);
+    values.push(productData.longitude);
+  }
 
   updates.push(`updated_at = CURRENT_TIMESTAMP`);
   values.push(id);
@@ -188,7 +214,8 @@ export async function updateProduct(
      WHERE id = $${paramCount}
      RETURNING id, supplier_id, title, destination, category, description, 
                cover_image_url, net_price, has_shopping, has_ticket, 
-               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
+               ticket_price, duration, status, rejection_reason, created_at, updated_at,
+               address, latitude, longitude`,
     values
   );
 
@@ -207,6 +234,9 @@ export async function updateProduct(
     hasTicket: product.has_ticket,
     ticketPrice: product.ticket_price ? parseFloat(product.ticket_price) : undefined,
     duration: parseFloat(product.duration),
+    address: product.address,
+    latitude: product.latitude ? parseFloat(product.latitude) : undefined,
+    longitude: product.longitude ? parseFloat(product.longitude) : undefined,
     status: product.status,
     rejectionReason: product.rejection_reason,
     createdAt: product.created_at,
@@ -223,7 +253,8 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
   const result = await pool.query(
     `SELECT id, supplier_id, title, destination, category, description, 
             cover_image_url, net_price, has_shopping, has_ticket, 
-            ticket_price, duration, status, rejection_reason, created_at, updated_at
+            ticket_price, duration, status, rejection_reason, created_at, updated_at,
+            address, latitude, longitude
      FROM products
      WHERE supplier_id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)
      ORDER BY created_at DESC`,
@@ -243,6 +274,9 @@ export async function getProductsBySupplier(supplierId: string): Promise<Product
     hasTicket: row.has_ticket,
     ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
     duration: parseFloat(row.duration),
+    address: row.address,
+    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
@@ -259,6 +293,7 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
             p.ticket_price, p.duration, p.status, p.created_at, p.updated_at,
+            p.address, p.latitude, p.longitude,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -279,6 +314,9 @@ export async function getAllProducts(): Promise<ProductWithSupplier[]> {
     hasTicket: row.has_ticket,
     ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
     duration: parseFloat(row.duration),
+    address: row.address,
+    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -296,6 +334,7 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
     SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
            p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
            p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
+           p.address, p.latitude, p.longitude,
            u.name as supplier_name
     FROM products p
     JOIN users u ON p.supplier_id = u.id
@@ -332,6 +371,9 @@ export async function getPublishedProducts(filters?: ProductFilters): Promise<Pr
     hasTicket: row.has_ticket,
     ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
     duration: parseFloat(row.duration),
+    address: row.address,
+    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -350,6 +392,7 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
             p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
+            p.address, p.latitude, p.longitude,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -376,6 +419,9 @@ export async function getProductById(id: string): Promise<ProductWithSupplier> {
     hasTicket: row.has_ticket,
     ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
     duration: parseFloat(row.duration),
+    address: row.address,
+    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
@@ -425,7 +471,8 @@ export async function updateProductStatus(
      WHERE id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)
      RETURNING id, supplier_id, title, destination, category, description, 
                cover_image_url, net_price, has_shopping, has_ticket, 
-               ticket_price, duration, status, rejection_reason, created_at, updated_at`,
+               ticket_price, duration, status, rejection_reason, created_at, updated_at,
+               address, latitude, longitude`,
     values
   );
 
@@ -448,6 +495,9 @@ export async function updateProductStatus(
     hasTicket: product.has_ticket,
     ticketPrice: product.ticket_price ? parseFloat(product.ticket_price) : undefined,
     duration: parseFloat(product.duration),
+    address: product.address,
+    latitude: product.latitude ? parseFloat(product.latitude) : undefined,
+    longitude: product.longitude ? parseFloat(product.longitude) : undefined,
     status: product.status,
     rejectionReason: product.rejection_reason,
     createdAt: product.created_at,
@@ -465,6 +515,7 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
     `SELECT p.id, p.supplier_id, p.title, p.destination, p.category, p.description, 
             p.cover_image_url, p.net_price, p.has_shopping, p.has_ticket, 
             p.ticket_price, p.duration, p.status, p.rejection_reason, p.created_at, p.updated_at,
+            p.address, p.latitude, p.longitude,
             u.name as supplier_name
      FROM products p
      JOIN users u ON p.supplier_id = u.id
@@ -486,6 +537,9 @@ export async function getProductsByStatus(status: ProductStatus): Promise<Produc
     hasTicket: row.has_ticket,
     ticketPrice: row.ticket_price ? parseFloat(row.ticket_price) : undefined,
     duration: parseFloat(row.duration),
+    address: row.address,
+    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
     status: row.status,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
