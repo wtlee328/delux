@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useJsApiLoader, GoogleMap, Marker } from '@react-google-maps/api';
+import { useJsApiLoader, GoogleMap } from '@react-google-maps/api';
 
 interface LocationFieldsProps {
   title: string;
@@ -15,8 +15,8 @@ interface LocationFieldsProps {
   onCoordinatesChange: (lat: number, lng: number) => void;
 }
 
-type Library = "places" | "drawing" | "geometry" | "visualization";
-const libraries: Library[] = ['places'];
+type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
+const libraries: Library[] = ['places', 'marker'];
 
 const defaultCenter = {
   lat: 25.0330, // Taipei 101
@@ -203,6 +203,31 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
     }
   };
 
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+
+  useEffect(() => {
+    let marker: any = null;
+    
+    const updateMarker = async () => {
+      if (!mapInstance || !latitude || !longitude || !window.google) return;
+      
+      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as any;
+      
+      marker = new AdvancedMarkerElement({
+        map: mapInstance,
+        position: { lat: latitude, lng: longitude },
+      });
+    };
+
+    updateMarker();
+
+    return () => {
+      if (marker) {
+        marker.map = null;
+      }
+    };
+  }, [mapInstance, latitude, longitude]);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Product Title Field */}
@@ -295,7 +320,10 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
             center={mapCenter}
             zoom={15}
             onClick={handleMapClick}
+            onLoad={(map) => setMapInstance(map)}
+            onUnmount={() => setMapInstance(null)}
             options={{
+              mapId: "DEMO_MAP_ID", // Required for Advanced Markers
               disableDefaultUI: false,
               zoomControl: true,
               streetViewControl: false,
@@ -304,9 +332,6 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
               clickableIcons: false
             }}
           >
-            {latitude && longitude && (
-              <Marker position={{ lat: latitude, lng: longitude }} />
-            )}
           </GoogleMap>
           <div className="absolute top-2 left-2 right-2 bg-white/90 backdrop-blur-sm p-2 rounded-md shadow-sm border border-slate-200 text-xs text-slate-700 pointer-events-none">
             💡 點擊地圖任意位置可直接設定地標並帶入地址
