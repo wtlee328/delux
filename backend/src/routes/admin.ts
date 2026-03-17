@@ -186,7 +186,8 @@ router.get('/trips', async (req: Request, res: Response) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at
     }));
-    res.json(mappedTrips);
+    const filteredTrips = mappedTrips.filter(t => t.status !== '草稿');
+    res.json(filteredTrips);
   } catch (error) {
     console.error('Get all trips error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -259,7 +260,6 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
 
 /**
  * GET /api/admin/tours
@@ -269,7 +269,8 @@ router.get('/tours', async (req: Request, res: Response) => {
   try {
     const { getAllProducts } = await import('../services/productService');
     const products = await getAllProducts();
-    res.json(products);
+    const filteredProducts = products.filter(p => p.status !== '草稿');
+    res.json(filteredProducts);
   } catch (error) {
     console.error('Get all products error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -403,3 +404,5 @@ router.delete('/tours/:id', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+export default router;
