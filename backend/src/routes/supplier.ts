@@ -28,7 +28,7 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
     console.log('Request body:', req.body);
     console.log('Request file:', req.file ? { name: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } : 'No file');
 
-    const { title, destination, category, description, netPrice, status, hasShopping, hasTicket, ticketPrice, duration } = req.body;
+    const { title, destination, category, description, netPrice, status, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
     const supplierId = req.user!.userId;
 
     // Validate status if provided
@@ -79,6 +79,9 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
       hasTicket: hasTicket === 'true' || hasTicket === true,
       ticketPrice: ticketPrice ? parseFloat(ticketPrice) : undefined,
       duration: duration ? parseFloat(duration) : 1.0,
+      address,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
     }, productStatus);
     console.log('Product created successfully:', product.id);
 
@@ -144,7 +147,7 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration } = req.body;
+    const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
     const supplierId = req.user!.userId;
 
     // Build update data
@@ -159,6 +162,9 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     if (hasTicket !== undefined) updateData.hasTicket = hasTicket === 'true' || hasTicket === true;
     if (ticketPrice !== undefined) updateData.ticketPrice = ticketPrice ? parseFloat(ticketPrice) : null;
     if (duration !== undefined) updateData.duration = parseFloat(duration);
+    if (address !== undefined) updateData.address = address;
+    if (latitude !== undefined) updateData.latitude = latitude ? parseFloat(latitude) : null;
+    if (longitude !== undefined) updateData.longitude = longitude ? parseFloat(longitude) : null;
 
     // Handle cover image update if provided
     if (req.file) {

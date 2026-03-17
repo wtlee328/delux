@@ -5,6 +5,7 @@ import 'react-quill/dist/quill.snow.css';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
+import LocationFields from '../../components/supplier/LocationFields';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -19,6 +20,9 @@ interface FormData {
   門票: boolean;
   門票價格: string;
   停留時間: string;
+  address: string;
+  latitude: number | undefined;
+  longitude: number | undefined;
 }
 
 interface FormErrors {
@@ -28,6 +32,7 @@ interface FormErrors {
   產品描述?: string;
   封面圖?: string;
   淨價?: string;
+  address?: string;
   submit?: string;
 }
 
@@ -47,6 +52,9 @@ const EditProductPage: React.FC = () => {
     門票: false,
     門票價格: '',
     停留時間: '1',
+    address: '',
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -86,6 +94,9 @@ const EditProductPage: React.FC = () => {
         門票: product.hasTicket || false,
         門票價格: product.ticketPrice ? product.ticketPrice.toString() : '',
         停留時間: product.duration ? product.duration.toString() : '1',
+        address: product.address || '',
+        latitude: product.latitude,
+        longitude: product.longitude,
       });
 
       setExistingImageUrl(product.coverImageUrl);
@@ -108,6 +119,10 @@ const EditProductPage: React.FC = () => {
 
     if (!formData.目的地.trim()) {
       newErrors.目的地 = '目的地為必填欄位';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = '地址為必填欄位';
     }
 
     if (!formData.類別) {
@@ -213,6 +228,9 @@ const EditProductPage: React.FC = () => {
         submitData.append('ticketPrice', formData.門票價格);
       }
       submitData.append('duration', formData.停留時間);
+      submitData.append('address', formData.address);
+      if (formData.latitude !== undefined) submitData.append('latitude', formData.latitude.toString());
+      if (formData.longitude !== undefined) submitData.append('longitude', formData.longitude.toString());
       if (formData.封面圖) {
         submitData.append('coverImage', formData.封面圖);
       }
@@ -312,23 +330,23 @@ const EditProductPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="產品標題" className="font-bold text-slate-700">
-                產品標題 <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="產品標題"
-                type="text"
-                name="產品標題"
-                value={formData.產品標題}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="請輸入產品標題"
-              />
-              {errors.產品標題 && (
-                <span className="text-red-500 text-sm">{errors.產品標題}</span>
-              )}
-            </div>
+            <LocationFields
+              title={formData.產品標題}
+              onTitleChange={(value) => {
+                setFormData((prev) => ({ ...prev, 產品標題: value }));
+                if (errors.產品標題) setErrors((prev) => ({ ...prev, 產品標題: undefined }));
+              }}
+              titleError={errors.產品標題}
+              address={formData.address}
+              onAddressChange={(value) => {
+                setFormData((prev) => ({ ...prev, address: value }));
+                if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
+              }}
+              addressError={errors.address}
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onCoordinatesChange={(lat, lng) => setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }))}
+            />
 
             <div className="flex flex-col gap-2">
               <label htmlFor="目的地" className="font-bold text-slate-700">
