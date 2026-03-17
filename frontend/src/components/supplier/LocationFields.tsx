@@ -52,8 +52,8 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
   const [addressValue, setAddressValue] = useState(address);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
 
-  const skipTitleFetch = React.useRef(false);
-  const skipAddressFetch = React.useRef(false);
+  const skipTitleFetch = React.useRef(true);
+  const skipAddressFetch = React.useRef(true);
 
   // Keep internal values in sync with props when they change externally
   useEffect(() => {
@@ -131,29 +131,33 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
 
   const handleTitleSelect = async (suggestion: any) => {
     const placePrediction = suggestion.placePrediction;
-    const titleText = placePrediction.text.text;
+    
+    // We intentionally DO NOT update titleValue / onTitleChange here
+    // to keep the 產品標題 exactly as the user originally typed it.
     skipTitleFetch.current = true;
-    setTitleValue(titleText);
-    onTitleChange(titleText);
     setTitleSuggestions([]);
 
     try {
-      const place = placePrediction.toPlace();
-      await place.fetchFields({ fields: ['location', 'formattedAddress'] });
-      
-      const lat = place.location?.lat();
-      const lng = place.location?.lng();
-      
-      if (lat && lng) {
+      // Use geocoder to get reliable address and geometry based on placeId
+      const geocoder = new window.google.maps.Geocoder();
+      const response = await geocoder.geocode({ placeId: placePrediction.placeId });
+
+      if (response.results && response.results.length > 0) {
+        const result = response.results[0];
+        const lat = result.geometry.location.lat();
+        const lng = result.geometry.location.lng();
+        
         onCoordinatesChange(lat, lng);
         setMapCenter({ lat, lng });
-      }
-      if (place.formattedAddress) {
-        skipAddressFetch.current = true;
-        onAddressChange(place.formattedAddress);
+
+        if (result.formatted_address) {
+          skipAddressFetch.current = true;
+          setAddressValue(result.formatted_address);
+          onAddressChange(result.formatted_address);
+        }
       }
     } catch (error) {
-      console.error("Error fetching place: ", error);
+      console.error("Error fetching place details via Geocoder: ", error);
     }
   };
 
@@ -166,18 +170,19 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
     setAddressSuggestions([]);
 
     try {
-      const place = placePrediction.toPlace();
-      await place.fetchFields({ fields: ['location'] });
-      
-      const lat = place.location?.lat();
-      const lng = place.location?.lng();
-      
-      if (lat && lng) {
+      const geocoder = new window.google.maps.Geocoder();
+      const response = await geocoder.geocode({ placeId: placePrediction.placeId });
+
+      if (response.results && response.results.length > 0) {
+        const result = response.results[0];
+        const lat = result.geometry.location.lat();
+        const lng = result.geometry.location.lng();
+        
         onCoordinatesChange(lat, lng);
         setMapCenter({ lat, lng });
       }
     } catch (error) {
-      console.error("Error fetching place: ", error);
+      console.error("Error fetching place details via Geocoder: ", error);
     }
   };
 
