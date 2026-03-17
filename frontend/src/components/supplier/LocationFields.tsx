@@ -52,13 +52,22 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
   const [addressValue, setAddressValue] = useState(address);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
 
+  const skipTitleFetch = React.useRef(false);
+  const skipAddressFetch = React.useRef(false);
+
   // Keep internal values in sync with props when they change externally
   useEffect(() => {
-    setTitleValue(title);
+    if (title !== titleValue) {
+      skipTitleFetch.current = true;
+      setTitleValue(title);
+    }
   }, [title]);
 
   useEffect(() => {
-    setAddressValue(address);
+    if (address !== addressValue) {
+      skipAddressFetch.current = true;
+      setAddressValue(address);
+    }
   }, [address]);
 
   useEffect(() => {
@@ -92,27 +101,38 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
 
   // Debounce for Title Autocomplete
   useEffect(() => {
-    if (titleValue !== title && titleValue.trim()) {
+    if (skipTitleFetch.current) {
+      skipTitleFetch.current = false;
+      return;
+    }
+
+    if (titleValue.trim()) {
       const timeoutId = setTimeout(() => fetchSuggestions(titleValue, setTitleSuggestions), 300);
       return () => clearTimeout(timeoutId);
-    } else if (!titleValue.trim()) {
+    } else {
       setTitleSuggestions([]);
     }
-  }, [titleValue, title, fetchSuggestions]);
+  }, [titleValue, fetchSuggestions]);
 
   // Debounce for Address Autocomplete
   useEffect(() => {
-    if (addressValue !== address && addressValue.trim()) {
+    if (skipAddressFetch.current) {
+      skipAddressFetch.current = false;
+      return;
+    }
+
+    if (addressValue.trim()) {
       const timeoutId = setTimeout(() => fetchSuggestions(addressValue, setAddressSuggestions), 300);
       return () => clearTimeout(timeoutId);
-    } else if (!addressValue.trim()) {
+    } else {
       setAddressSuggestions([]);
     }
-  }, [addressValue, address, fetchSuggestions]);
+  }, [addressValue, fetchSuggestions]);
 
   const handleTitleSelect = async (suggestion: any) => {
     const placePrediction = suggestion.placePrediction;
     const titleText = placePrediction.text.text;
+    skipTitleFetch.current = true;
     setTitleValue(titleText);
     onTitleChange(titleText);
     setTitleSuggestions([]);
@@ -129,6 +149,7 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
         setMapCenter({ lat, lng });
       }
       if (place.formattedAddress) {
+        skipAddressFetch.current = true;
         onAddressChange(place.formattedAddress);
       }
     } catch (error) {
@@ -139,6 +160,7 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
   const handleAddressSelect = async (suggestion: any) => {
     const placePrediction = suggestion.placePrediction;
     const addressText = placePrediction.text.text;
+    skipAddressFetch.current = true;
     setAddressValue(addressText);
     onAddressChange(addressText);
     setAddressSuggestions([]);
@@ -170,7 +192,10 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
         const geocoder = new window.google.maps.Geocoder();
         const response = await geocoder.geocode({ location: { lat, lng } });
         if (response.results && response.results.length > 0) {
-          onAddressChange(response.results[0].formatted_address);
+          const addressText = response.results[0].formatted_address;
+          skipAddressFetch.current = true;
+          setAddressValue(addressText);
+          onAddressChange(addressText);
         }
       } catch (error) {
         console.error('Geocoder failed due to: ', error);
