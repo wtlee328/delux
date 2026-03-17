@@ -114,8 +114,8 @@ const MapView: React.FC<MapViewProps> = ({
             title={product.title}
             icon={{
               url: highlightedProductId === product.id
-                ? 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                : 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
             }}
           />
         ))}
@@ -127,7 +127,7 @@ const MapView: React.FC<MapViewProps> = ({
           position={item.location!}
           title={item.title}
           icon={{
-            url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+            url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
           }}
           label={{
             text: `${item.dayNumber}`,
