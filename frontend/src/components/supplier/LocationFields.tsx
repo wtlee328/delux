@@ -30,7 +30,7 @@ const mapContainerStyle = {
   borderRadius: '0.5rem'
 };
 
-const LocationFields: React.FC<LocationFieldsProps> = ({
+const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean }> = ({
   title,
   onTitleChange,
   titleError,
@@ -39,15 +39,9 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
   addressError,
   latitude,
   longitude,
-  onCoordinatesChange
+  onCoordinatesChange,
+  isLoaded
 }) => {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-    language: 'zh-TW'
-  });
-
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [showMap, setShowMap] = useState(false);
   
@@ -61,7 +55,8 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
   } = usePlacesAutocomplete({
     requestOptions: { language: 'zh-TW' },
     debounce: 300,
-    defaultValue: title
+    defaultValue: title,
+    initOnMount: isLoaded
   });
 
   // Address Autocomplete
@@ -74,10 +69,11 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
   } = usePlacesAutocomplete({
     requestOptions: { language: 'zh-TW' },
     debounce: 300,
-    defaultValue: address
+    defaultValue: address,
+    initOnMount: isLoaded
   });
 
-  // Keep internal values in sync with props when they change externally (e.g. from map click or initial load)
+  // Keep internal values in sync with props when they change externally
   useEffect(() => {
     setTitleValue(title, false);
   }, [title, setTitleValue]);
@@ -92,7 +88,7 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
     }
   }, [latitude, longitude]);
 
-  const handleTitleSelect = async (suggestion: any) => {
+  const handleTitleSelect = async (suggestion: google.maps.places.AutocompletePrediction) => {
     const titleText = suggestion.structured_formatting.main_text;
     setTitleValue(titleText, false);
     onTitleChange(titleText);
@@ -111,7 +107,7 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
     }
   };
 
-  const handleAddressSelect = async (suggestion: any) => {
+  const handleAddressSelect = async (suggestion: google.maps.places.AutocompletePrediction) => {
     setAddressValue(suggestion.description, false);
     onAddressChange(suggestion.description);
     clearAddressSuggestions();
@@ -144,10 +140,6 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
     }
   };
 
-  if (loadError) {
-    return <div>地圖載入失敗，請確認 API 金鑰是否正確。</div>;
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {/* Product Title Field */}
@@ -163,7 +155,7 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
             setTitleValue(e.target.value);
             onTitleChange(e.target.value);
           }}
-          disabled={!titleReady && isLoaded}
+          disabled={!titleReady}
           className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           placeholder="請輸入產品標題 (例如：台北 101 觀景台)"
         />
@@ -202,7 +194,7 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
                 setAddressValue(e.target.value);
                 onAddressChange(e.target.value);
               }}
-              disabled={!addressReady && isLoaded}
+              disabled={!addressReady}
               className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="請輸入地址"
             />
@@ -234,7 +226,7 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
         )}
       </div>
 
-      {showMap && isLoaded && (
+      {showMap && (
         <div className="w-full border border-slate-300 rounded-lg overflow-hidden relative">
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
@@ -261,6 +253,34 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
       )}
     </div>
   );
+};
+
+const LocationFields: React.FC<LocationFieldsProps> = (props) => {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+    language: 'zh-TW'
+  });
+
+  if (loadError) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+        地圖載入失敗，請確認 API 金鑰是否正確或已開啟相關權限。
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col gap-6 animate-pulse">
+        <div className="h-20 bg-slate-100 rounded-lg"></div>
+        <div className="h-20 bg-slate-100 rounded-lg"></div>
+      </div>
+    );
+  }
+
+  return <LocationFieldsContent {...props} isLoaded={isLoaded} />;
 };
 
 export default LocationFields;
