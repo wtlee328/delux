@@ -56,8 +56,11 @@ const ItineraryPlannerPage: React.FC = () => {
   const [loadingDestinations, setLoadingDestinations] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<string>('');
   const [destinationSearch, setDestinationSearch] = useState('');
+  const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false);
   const [plannerStep, setPlannerStep] = useState<'destination' | 'supplier'>('destination');
   const [tempSupplierId, setTempSupplierId] = useState<string>('');
+  const [supplierSearch, setSupplierSearch] = useState('');
+  const [isSupplierMenuOpen, setIsSupplierMenuOpen] = useState(false);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -247,6 +250,20 @@ const ItineraryPlannerPage: React.FC = () => {
       }
     };
     fetchDestinations();
+  }, []);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.searchable-dropdown')) {
+        setIsDestinationMenuOpen(false);
+        setIsSupplierMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Fetch suppliers list based on destination
@@ -745,48 +762,82 @@ const ItineraryPlannerPage: React.FC = () => {
 
                 {plannerStep === 'destination' ? (
                   <div className="flex flex-col gap-6 max-w-sm mx-auto">
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                        <span className="material-symbols-outlined">search</span>
-                      </div>
-                      <input 
-                        type="text"
-                        placeholder="搜尋或選擇目的地..."
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 pl-12 pr-6 text-slate-700 font-bold focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-lg"
-                        value={destinationSearch}
-                        onChange={(e) => setDestinationSearch(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-                      {loadingDestinations ? (
-                        <div className="py-8 flex flex-col items-center gap-3">
-                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                          <p className="text-xs text-slate-400 font-bold tracking-widest uppercase">載入目的地...</p>
+                    <div className="relative searchable-dropdown">
+                      <button 
+                        type="button"
+                        onClick={() => setIsDestinationMenuOpen(!isDestinationMenuOpen)}
+                        className={`w-full bg-slate-50 border-2 rounded-2xl py-4.5 px-6 text-left flex items-center justify-between transition-all focus:ring-4 focus:ring-blue-500/5 outline-none ${
+                          isDestinationMenuOpen ? 'border-blue-500 bg-white ring-4 ring-blue-500/5' : 'border-slate-100 hover:bg-slate-100/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`material-symbols-outlined ${selectedDestination ? 'text-blue-600' : 'text-slate-400'}`}>
+                            map
+                          </span>
+                          <span className={`text-lg font-bold ${selectedDestination ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {selectedDestination || '請選擇目的地...'}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-2">
-                          {destinations
-                            .filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase()))
-                            .map(dest => (
-                              <button
-                                key={dest}
-                                onClick={() => setSelectedDestination(dest)}
-                                className={`w-full text-left px-6 py-4 rounded-xl font-bold transition-all border-2 ${
-                                  selectedDestination === dest 
-                                    ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-sm' 
-                                    : 'bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-100'
-                                }`}
-                              >
-                                {dest}
-                              </button>
-                            ))
-                          }
-                          {destinations.filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase())).length === 0 && (
-                            <div className="py-10 text-center text-slate-400 italic">
-                               找不到符合的目的地
+                        <span className={`material-symbols-outlined text-3xl transition-transform duration-300 ${isDestinationMenuOpen ? 'rotate-180 text-blue-500' : 'text-slate-400'}`}>
+                          expand_more
+                        </span>
+                      </button>
+
+                      {isDestinationMenuOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[24px] overflow-hidden z-[120] animate-in fade-in slide-in-from-top-4 duration-300 p-3">
+                          <div className="relative mb-3">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                              <span className="material-symbols-outlined text-xl">search</span>
                             </div>
-                          )}
+                            <input 
+                              autoFocus
+                              type="text"
+                              placeholder="搜尋目的地..."
+                              className="w-full bg-slate-50 border-none rounded-xl py-3 pl-11 pr-4 text-slate-700 font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
+                              value={destinationSearch}
+                              onChange={(e) => setDestinationSearch(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                          
+                          <div className="max-h-[240px] overflow-y-auto custom-scrollbar flex flex-col gap-1">
+                            {loadingDestinations ? (
+                                <div className="py-8 flex flex-col items-center gap-3">
+                                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-xs text-slate-400 font-bold tracking-widest uppercase">載入目的地...</p>
+                                </div>
+                            ) : (
+                              <>
+                                {destinations
+                                  .filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase()))
+                                  .map(dest => (
+                                    <button
+                                      key={dest}
+                                      onClick={() => {
+                                        setSelectedDestination(dest);
+                                        setIsDestinationMenuOpen(false);
+                                        setDestinationSearch('');
+                                      }}
+                                      className={`w-full text-left px-4 py-3.5 rounded-xl font-bold transition-all flex items-center gap-3 ${
+                                        selectedDestination === dest 
+                                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                                          : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
+                                      }`}
+                                    >
+                                      <span className="material-symbols-outlined text-xl">
+                                        {selectedDestination === dest ? 'check_circle' : 'location_on'}
+                                      </span>
+                                      {dest}
+                                    </button>
+                                  ))}
+                                {destinations.filter(d => d.toLowerCase().includes(destinationSearch.toLowerCase())).length === 0 && (
+                                  <div className="py-8 text-center text-slate-400 font-medium">
+                                    找不到符合的目的地
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -809,20 +860,75 @@ const ItineraryPlannerPage: React.FC = () => {
                       </div>
                     ) : (
                       <>
-                        <div className="relative group">
-                          <select
-                            value={tempSupplierId}
-                            onChange={(e) => setTempSupplierId(e.target.value)}
-                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4.5 px-6 text-slate-700 font-bold appearance-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none cursor-pointer text-lg hover:bg-slate-100/50"
+                        <div className="relative searchable-dropdown">
+                          <button 
+                            type="button"
+                            onClick={() => setIsSupplierMenuOpen(!isSupplierMenuOpen)}
+                            className={`w-full bg-slate-50 border-2 rounded-2xl py-4.5 px-6 text-left flex items-center justify-between transition-all focus:ring-4 focus:ring-blue-500/5 outline-none ${
+                              isSupplierMenuOpen ? 'border-blue-500 bg-white ring-4 ring-blue-500/5' : 'border-slate-100 hover:bg-slate-100/50'
+                            }`}
                           >
-                            <option value="" disabled>請選擇供應商...</option>
-                            {suppliers.map(s => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                          </select>
-                          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                            <span className="material-symbols-outlined text-3xl">expand_more</span>
-                          </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`material-symbols-outlined ${tempSupplierId ? 'text-blue-600' : 'text-slate-400'}`}>
+                                badge
+                              </span>
+                              <span className={`text-lg font-bold ${tempSupplierId ? 'text-slate-900' : 'text-slate-400'}`}>
+                                {suppliers.find(s => s.id === tempSupplierId)?.name || '請選擇供應商...'}
+                              </span>
+                            </div>
+                            <span className={`material-symbols-outlined text-3xl transition-transform duration-300 ${isSupplierMenuOpen ? 'rotate-180 text-blue-500' : 'text-slate-400'}`}>
+                              expand_more
+                            </span>
+                          </button>
+
+                          {isSupplierMenuOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[24px] overflow-hidden z-[120] animate-in fade-in slide-in-from-top-4 duration-300 p-3">
+                              <div className="relative mb-3">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                  <span className="material-symbols-outlined text-xl">search</span>
+                                </div>
+                                <input 
+                                  autoFocus
+                                  type="text"
+                                  placeholder="搜尋供應商..."
+                                  className="w-full bg-slate-50 border-none rounded-xl py-3 pl-11 pr-4 text-slate-700 font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                  value={supplierSearch}
+                                  onChange={(e) => setSupplierSearch(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              
+                              <div className="max-h-[240px] overflow-y-auto custom-scrollbar flex flex-col gap-1">
+                                {suppliers
+                                  .filter(s => s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+                                  .map(supplier => (
+                                    <button
+                                      key={supplier.id}
+                                      onClick={() => {
+                                        setTempSupplierId(supplier.id);
+                                        setIsSupplierMenuOpen(false);
+                                        setSupplierSearch('');
+                                      }}
+                                      className={`w-full text-left px-4 py-3.5 rounded-xl font-bold transition-all flex items-center gap-3 ${
+                                        tempSupplierId === supplier.id 
+                                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                                          : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
+                                      }`}
+                                    >
+                                      <span className="material-symbols-outlined text-xl">
+                                        {tempSupplierId === supplier.id ? 'check_circle' : 'storefront'}
+                                      </span>
+                                      {supplier.name}
+                                    </button>
+                                  ))}
+                                {suppliers.filter(s => s.name.toLowerCase().includes(supplierSearch.toLowerCase())).length === 0 && (
+                                  <div className="py-8 text-center text-slate-400 font-medium">
+                                    找不到符合的供應商
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {suppliers.length === 0 && !loadingSuppliers && (
@@ -848,7 +954,6 @@ const ItineraryPlannerPage: React.FC = () => {
                                 className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white py-5 rounded-2xl font-black shadow-2xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg flex items-center justify-center gap-2"
                             >
                                 開始規劃
-                                <span className="material-symbols-outlined font-bold">check_circle</span>
                             </button>
                         </div>
                       </>
