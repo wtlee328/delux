@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useJsApiLoader, GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
+import React, { useState, useEffect } from 'react';
+import { useJsApiLoader, GoogleMap, Marker } from '@react-google-maps/api';
+import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 
 interface LocationFieldsProps {
   title: string;
@@ -49,11 +50,41 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
 
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [showMap, setShowMap] = useState(false);
-  const titleAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const addressAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   
-  // Custom hook ref to hold the map instance for geocoding
-  const mapRef = useRef<google.maps.Map | null>(null);
+  // Title Autocomplete
+  const {
+    ready: titleReady,
+    value: titleValue,
+    suggestions: { status: titleStatus, data: titleData },
+    setValue: setTitleValue,
+    clearSuggestions: clearTitleSuggestions,
+  } = usePlacesAutocomplete({
+    requestOptions: { language: 'zh-TW' },
+    debounce: 300,
+    defaultValue: title
+  });
+
+  // Address Autocomplete
+  const {
+    ready: addressReady,
+    value: addressValue,
+    suggestions: { status: addressStatus, data: addressData },
+    setValue: setAddressValue,
+    clearSuggestions: clearAddressSuggestions,
+  } = usePlacesAutocomplete({
+    requestOptions: { language: 'zh-TW' },
+    debounce: 300,
+    defaultValue: address
+  });
+
+  // Keep internal values in sync with props when they change externally (e.g. from map click or initial load)
+  useEffect(() => {
+    setTitleValue(title, false);
+  }, [title, setTitleValue]);
+
+  useEffect(() => {
+    setAddressValue(address, false);
+  }, [address, setAddressValue]);
 
   useEffect(() => {
     if (latitude && longitude) {
@@ -61,51 +92,37 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
     }
   }, [latitude, longitude]);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
+  const handleTitleSelect = async (suggestion: any) => {
+    const titleText = suggestion.structured_formatting.main_text;
+    setTitleValue(titleText, false);
+    onTitleChange(titleText);
+    clearTitleSuggestions();
 
-  const onMapUnmount = useCallback(() => {
-    mapRef.current = null;
-  }, []);
-
-  const handleTitlePlaceChanged = () => {
-    if (titleAutocompleteRef.current !== null) {
-      const place = titleAutocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        
-        if (place.name) {
-          onTitleChange(place.name); // Usually the product title will be the name of the place
-        }
-        
-        if (place.formatted_address) {
-          onAddressChange(place.formatted_address);
-        }
-        
-        onCoordinatesChange(lat, lng);
-        setMapCenter({ lat, lng });
+    try {
+      const results = await getGeocode({ address: suggestion.description });
+      const { lat, lng } = await getLatLng(results[0]);
+      onCoordinatesChange(lat, lng);
+      setMapCenter({ lat, lng });
+      if (results[0].formatted_address) {
+        onAddressChange(results[0].formatted_address);
       }
+    } catch (error) {
+      console.error("Error: ", error);
     }
   };
 
-  const handleAddressPlaceChanged = () => {
-    if (addressAutocompleteRef.current !== null) {
-      const place = addressAutocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        
-        if (place.formatted_address) {
-          onAddressChange(place.formatted_address);
-        } else if (place.name) {
-          onAddressChange(place.name);
-        }
-        
-        onCoordinatesChange(lat, lng);
-        setMapCenter({ lat, lng });
-      }
+  const handleAddressSelect = async (suggestion: any) => {
+    setAddressValue(suggestion.description, false);
+    onAddressChange(suggestion.description);
+    clearAddressSuggestions();
+
+    try {
+      const results = await getGeocode({ address: suggestion.description });
+      const { lat, lng } = await getLatLng(results[0]);
+      onCoordinatesChange(lat, lng);
+      setMapCenter({ lat, lng });
+    } catch (error) {
+      console.error("Error: ", error);
     }
   };
 
@@ -116,12 +133,10 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
       onCoordinatesChange(lat, lng);
       setMapCenter({ lat, lng });
 
-      // Reverse geocoding to get address
       try {
-        const geocoder = new window.google.maps.Geocoder();
-        const response = await geocoder.geocode({ location: { lat, lng } });
-        if (response.results && response.results.length > 0) {
-          onAddressChange(response.results[0].formatted_address);
+        const results = await getGeocode({ location: { lat, lng } });
+        if (results && results.length > 0) {
+          onAddressChange(results[0].formatted_address);
         }
       } catch (error) {
         console.error('Geocoder failed due to: ', error);
@@ -135,81 +150,80 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+      {/* Product Title Field */}
+      <div className="flex flex-col gap-2 relative">
         <label htmlFor="產品標題" className="font-bold text-slate-700">
           產品標題 <span className="text-red-500">*</span>
         </label>
-        {isLoaded ? (
-          <Autocomplete
-            onLoad={(autocomplete) => { titleAutocompleteRef.current = autocomplete; }}
-            onPlaceChanged={handleTitlePlaceChanged}
-          >
-            <input
-              id="產品標題"
-              type="text"
-              name="產品標題"
-              value={title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="請輸入產品標題 (例如：台北 101 觀景台)"
-            />
-          </Autocomplete>
-        ) : (
-          <input
-            id="產品標題"
-            type="text"
-            name="產品標題"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            placeholder="請輸入產品標題"
-          />
+        <input
+          id="產品標題"
+          type="text"
+          value={titleValue}
+          onChange={(e) => {
+            setTitleValue(e.target.value);
+            onTitleChange(e.target.value);
+          }}
+          disabled={!titleReady && isLoaded}
+          className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          placeholder="請輸入產品標題 (例如：台北 101 觀景台)"
+        />
+        {titleStatus === "OK" && (
+          <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg top-full max-h-60 overflow-auto">
+            {titleData.map((suggestion) => (
+              <li
+                key={suggestion.place_id}
+                onClick={() => handleTitleSelect(suggestion)}
+                className="p-3 hover:bg-slate-50 cursor-pointer text-slate-700 border-b border-slate-50 last:border-0"
+              >
+                <span className="font-bold">{suggestion.structured_formatting.main_text}</span>
+                <small className="block text-slate-500">{suggestion.structured_formatting.secondary_text}</small>
+              </li>
+            ))}
+          </ul>
         )}
         {titleError && (
           <span className="text-red-500 text-sm">{titleError}</span>
         )}
-        <small className="text-slate-500 text-sm">
-          輸入景點名稱可自動帶入地址。
-        </small>
+        <small className="text-slate-500 text-sm">輸入景點名稱可自動帶入地址。</small>
       </div>
 
-      <div className="flex flex-col gap-2">
+      {/* Address Field */}
+      <div className="flex flex-col gap-2 relative">
         <label htmlFor="地址" className="font-bold text-slate-700">
           地址 <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-2">
-          {isLoaded ? (
-            <div className="flex-1">
-              <Autocomplete
-                onLoad={(autocomplete) => { addressAutocompleteRef.current = autocomplete; }}
-                onPlaceChanged={handleAddressPlaceChanged}
-              >
-                <input
-                  id="地址"
-                  type="text"
-                  name="地址"
-                  value={address}
-                  onChange={(e) => onAddressChange(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="請輸入地址"
-                />
-              </Autocomplete>
-            </div>
-          ) : (
+          <div className="flex-1 relative">
             <input
               id="地址"
               type="text"
-              name="地址"
-              value={address}
-              onChange={(e) => onAddressChange(e.target.value)}
-              className="w-full p-3 flex-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              value={addressValue}
+              onChange={(e) => {
+                setAddressValue(e.target.value);
+                onAddressChange(e.target.value);
+              }}
+              disabled={!addressReady && isLoaded}
+              className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="請輸入地址"
             />
-          )}
+            {addressStatus === "OK" && (
+              <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg top-full max-h-60 overflow-auto">
+                {addressData.map((suggestion) => (
+                  <li
+                    key={suggestion.place_id}
+                    onClick={() => handleAddressSelect(suggestion)}
+                    className="p-3 hover:bg-slate-50 cursor-pointer text-slate-700 border-b border-slate-50 last:border-0"
+                  >
+                    {suggestion.description}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setShowMap(!showMap)}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap border border-slate-300"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap border border-slate-300 h-[50px]"
           >
             <span className="material-symbols-outlined text-sm">map</span>
             {showMap ? '隱藏地圖' : '在地圖上選擇'}
@@ -226,8 +240,6 @@ const LocationFields: React.FC<LocationFieldsProps> = ({
             mapContainerStyle={mapContainerStyle}
             center={mapCenter}
             zoom={15}
-            onLoad={onMapLoad}
-            onUnmount={onMapUnmount}
             onClick={handleMapClick}
             options={{
               disableDefaultUI: false,
