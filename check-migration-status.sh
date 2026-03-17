@@ -16,14 +16,14 @@ DB_PASSWORD=$(gcloud secrets versions access latest --secret="delux-db-password"
 
 # Start Cloud SQL Proxy
 echo "🔌 Starting Cloud SQL Proxy..."
-cloud-sql-proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
+./cloud_sql_proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
 PROXY_PID=$!
 
 sleep 5
 
 # Check migrations table
 echo "📋 Checking executed migrations..."
-PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -p 5433 -U postgres -d delux_plus -c "SELECT name, executed_at FROM migrations ORDER BY id;" 2>/dev/null || echo "❌ Could not connect to database"
+PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -p 5433 -U delux_admin -d delux_plus -c "SELECT name, executed_at FROM migrations ORDER BY id;" || echo "❌ Could not list migrations"
 
 echo ""
 echo "📋 Checking product status constraint..."

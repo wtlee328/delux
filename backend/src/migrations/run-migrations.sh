@@ -26,7 +26,7 @@ DB_HOST=$(gcloud sql instances describe $INSTANCE_NAME --project=$PROJECT_ID --f
 export DB_HOST="$DB_HOST"
 export DB_PORT="5432"
 export DB_NAME="delux_plus"
-export DB_USER="postgres"
+export DB_USER="delux_admin"
 export DB_PASSWORD="$DB_PASSWORD"
 export NODE_ENV="production"
 
@@ -35,7 +35,7 @@ echo ""
 
 # Start Cloud SQL Proxy in the background
 echo "🔌 Starting Cloud SQL Proxy..."
-/opt/homebrew/share/google-cloud-sdk/bin/cloud-sql-proxy --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
+"$(dirname "$0")/../../../cloud_sql_proxy" --port 5433 ${PROJECT_ID}:${REGION}:${INSTANCE_NAME} &
 PROXY_PID=$!
 
 # Wait for proxy to be ready

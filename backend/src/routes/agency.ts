@@ -11,6 +11,28 @@ router.use(requireAuth);
 router.use(requireRole(['agency']));
 
 /**
+ * GET /api/agency/destinations
+ * Get all unique destinations from published products
+ */
+router.get('/destinations', async (req: Request, res: Response) => {
+  try {
+    const query = `
+      SELECT DISTINCT destination 
+      FROM products 
+      WHERE status = '已發佈' 
+      AND destination IS NOT NULL 
+      AND destination != ''
+      ORDER BY destination
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows.map(row => row.destination));
+  } catch (error) {
+    console.error('Get destinations error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/agency/suppliers
  * Get list of all suppliers, optionally filtered by destination
  */
