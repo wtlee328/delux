@@ -38,6 +38,9 @@ const dayColors = [
   '#85C1E2', // Sky Blue
 ];
 
+type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
+const libraries: Library[] = ['places', 'marker'];
+
 const MapView: React.FC<MapViewProps> = ({
   products,
   highlightedProductId,
@@ -46,6 +49,9 @@ const MapView: React.FC<MapViewProps> = ({
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+    language: 'zh-TW',
+    version: 'weekly'
   });
 
   const [map, setMap] = useState<any>(null);
