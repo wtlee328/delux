@@ -36,6 +36,12 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
 
   const displayStatus = status === '待審核' ? '審核中' : status === '需要修改' ? '已退回' : status;
 
+  const handleSubmitConfirm = () => {
+    if (window.confirm('請確認您已「儲存」最新的修改！\n若有尚未儲存的編輯，送出審核後將會遺失。\n\n按「確定」送出審核，或按「取消」先回到頁面點擊儲存。')) {
+      onSubmitForReview();
+    }
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-50">
       <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-4 md:px-8">
@@ -71,7 +77,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
           {(status === '草稿' || status === '已退回' || status === '需要修改') && (
             <button
               type="button"
-              onClick={onSubmitForReview}
+              onClick={handleSubmitConfirm}
               disabled={isSubmitting}
               className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
@@ -104,7 +110,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
               )}
               <button
                 type="button"
-                onClick={onSubmitForReview}
+                onClick={handleSubmitConfirm}
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
               >
