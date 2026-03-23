@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
@@ -310,6 +310,8 @@ export default function TripBuilderPage() {
     }
   };
 
+  const isSubmitForReviewRef = useRef(false);
+
   const saveTrip = async () => {
     try {
       if (!name) {
@@ -340,11 +342,18 @@ export default function TripBuilderPage() {
       } else {
         await axios.post('/api/supplier/trips', payload);
       }
+
+      if (isSubmitForReviewRef.current) {
+        await axios.put(`/api/supplier/trips/${id}/status`, { status: '審核中' });
+        alert('行程已儲存並成功提交審核！');
+      }
+
       navigate('/supplier/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || '儲存行程失敗');
     } finally {
       setSaving(false);
+      isSubmitForReviewRef.current = false;
     }
   };
 
@@ -386,6 +395,26 @@ export default function TripBuilderPage() {
     } catch (err: any) {
       console.error(err);
     }
+  };
+
+  const handleSaveAndSubmitForReview = () => {
+    const allProductIdsInTrip: string[] = [];
+    days.forEach(d => {
+      if (d.breakfastId) allProductIdsInTrip.push(d.breakfastId);
+      if (d.lunchId) allProductIdsInTrip.push(d.lunchId);
+      if (d.dinnerId) allProductIdsInTrip.push(d.dinnerId);
+      if (d.hotelId) allProductIdsInTrip.push(d.hotelId);
+      d.items.forEach(item => allProductIdsInTrip.push(item.productId));
+    });
+
+    const unapproved = products.filter(p => allProductIdsInTrip.includes(p.id) && p.status !== '已發佈');
+    if (unapproved.length > 0) {
+      alert('此行程包含尚未審核通過的產品，請先完成產品審核後再提交行程審核。');
+      return;
+    }
+
+    isSubmitForReviewRef.current = true;
+    saveTrip();
   };
 
   const uniqueDestinations = Array.from(new Set(products.map(p => p.destination).filter(d => Boolean(d) && d !== '待定')));
@@ -662,6 +691,7 @@ export default function TripBuilderPage() {
         rejectionReason={rejectionReason}
         onSaveDraft={saveTrip}
         onSubmitForReview={submitForReview}
+        onSaveAndSubmitForReview={handleSaveAndSubmitForReview}
         onWithdraw={() => handleStatusUpdate('草稿')}
         isSubmitting={saving}
         itemType="行程"

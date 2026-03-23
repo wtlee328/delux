@@ -5,6 +5,7 @@ interface DraftStatusFooterProps {
   rejectionReason?: string | null;
   onSaveDraft?: () => void;
   onSubmitForReview: () => void;
+  onSaveAndSubmitForReview?: () => void;
   onWithdraw?: () => void;
   isSubmitting: boolean;
   itemType: '產品' | '行程';
@@ -15,6 +16,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
   rejectionReason,
   onSaveDraft,
   onSubmitForReview,
+  onSaveAndSubmitForReview,
   onWithdraw,
   isSubmitting,
   itemType
@@ -37,8 +39,12 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
   const displayStatus = status === '待審核' ? '審核中' : status === '需要修改' ? '已退回' : status;
 
   const handleSubmitConfirm = () => {
-    if (window.confirm('請確認您已「儲存」最新的修改！\n若有尚未儲存的編輯，送出審核後將會遺失。\n\n按「確定」送出審核，或按「取消」先回到頁面點擊儲存。')) {
-      onSubmitForReview();
+    if (window.confirm('準備提交審核！若有尚未儲存的變更，將會一併儲存。\n\n- 點擊「確定」：儲存並送出審核\n- 點擊「取消」：取消提交')) {
+      if (onSaveAndSubmitForReview) {
+        onSaveAndSubmitForReview();
+      } else {
+        onSubmitForReview();
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -197,10 +197,13 @@ const EditProductPage: React.FC = () => {
     }
   };
 
+  const isSubmitForReviewRef = useRef(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
+      isSubmitForReviewRef.current = false;
       return;
     }
 
@@ -241,6 +244,11 @@ const EditProductPage: React.FC = () => {
         },
       });
 
+      if (isSubmitForReviewRef.current) {
+        await axios.put(`/api/supplier/tours/${id}/status`, { status: '待審核' });
+        alert('產品已儲存並成功提交審核！');
+      }
+
       navigate('/supplier/dashboard');
     } catch (error: any) {
       if (error.response?.data?.message) {
@@ -250,6 +258,7 @@ const EditProductPage: React.FC = () => {
       }
     } finally {
       setIsSubmitting(false);
+      isSubmitForReviewRef.current = false;
     }
   };
 
@@ -549,6 +558,12 @@ const EditProductPage: React.FC = () => {
           }
         }}
         onSubmitForReview={() => handleStatusChange('待審核')}
+        onSaveAndSubmitForReview={() => {
+          isSubmitForReviewRef.current = true;
+          const editBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+          if (editBtn) editBtn.click();
+          else handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+        }}
         onWithdraw={() => handleStatusChange('草稿')}
         isSubmitting={isSubmitting}
         itemType="產品"
