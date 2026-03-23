@@ -89,6 +89,29 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
               撤回至草稿
             </button>
           )}
+
+          {status === '已發佈' && (
+            <>
+              {onWithdraw && (
+                <button
+                  type="button"
+                  onClick={onWithdraw}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 font-bold transition-all disabled:opacity-50 text-slate-700"
+                >
+                  下架並轉為草稿
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onSubmitForReview}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+              >
+                下架並重新審核
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
