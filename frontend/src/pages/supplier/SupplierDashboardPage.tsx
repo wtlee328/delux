@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import SupplierTripList from './SupplierTripList';
@@ -18,7 +18,14 @@ interface Product {
 
 const SupplierDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'products' | 'trips'>('products');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'products' | 'trips') || 'products';
+  const [activeTab, setActiveTab] = useState<'products' | 'trips'>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +38,11 @@ const SupplierDashboardPage: React.FC = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleTabChange = (tab: 'products' | 'trips') => {
+    setSearchParams({ tab });
+    setActiveTab(tab);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -146,7 +158,7 @@ const SupplierDashboardPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex gap-8">
             <button
-              onClick={() => setActiveTab('products')}
+              onClick={() => handleTabChange('products')}
               className={`py-4 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === 'products'
                   ? 'border-slate-800 text-slate-800'
@@ -156,7 +168,7 @@ const SupplierDashboardPage: React.FC = () => {
               景點
             </button>
             <button
-              onClick={() => setActiveTab('trips')}
+              onClick={() => handleTabChange('trips')}
               className={`py-4 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === 'trips'
                   ? 'border-slate-800 text-slate-800'

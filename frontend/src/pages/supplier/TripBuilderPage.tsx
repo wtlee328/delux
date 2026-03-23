@@ -348,7 +348,7 @@ export default function TripBuilderPage() {
         alert('行程已儲存並成功提交審核！');
       }
 
-      navigate('/supplier/dashboard');
+      navigate('/supplier/dashboard?tab=trips');
     } catch (err: any) {
       setError(err.response?.data?.error || '儲存行程失敗');
     } finally {
@@ -431,7 +431,7 @@ export default function TripBuilderPage() {
           <h1 className="text-2xl font-bold text-slate-800">{isEditing ? '編輯行程' : '新增行程'}</h1>
           <button 
             type="button"
-            onClick={() => navigate('/supplier/dashboard')}
+            onClick={() => navigate('/supplier/dashboard?tab=trips')}
             className="px-6 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg shadow-sm font-medium hover:bg-slate-50 transition-colors"
           >
             返回上頁
