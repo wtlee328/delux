@@ -24,6 +24,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
   const getStatusStyle = (s: string) => {
     switch (s) {
       case '已發佈':
+      case '已通過':
         return 'bg-green-500 text-white border-green-600';
       case '待審核':
       case '審核中':
@@ -36,7 +37,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
     }
   };
 
-  const displayStatus = status === '待審核' ? '審核中' : status === '需要修改' ? '已退回' : status;
+  const displayStatus = (status === '待審核' || status === '審核中') ? '審核中' : (status === '需要修改' || status === '已退回') ? '已退回' : status;
 
   const handleSubmitConfirm = () => {
     if (window.confirm('準備提交審核！若有尚未儲存的變更，將會一併儲存。\n\n- 點擊「確定」：儲存並送出審核\n- 點擊「取消」：取消提交')) {
@@ -47,6 +48,8 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
       }
     }
   };
+
+  const isApproved = status === '已發佈' || status === '已通過';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-50">
@@ -102,7 +105,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
             </button>
           )}
 
-          {status === '已發佈' && (
+          {isApproved && (
             <>
               {onWithdraw && (
                 <button
