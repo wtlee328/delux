@@ -149,6 +149,9 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     const { id } = req.params;
     const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
     const supplierId = req.user!.userId;
+    
+    console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}`);
+    console.log(`[DEBUG] Received address: "${address}", lat: ${latitude}, lng: ${longitude}`);
 
     // Build update data
     const updateData: any = {};
