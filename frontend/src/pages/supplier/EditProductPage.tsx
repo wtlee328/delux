@@ -6,6 +6,7 @@ import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
 import LocationFields from '../../components/supplier/LocationFields';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -375,26 +376,19 @@ const EditProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="類別" className="font-bold text-slate-700">
-                類別 <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="類別"
-                name="類別"
-                value={formData.類別}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="地標">地標</option>
-                <option value="住宿">住宿</option>
-                <option value="餐飲">餐飲</option>
-                <option value="交通">交通</option>
-              </select>
-              {errors.類別 && (
-                <span className="text-red-500 text-sm">{errors.類別}</span>
-              )}
-            </div>
+            <CustomSelect
+              label="類別"
+              id="類別"
+              name="類別"
+              value={formData.類別}
+              onChange={handleInputChange}
+              error={errors.類別}
+            >
+              <option value="地標">地標</option>
+              <option value="住宿">住宿</option>
+              <option value="餐飲">餐飲</option>
+              <option value="交通">交通</option>
+            </CustomSelect>
 
             <div className="flex flex-col gap-2">
               <label htmlFor="淨價" className="font-bold text-slate-700">
