@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import CustomSelect from '../ui/CustomSelect';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { TimelineActivityItem } from './TimelineActivityItem';
 import { Product, TimelineDay } from '../../types/itinerary';
@@ -34,34 +35,33 @@ const MealSelect: React.FC<{
     const currentValue = idValue ? String(idValue) : (customValue || '');
 
     return (
-        <div style={fieldStyles.mealItem}>
-            <label style={fieldStyles.fieldLabel}>{label}</label>
-            <select
-                style={fieldStyles.select}
-                value={currentValue}
-                onChange={(e) => {
-                    const val = e.target.value;
-                    if (MEAL_PREDEFINED_OPTIONS.includes(val)) {
-                        onChange(null, val);
-                    } else {
-                        onChange(val || null, null);
-                    }
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-            >
-                <option value="">-- 選擇 --</option>
-                <optgroup label="特殊選項">
-                    {MEAL_PREDEFINED_OPTIONS.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                </optgroup>
-                <optgroup label="餐食產品">
-                    {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
-                </optgroup>
-            </select>
-        </div>
+        <CustomSelect
+            label={label}
+            labelClassName="!text-[0.7rem] !text-[#b2bec3] !uppercase"
+            value={currentValue}
+            onChange={(e) => {
+                const val = e.target.value;
+                if (MEAL_PREDEFINED_OPTIONS.includes(val)) {
+                    onChange(null, val);
+                } else {
+                    onChange(val || null, null);
+                }
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="!text-[0.8rem] !py-1.5"
+        >
+            <option value="">-- 選擇 --</option>
+            <optgroup label="特殊選項">
+                {MEAL_PREDEFINED_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                ))}
+            </optgroup>
+            <optgroup label="餐食產品">
+                {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+            </optgroup>
+        </CustomSelect>
     );
 };
 
@@ -75,37 +75,34 @@ const HotelSelect: React.FC<{
     const currentValue = idValue ? String(idValue) : (customValue || '');
 
     return (
-        <div style={fieldStyles.hotelSection}>
-            <label style={fieldStyles.sectionLabel}>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '4px' }}>hotel</span>
-                住宿
-            </label>
-            <select
-                style={fieldStyles.select}
-                value={currentValue}
-                onChange={(e) => {
-                    const val = e.target.value;
-                    if (HOTEL_PREDEFINED_OPTIONS.includes(val)) {
-                        onChange(null, val);
-                    } else {
-                        onChange(val || null, null);
-                    }
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-            >
-                <option value="">-- 選擇住宿 --</option>
-                <optgroup label="等級選項">
-                    {HOTEL_PREDEFINED_OPTIONS.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                </optgroup>
-                <optgroup label="住宿產品">
-                    {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
-                </optgroup>
-            </select>
-        </div>
+        <CustomSelect
+            label="住宿"
+            labelClassName="!text-[0.8rem] !text-[#636e72]"
+            icon="hotel"
+            value={currentValue}
+            onChange={(e) => {
+                const val = e.target.value;
+                if (HOTEL_PREDEFINED_OPTIONS.includes(val)) {
+                    onChange(null, val);
+                } else {
+                    onChange(val || null, null);
+                }
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="!text-[0.8rem] !py-1.5"
+        >
+            <option value="">-- 選擇住宿 --</option>
+            <optgroup label="等級選項">
+                {HOTEL_PREDEFINED_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                ))}
+            </optgroup>
+            <optgroup label="住宿產品">
+                {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+            </optgroup>
+        </CustomSelect>
     );
 };
 

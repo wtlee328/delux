@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
+import CustomSelect from '../../components/ui/CustomSelect';
 import { useToast } from '../../components/Toast';
 import { 
   MapPin, 
@@ -125,10 +126,14 @@ const AgencyTripsPage: React.FC = () => {
               <Filter size={14} />
               排序
             </div>
-            <select className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 p-0 cursor-pointer">
+            <CustomSelect
+              containerClassName="!flex-row !items-center !gap-2 !border-none !shadow-none !p-0"
+              className="!bg-transparent !border-none !focus:ring-0 !text-sm !font-bold !text-slate-700 !p-0 !min-w-[80px]"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <option>最新優先</option>
               <option>最舊優先</option>
-            </select>
+            </CustomSelect>
           </div>
         </div>
 

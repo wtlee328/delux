@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
+import LocationFields from '../../components/supplier/LocationFields';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -19,6 +21,9 @@ interface FormData {
   門票: boolean;
   門票價格: string;
   停留時間: string;
+  address: string;
+  latitude: number | undefined;
+  longitude: number | undefined;
 }
 
 interface FormErrors {
@@ -28,6 +33,7 @@ interface FormErrors {
   產品描述?: string;
   封面圖?: string;
   淨價?: string;
+  address?: string;
   submit?: string;
 }
 
@@ -47,6 +53,9 @@ const EditProductPage: React.FC = () => {
     門票: false,
     門票價格: '',
     停留時間: '1',
+    address: '',
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -86,6 +95,9 @@ const EditProductPage: React.FC = () => {
         門票: product.hasTicket || false,
         門票價格: product.ticketPrice ? product.ticketPrice.toString() : '',
         停留時間: product.duration ? product.duration.toString() : '1',
+        address: product.address || '',
+        latitude: product.latitude,
+        longitude: product.longitude,
       });
 
       setExistingImageUrl(product.coverImageUrl);
@@ -108,6 +120,10 @@ const EditProductPage: React.FC = () => {
 
     if (!formData.目的地.trim()) {
       newErrors.目的地 = '目的地為必填欄位';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = '地址為必填欄位';
     }
 
     if (!formData.類別) {
@@ -182,10 +198,13 @@ const EditProductPage: React.FC = () => {
     }
   };
 
+  const isSubmitForReviewRef = useRef(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
+      isSubmitForReviewRef.current = false;
       return;
     }
 
@@ -213,6 +232,9 @@ const EditProductPage: React.FC = () => {
         submitData.append('ticketPrice', formData.門票價格);
       }
       submitData.append('duration', formData.停留時間);
+      submitData.append('address', formData.address);
+      if (formData.latitude !== undefined) submitData.append('latitude', formData.latitude.toString());
+      if (formData.longitude !== undefined) submitData.append('longitude', formData.longitude.toString());
       if (formData.封面圖) {
         submitData.append('coverImage', formData.封面圖);
       }
@@ -223,7 +245,12 @@ const EditProductPage: React.FC = () => {
         },
       });
 
-      navigate('/supplier/dashboard');
+      if (isSubmitForReviewRef.current) {
+        await axios.put(`/api/supplier/tours/${id}/status`, { status: '待審核' });
+        alert('產品已儲存並成功提交審核！');
+      }
+
+      navigate('/supplier/dashboard?tab=products');
     } catch (error: any) {
       if (error.response?.data?.message) {
         setErrors({ submit: error.response.data.message });
@@ -232,6 +259,7 @@ const EditProductPage: React.FC = () => {
       }
     } finally {
       setIsSubmitting(false);
+      isSubmitForReviewRef.current = false;
     }
   };
 
@@ -281,7 +309,7 @@ const EditProductPage: React.FC = () => {
       <main className="p-8 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
           <button
-            onClick={() => navigate('/supplier/dashboard')}
+            onClick={() => navigate('/supplier/dashboard?tab=products')}
             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors mb-6 flex items-center gap-2"
           >
             ← 返回控制台
@@ -312,23 +340,23 @@ const EditProductPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="產品標題" className="font-bold text-slate-700">
-                產品標題 <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="產品標題"
-                type="text"
-                name="產品標題"
-                value={formData.產品標題}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="請輸入產品標題"
-              />
-              {errors.產品標題 && (
-                <span className="text-red-500 text-sm">{errors.產品標題}</span>
-              )}
-            </div>
+            <LocationFields
+              title={formData.產品標題}
+              onTitleChange={(value) => {
+                setFormData((prev) => ({ ...prev, 產品標題: value }));
+                if (errors.產品標題) setErrors((prev) => ({ ...prev, 產品標題: undefined }));
+              }}
+              titleError={errors.產品標題}
+              address={formData.address}
+              onAddressChange={(value) => {
+                setFormData((prev) => ({ ...prev, address: value }));
+                if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
+              }}
+              addressError={errors.address}
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onCoordinatesChange={(lat, lng) => setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }))}
+            />
 
             <div className="flex flex-col gap-2">
               <label htmlFor="目的地" className="font-bold text-slate-700">
@@ -348,26 +376,19 @@ const EditProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="類別" className="font-bold text-slate-700">
-                類別 <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="類別"
-                name="類別"
-                value={formData.類別}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="地標">地標</option>
-                <option value="住宿">住宿</option>
-                <option value="餐飲">餐飲</option>
-                <option value="交通">交通</option>
-              </select>
-              {errors.類別 && (
-                <span className="text-red-500 text-sm">{errors.類別}</span>
-              )}
-            </div>
+            <CustomSelect
+              label="類別"
+              id="類別"
+              name="類別"
+              value={formData.類別}
+              onChange={handleInputChange}
+              error={errors.類別}
+            >
+              <option value="地標">地標</option>
+              <option value="住宿">住宿</option>
+              <option value="餐飲">餐飲</option>
+              <option value="交通">交通</option>
+            </CustomSelect>
 
             <div className="flex flex-col gap-2">
               <label htmlFor="淨價" className="font-bold text-slate-700">
@@ -531,6 +552,12 @@ const EditProductPage: React.FC = () => {
           }
         }}
         onSubmitForReview={() => handleStatusChange('待審核')}
+        onSaveAndSubmitForReview={() => {
+          isSubmitForReviewRef.current = true;
+          const editBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+          if (editBtn) editBtn.click();
+          else handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+        }}
         onWithdraw={() => handleStatusChange('草稿')}
         isSubmitting={isSubmitting}
         itemType="產品"

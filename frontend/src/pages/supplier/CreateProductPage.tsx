@@ -8,6 +8,8 @@ import axios from 'axios';
 import axiosInstance from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
+import LocationFields from '../../components/supplier/LocationFields';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 interface FormData {
   產品標題: string;
@@ -20,6 +22,9 @@ interface FormData {
   門票: boolean;
   門票價格: string;
   停留時間: string;
+  address: string;
+  latitude: number | undefined;
+  longitude: number | undefined;
 }
 
 interface FormErrors {
@@ -29,6 +34,7 @@ interface FormErrors {
   產品描述?: string;
   封面圖?: string;
   淨價?: string;
+  address?: string;
   submit?: string;
 }
 
@@ -48,6 +54,9 @@ const CreateProductPage: React.FC = () => {
     門票: false,
     門票價格: '',
     停留時間: '1',
+    address: '',
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -108,6 +117,7 @@ const CreateProductPage: React.FC = () => {
     if (!formData.產品描述) newErrors.產品描述 = '請輸入產品描述';
     if (!formData.淨價) newErrors.淨價 = '請輸入淨價';
     if (!formData.封面圖) newErrors.封面圖 = '請上傳封面圖';
+    if (!formData.address) newErrors.address = '請輸入地址';
     if (formData.門票 && !formData.門票價格) newErrors.submit = '請輸入門票價格';
     if (!formData.停留時間) newErrors.submit = '請輸入停留時間';
 
@@ -135,6 +145,9 @@ const CreateProductPage: React.FC = () => {
         submitData.append('ticketPrice', formData.門票價格);
       }
       submitData.append('duration', formData.停留時間);
+      submitData.append('address', formData.address);
+      if (formData.latitude !== undefined) submitData.append('latitude', formData.latitude.toString());
+      if (formData.longitude !== undefined) submitData.append('longitude', formData.longitude.toString());
       submitData.append('status', status);
       if (formData.封面圖) {
         submitData.append('coverImage', formData.封面圖);
@@ -190,23 +203,23 @@ const CreateProductPage: React.FC = () => {
               <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">{errors.submit}</div>
             )}
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="產品標題" className="font-bold text-slate-700">
-                產品標題 <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="產品標題"
-                type="text"
-                name="產品標題"
-                value={formData.產品標題}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="請輸入產品標題"
-              />
-              {errors.產品標題 && (
-                <span className="text-red-500 text-sm">{errors.產品標題}</span>
-              )}
-            </div>
+            <LocationFields
+              title={formData.產品標題}
+              onTitleChange={(value) => {
+                setFormData((prev) => ({ ...prev, 產品標題: value }));
+                if (errors.產品標題) setErrors((prev) => ({ ...prev, 產品標題: undefined }));
+              }}
+              titleError={errors.產品標題}
+              address={formData.address}
+              onAddressChange={(value) => {
+                setFormData((prev) => ({ ...prev, address: value }));
+                if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
+              }}
+              addressError={errors.address}
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onCoordinatesChange={(lat, lng) => setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }))}
+            />
 
             <div className="flex flex-col gap-2">
               <label htmlFor="目的地" className="font-bold text-slate-700">
@@ -226,26 +239,22 @@ const CreateProductPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="類別" className="font-bold text-slate-700">
-                類別 <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="類別"
-                name="類別"
-                value={formData.類別}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="地標">地標</option>
-                <option value="住宿">住宿</option>
-                <option value="餐飲">餐飲</option>
-                <option value="交通">交通</option>
-              </select>
-              {errors.類別 && (
-                <span className="text-red-500 text-sm">{errors.類別}</span>
-              )}
-            </div>
+            <CustomSelect
+              label="類別 *"
+              labelClassName="!font-bold !text-slate-700"
+              icon="category"
+              id="類別"
+              name="類別"
+              value={formData.類別}
+              onChange={handleInputChange}
+              error={errors.類別}
+              className="!p-3"
+            >
+              <option value="地標">地標</option>
+              <option value="住宿">住宿</option>
+              <option value="餐飲">餐飲</option>
+              <option value="交通">交通</option>
+            </CustomSelect>
 
             <div className="flex flex-col gap-2">
               <label htmlFor="淨價" className="font-bold text-slate-700">

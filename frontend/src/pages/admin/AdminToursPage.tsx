@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 import TopBar from '../../components/TopBar';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
 
@@ -281,32 +282,29 @@ const AdminToursPage: React.FC = () => {
               className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="flex flex-col gap-1 min-w-[150px]">
-            <label className="text-xs font-bold text-slate-500 uppercase">類別</label>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">全部類別</option>
-              {uniqueCategories.map(c => (
-                <option key={c} value={c}>{categoryMap[c] || c}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 min-w-[150px]">
-            <label className="text-xs font-bold text-slate-500 uppercase">狀態</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">全部狀態</option>
-              {uniqueStatuses.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            label="類別"
+            containerClassName="min-w-[150px]"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
+            <option value="">全部類別</option>
+            {uniqueCategories.map(c => (
+              <option key={c} value={c}>{categoryMap[c] || c}</option>
+            ))}
+          </CustomSelect>
+
+          <CustomSelect
+            label="狀態"
+            containerClassName="min-w-[150px]"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">全部狀態</option>
+            {uniqueStatuses.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </CustomSelect>
           {(filterSupplier || filterDestination || filterCategory || filterStatus) && (
             <div className="flex items-end pb-1">
               <button

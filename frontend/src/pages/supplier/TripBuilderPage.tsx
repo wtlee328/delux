@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
@@ -7,6 +7,7 @@ import { ChevronUp, ChevronDown, Trash2, GripVertical } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 interface Product {
   id: string;
@@ -310,6 +311,8 @@ export default function TripBuilderPage() {
     }
   };
 
+  const isSubmitForReviewRef = useRef(false);
+
   const saveTrip = async () => {
     try {
       if (!name) {
@@ -340,11 +343,18 @@ export default function TripBuilderPage() {
       } else {
         await axios.post('/api/supplier/trips', payload);
       }
-      navigate('/supplier/dashboard');
+
+      if (isSubmitForReviewRef.current) {
+        await axios.put(`/api/supplier/trips/${id}/status`, { status: '審核中' });
+        alert('行程已儲存並成功提交審核！');
+      }
+
+      navigate('/supplier/dashboard?tab=trips');
     } catch (err: any) {
       setError(err.response?.data?.error || '儲存行程失敗');
     } finally {
       setSaving(false);
+      isSubmitForReviewRef.current = false;
     }
   };
 
@@ -388,6 +398,26 @@ export default function TripBuilderPage() {
     }
   };
 
+  const handleSaveAndSubmitForReview = () => {
+    const allProductIdsInTrip: string[] = [];
+    days.forEach(d => {
+      if (d.breakfastId) allProductIdsInTrip.push(d.breakfastId);
+      if (d.lunchId) allProductIdsInTrip.push(d.lunchId);
+      if (d.dinnerId) allProductIdsInTrip.push(d.dinnerId);
+      if (d.hotelId) allProductIdsInTrip.push(d.hotelId);
+      d.items.forEach(item => allProductIdsInTrip.push(item.productId));
+    });
+
+    const unapproved = products.filter(p => allProductIdsInTrip.includes(p.id) && p.status !== '已發佈');
+    if (unapproved.length > 0) {
+      alert('此行程包含尚未審核通過的產品，請先完成產品審核後再提交行程審核。');
+      return;
+    }
+
+    isSubmitForReviewRef.current = true;
+    saveTrip();
+  };
+
   const uniqueDestinations = Array.from(new Set(products.map(p => p.destination).filter(d => Boolean(d) && d !== '待定')));
   const getProductsByCategory = (cat: string) => products.filter(p => p.category === cat && (!destination || p.destination === destination));
 
@@ -402,7 +432,7 @@ export default function TripBuilderPage() {
           <h1 className="text-2xl font-bold text-slate-800">{isEditing ? '編輯行程' : '新增行程'}</h1>
           <button 
             type="button"
-            onClick={() => navigate('/supplier/dashboard')}
+            onClick={() => navigate('/supplier/dashboard?tab=trips')}
             className="px-6 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg shadow-sm font-medium hover:bg-slate-50 transition-colors"
           >
             返回上頁
@@ -434,8 +464,8 @@ export default function TripBuilderPage() {
               />
             </div>
             <div className="md:col-span-3">
-              <label className="block text-sm font-medium text-slate-700 mb-1">目的地 (Destination) *</label>
-              <select 
+              <CustomSelect
+                label="目的地 (Destination) *" 
                 value={destination} 
                 onChange={e => {
                   if (e.target.value === '__add_new__') {
@@ -447,7 +477,6 @@ export default function TripBuilderPage() {
                     setDestination(e.target.value);
                   }
                 }}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none bg-white"
               >
                 <option value="" disabled>請選擇目的地</option>
                 {uniqueDestinations.map(dest => (
@@ -457,20 +486,19 @@ export default function TripBuilderPage() {
                   <option value={destination}>{destination}</option>
                 )}
                 <option value="__add_new__">+ 新增目的地...</option>
-              </select>
+              </CustomSelect>
             </div>
             <div className="md:col-span-3">
-              <label className="block text-sm font-medium text-slate-700 mb-1">類別 (Category) *</label>
-              <select 
+              <CustomSelect
+                label="類別 (Category) *" 
                 value={category} 
                 onChange={e => setCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none bg-white"
               >
                 <option value="團體旅遊">團體旅遊</option>
                 <option value="半自助">半自助</option>
                 <option value="自駕遊">自駕遊</option>
                 <option value="自由行">自由行</option>
-              </select>
+              </CustomSelect>
             </div>
           </div>
         </div>
@@ -501,8 +529,7 @@ export default function TripBuilderPage() {
                     return (
                       <div key={mealStr} className="p-4 bg-slate-50 rounded-lg border border-slate-100">
                         <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-                        <select 
-                          className="w-full text-sm border border-slate-300 rounded-lg p-2 mb-2 bg-white outline-none focus:ring-2 focus:ring-slate-800"
+                        <CustomSelect
                           value={(day[idKey] as string | null) ? String(day[idKey]) : ((day[customKey] as string | null) || '')}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -520,7 +547,7 @@ export default function TripBuilderPage() {
                             }
                           }}
                         >
-                          <option value="">-- 選擇餐食 --</option>
+                          <option value="">-- 選擇或輸入餐食 --</option>
                           <optgroup label="特殊選項 (不建立產品)">
                             <option value="酒店享用">酒店享用</option>
                             <option value="自理">自理</option>
@@ -533,8 +560,8 @@ export default function TripBuilderPage() {
                               </option>
                             ))}
                           </optgroup>
-                          <option value="__add_new__">+ 新增餐食產品...</option>
-                        </select>
+                          <option value="__add_new__">+ 建立新產品並加入</option>
+                        </CustomSelect>
                       </div>
                     );
                   })}
@@ -568,8 +595,9 @@ export default function TripBuilderPage() {
                     </SortableContext>
                   </DndContext>
                   
-                  <select 
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-slate-800"
+                  <CustomSelect
+                    icon="add"
+                    className="bg-slate-50"
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '__add_new__') {
@@ -583,7 +611,7 @@ export default function TripBuilderPage() {
                     }}
                     defaultValue=""
                   >
-                    <option value="" disabled>從現有產品選擇景點加入...</option>
+                    <option value="" disabled>點擊選擇現有景點加入行程...</option>
                     <optgroup label="現有景點產品">
                       {getProductsByCategory('landmark').map(p => (
                         <option key={p.id} value={p.id}>
@@ -591,48 +619,47 @@ export default function TripBuilderPage() {
                         </option>
                       ))}
                     </optgroup>
-                    <option value="__add_new__">+ 新增景點產品...</option>
-                  </select>
+                    <option value="__add_new__">+ 點擊建立新產品並加入</option>
+                  </CustomSelect>
                 </div>
 
                 {/* Hotel */}
                 <div>
                   <h4 className="font-bold text-slate-700 mb-2">住宿</h4>
                   <div className="flex gap-4 items-center">
-                    <select 
-                      className="flex-1 p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800"
-                      value={day.hotelId ? String(day.hotelId) : (day.hotelCustom || '')}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '__add_new__') {
-                          setShowNewProductModal(true);
-                          setNewProductParams({ category: 'accommodation', dayIndex: day.dayIndex });
-                          return;
-                        }
-                        if (['五星或同級', '四星或同級', '三星或同級'].includes(val)) {
-                          handleDayChange(day.dayIndex, 'hotelId', null);
-                          handleDayChange(day.dayIndex, 'hotelCustom', val);
-                        } else {
-                          handleDayChange(day.dayIndex, 'hotelId', val || null);
-                          handleDayChange(day.dayIndex, 'hotelCustom', null);
-                        }
-                      }}
-                    >
-                      <option value="">-- 選擇住宿 --</option>
-                      <optgroup label="特殊選項 (不建立產品)">
-                        <option value="五星或同級">五星或同級</option>
-                        <option value="四星或同級">四星或同級</option>
-                        <option value="三星或同級">三星或同級</option>
-                      </optgroup>
-                      <optgroup label="現有住宿產品">
-                        {getProductsByCategory('accommodation').map(p => (
-                          <option key={p.id} value={p.id}>
-                            {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <option value="__add_new__">+ 新增住宿產品...</option>
-                    </select>
+                  <CustomSelect
+                    value={day.hotelId ? String(day.hotelId) : (day.hotelCustom || '')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__add_new__') {
+                        setShowNewProductModal(true);
+                        setNewProductParams({ category: 'accommodation', dayIndex: day.dayIndex });
+                        return;
+                      }
+                      if (['五星或同級', '四星或同級', '三星或同級'].includes(val)) {
+                        handleDayChange(day.dayIndex, 'hotelId', null);
+                        handleDayChange(day.dayIndex, 'hotelCustom', val);
+                      } else {
+                        handleDayChange(day.dayIndex, 'hotelId', val || null);
+                        handleDayChange(day.dayIndex, 'hotelCustom', null);
+                      }
+                    }}
+                  >
+                    <option value="">-- 選擇或輸入住宿 --</option>
+                    <optgroup label="特殊選項 (不建立產品)">
+                      <option value="五星或同級">五星或同級</option>
+                      <option value="四星或同級">四星或同級</option>
+                      <option value="三星或同級">三星或同級</option>
+                    </optgroup>
+                    <optgroup label="現有住宿產品">
+                      {getProductsByCategory('accommodation').map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <option value="__add_new__">+ 點擊建立新產品並加入</option>
+                  </CustomSelect>
                   </div>
                 </div>
 
@@ -662,6 +689,7 @@ export default function TripBuilderPage() {
         rejectionReason={rejectionReason}
         onSaveDraft={saveTrip}
         onSubmitForReview={submitForReview}
+        onSaveAndSubmitForReview={handleSaveAndSubmitForReview}
         onWithdraw={() => handleStatusUpdate('草稿')}
         isSubmitting={saving}
         itemType="行程"

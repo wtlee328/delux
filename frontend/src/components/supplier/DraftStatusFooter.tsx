@@ -5,6 +5,7 @@ interface DraftStatusFooterProps {
   rejectionReason?: string | null;
   onSaveDraft?: () => void;
   onSubmitForReview: () => void;
+  onSaveAndSubmitForReview?: () => void;
   onWithdraw?: () => void;
   isSubmitting: boolean;
   itemType: '產品' | '行程';
@@ -15,6 +16,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
   rejectionReason,
   onSaveDraft,
   onSubmitForReview,
+  onSaveAndSubmitForReview,
   onWithdraw,
   isSubmitting,
   itemType
@@ -22,6 +24,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
   const getStatusStyle = (s: string) => {
     switch (s) {
       case '已發佈':
+      case '已通過':
         return 'bg-green-500 text-white border-green-600';
       case '待審核':
       case '審核中':
@@ -34,7 +37,19 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
     }
   };
 
-  const displayStatus = status === '待審核' ? '審核中' : status === '需要修改' ? '已退回' : status;
+  const displayStatus = (status === '待審核' || status === '審核中') ? '審核中' : (status === '需要修改' || status === '已退回') ? '已退回' : status;
+
+  const handleSubmitConfirm = () => {
+    if (window.confirm('準備提交審核！若有尚未儲存的變更，將會一併儲存。\n\n- 點擊「確定」：儲存並送出審核\n- 點擊「取消」：取消提交')) {
+      if (onSaveAndSubmitForReview) {
+        onSaveAndSubmitForReview();
+      } else {
+        onSubmitForReview();
+      }
+    }
+  };
+
+  const isApproved = status === '已發佈' || status === '已通過';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-50">
@@ -71,7 +86,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
           {(status === '草稿' || status === '已退回' || status === '需要修改') && (
             <button
               type="button"
-              onClick={onSubmitForReview}
+              onClick={handleSubmitConfirm}
               disabled={isSubmitting}
               className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
@@ -88,6 +103,29 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
             >
               撤回至草稿
             </button>
+          )}
+
+          {isApproved && (
+            <>
+              {onWithdraw && (
+                <button
+                  type="button"
+                  onClick={onWithdraw}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 font-bold transition-all disabled:opacity-50 text-slate-700"
+                >
+                  下架並轉為草稿
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSubmitConfirm}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+              >
+                下架並重新審核
+              </button>
+            </>
           )}
         </div>
       </div>
