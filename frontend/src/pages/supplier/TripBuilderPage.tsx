@@ -530,40 +530,45 @@ export default function TripBuilderPage() {
                     return (
                       <div key={mealStr} className="p-4 bg-slate-50 rounded-lg border border-slate-100">
                         <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-                        <select 
-                          className="w-full text-sm border border-slate-300 rounded-lg p-2 mb-2 bg-white outline-none focus:ring-2 focus:ring-slate-800"
-                          value={(day[idKey] as string | null) ? String(day[idKey]) : ((day[customKey] as string | null) || '')}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === '__add_new__') {
-                              setShowNewProductModal(true);
-                              setNewProductParams({ category: 'food', dayIndex: day.dayIndex });
-                              return;
-                            }
-                            if (['酒店享用', '自理', '機上'].includes(val)) {
-                              handleDayChange(day.dayIndex, idKey, null);
-                              handleDayChange(day.dayIndex, customKey, val);
-                            } else {
-                              handleDayChange(day.dayIndex, idKey, val || null);
-                              handleDayChange(day.dayIndex, customKey, null);
-                            }
-                          }}
-                        >
-                          <option value="">-- 選擇餐食 --</option>
-                          <optgroup label="特殊選項 (不建立產品)">
-                            <option value="酒店享用">酒店享用</option>
-                            <option value="自理">自理</option>
-                            <option value="機上">機上</option>
-                          </optgroup>
-                          <optgroup label="現有餐食產品">
-                            {getProductsByCategory('food').map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
-                              </option>
-                            ))}
-                          </optgroup>
-                          <option value="__add_new__">+ 新增餐食產品...</option>
-                        </select>
+                        <div className="relative group overflow-hidden">
+                          <select 
+                            className="w-full text-sm border border-slate-300 rounded-lg pl-3 pr-10 py-2 bg-white hover:border-slate-400 cursor-pointer outline-none focus:ring-2 focus:ring-slate-800 transition-all appearance-none shadow-sm"
+                            value={(day[idKey] as string | null) ? String(day[idKey]) : ((day[customKey] as string | null) || '')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '__add_new__') {
+                                setShowNewProductModal(true);
+                                setNewProductParams({ category: 'food', dayIndex: day.dayIndex });
+                                return;
+                              }
+                              if (['酒店享用', '自理', '機上'].includes(val)) {
+                                handleDayChange(day.dayIndex, idKey, null);
+                                handleDayChange(day.dayIndex, customKey, val);
+                              } else {
+                                handleDayChange(day.dayIndex, idKey, val || null);
+                                handleDayChange(day.dayIndex, customKey, null);
+                              }
+                            }}
+                          >
+                            <option value="">-- 選擇或輸入餐食 --</option>
+                            <optgroup label="特殊選項 (不建立產品)">
+                              <option value="酒店享用">酒店享用</option>
+                              <option value="自理">自理</option>
+                              <option value="機上">機上</option>
+                            </optgroup>
+                            <optgroup label="現有餐食產品">
+                              {getProductsByCategory('food').map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <option value="__add_new__">+ 建立新產品並加入</option>
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <span className="material-symbols-outlined text-[18px]">expand_more</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -597,39 +602,48 @@ export default function TripBuilderPage() {
                     </SortableContext>
                   </DndContext>
                   
-                  <select 
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-slate-800"
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '__add_new__') {
-                        setShowNewProductModal(true);
-                        setNewProductParams({ category: 'landmark', dayIndex: day.dayIndex });
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
+                      <span className="material-symbols-outlined text-[18px]">add</span>
+                    </div>
+                    <select 
+                      className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 hover:bg-white hover:border-slate-400 cursor-pointer outline-none focus:ring-2 focus:ring-slate-800 transition-all appearance-none shadow-sm"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '__add_new__') {
+                          setShowNewProductModal(true);
+                          setNewProductParams({ category: 'landmark', dayIndex: day.dayIndex });
+                          e.target.value = '';
+                          return;
+                        }
+                        handleAddItem(day.dayIndex, val);
                         e.target.value = '';
-                        return;
-                      }
-                      handleAddItem(day.dayIndex, val);
-                      e.target.value = '';
-                    }}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>從現有產品選擇景點加入...</option>
-                    <optgroup label="現有景點產品">
-                      {getProductsByCategory('landmark').map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <option value="__add_new__">+ 新增景點產品...</option>
-                  </select>
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>點擊選擇現有景點加入行程...</option>
+                      <optgroup label="現有景點產品">
+                        {getProductsByCategory('landmark').map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.title} {p.status !== '已發佈' ? '(未審核)' : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <option value="__add_new__">+ 點擊建立新產品並加入</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <span className="material-symbols-outlined text-[18px]">expand_more</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Hotel */}
                 <div>
                   <h4 className="font-bold text-slate-700 mb-2">住宿</h4>
                   <div className="flex gap-4 items-center">
+                  <div className="relative group overflow-hidden">
                     <select 
-                      className="flex-1 p-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800"
+                      className="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg text-sm bg-white hover:border-slate-400 cursor-pointer outline-none focus:ring-2 focus:ring-slate-800 transition-all appearance-none shadow-sm"
                       value={day.hotelId ? String(day.hotelId) : (day.hotelCustom || '')}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -647,7 +661,7 @@ export default function TripBuilderPage() {
                         }
                       }}
                     >
-                      <option value="">-- 選擇住宿 --</option>
+                      <option value="">-- 選擇或輸入住宿 --</option>
                       <optgroup label="特殊選項 (不建立產品)">
                         <option value="五星或同級">五星或同級</option>
                         <option value="四星或同級">四星或同級</option>
@@ -660,8 +674,12 @@ export default function TripBuilderPage() {
                           </option>
                         ))}
                       </optgroup>
-                      <option value="__add_new__">+ 新增住宿產品...</option>
+                      <option value="__add_new__">+ 點擊建立新產品並加入</option>
                     </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <span className="material-symbols-outlined text-[18px]">expand_more</span>
+                    </div>
+                  </div>
                   </div>
                 </div>
 
