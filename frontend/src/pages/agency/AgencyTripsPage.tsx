@@ -128,7 +128,7 @@ const AgencyTripsPage: React.FC = () => {
             </div>
             <CustomSelect
               containerClassName="!flex-row !items-center !gap-2 !border-none !shadow-none !p-0"
-              className="!bg-transparent !border-none !focus:ring-0 !text-sm !font-bold !text-slate-700 !p-0 !min-w-[80px]"
+              className="!bg-transparent !border-none !focus:ring-0 !text-sm !font-bold !text-slate-700 !pl-0 !pr-6 !py-0 !min-w-[80px]"
               onPointerDown={(e) => e.stopPropagation()}
             >
               <option>最新優先</option>

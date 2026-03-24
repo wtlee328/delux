@@ -248,7 +248,7 @@ const CreateProductPage: React.FC = () => {
               value={formData.類別}
               onChange={handleInputChange}
               error={errors.類別}
-              className="!p-3"
+              className="!py-3 !pl-10 !pr-10"
             >
               <option value="地標">地標</option>
               <option value="住宿">住宿</option>

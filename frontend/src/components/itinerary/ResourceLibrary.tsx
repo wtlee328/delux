@@ -250,7 +250,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
               ) : (
                 <CustomSelect
                   containerClassName="!border-none !shadow-none !p-0 !min-w-[140px]"
-                  className="!bg-transparent !border-none !focus:ring-0 !p-0 !text-sm !font-semibold !text-slate-800 !h-auto !mt-1"
+                  className="!bg-transparent !border-none !focus:ring-0 !pl-0 !pr-6 !text-sm !font-semibold !text-slate-800 !h-auto !mt-1"
                   value={selectedSupplier}
                   onChange={(e) => setSelectedSupplier(e.target.value)}
                 >
