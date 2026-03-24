@@ -171,7 +171,7 @@ const AgencyDashboardPage: React.FC = () => {
                 labelClassName="!text-[10px] !uppercase !tracking-wider !font-bold !text-slate-400 !mb-0.5"
                 icon="calendar_month"
                 containerClassName="!gap-0"
-                className="!bg-transparent !border-none !focus:ring-0 !pl-8 !pr-6 !py-0 !text-sm !font-semibold !text-slate-700 !shadow-none !h-auto"
+                className="!bg-transparent !border-none !focus:ring-0 !pl-10 !pr-6 !py-0 !text-sm !font-semibold !text-slate-700 !shadow-none !h-auto"
                 value={daysFilter || ''}
                 onChange={(e) => setDaysFilter(e.target.value ? Number(e.target.value) : null)}
               >
