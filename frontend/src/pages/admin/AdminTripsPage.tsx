@@ -3,6 +3,7 @@ import axios from '../../config/axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import TopBar from '../../components/TopBar';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 type TripStatus = '草稿' | '審核中' | '已通過' | '已退回';
 
@@ -110,24 +111,24 @@ const AdminTripsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center">
           <input
             type="text"
             placeholder="搜尋目的地..."
             value={filterDestination}
             onChange={(e) => setFilterDestination(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-800"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-800 h-[38px] transition-all hover:border-slate-400 shadow-sm"
           />
-          <select
+          <CustomSelect
+            containerClassName="min-w-[150px]"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800"
           >
             <option value="">全部狀態</option>
             <option value="審核中">審核中</option>
             <option value="已通過">已通過</option>
             <option value="已退回">已退回</option>
-          </select>
+          </CustomSelect>
         </div>
 
         {loading ? (

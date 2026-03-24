@@ -4,6 +4,7 @@ interface CustomSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement
   icon?: string;
   containerClassName?: string;
   label?: string;
+  labelClassName?: string;
   error?: string;
 }
 
@@ -13,13 +14,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   className, 
   containerClassName = '', 
   label, 
+  labelClassName = '',
   error,
   ...props 
 }) => {
   return (
     <div className={`flex flex-col gap-1 ${containerClassName}`}>
       {label && (
-        <label className="text-sm font-medium text-slate-700">
+        <label className={`text-sm font-medium text-slate-700 ${labelClassName}`}>
           {label}
         </label>
       )}

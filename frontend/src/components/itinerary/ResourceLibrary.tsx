@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import axios from '../../config/axios';
 import ResourceDetailModal from './ResourceDetailModal';
+import CustomSelect from '../ui/CustomSelect';
 
 interface Product {
   id: string;
@@ -247,43 +248,17 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
               {restrictToSupplierName ? (
                 <div style={styles.destinationName}>{restrictToSupplierName}</div>
               ) : (
-                <>
-                  <select
-                    value={selectedSupplier}
-                    onChange={(e) => setSelectedSupplier(e.target.value)}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: '#1f2937',
-                      paddingRight: '1.5rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      appearance: 'none',
-                      width: '100%',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <option value="all">全部供應商</option>
-                    {uniqueSuppliers.map(supplier => (
-                      <option key={supplier} value={supplier}>{supplier}</option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined" style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: '1.25rem',
-                    color: '#9ca3af',
-                    pointerEvents: 'none'
-                  }}>
-                    arrow_drop_down
-                  </span>
-                </>
+                <CustomSelect
+                  containerClassName="!border-none !shadow-none !p-0 !min-w-[140px]"
+                  className="!bg-transparent !border-none !focus:ring-0 !p-0 !text-sm !font-semibold !text-slate-800 !h-auto !mt-1"
+                  value={selectedSupplier}
+                  onChange={(e) => setSelectedSupplier(e.target.value)}
+                >
+                  <option value="all">全部供應商</option>
+                  {uniqueSuppliers.map(supplier => (
+                    <option key={supplier} value={supplier}>{supplier}</option>
+                  ))}
+                </CustomSelect>
               )}
             </div>
           </div>

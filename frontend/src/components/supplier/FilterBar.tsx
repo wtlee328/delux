@@ -1,4 +1,5 @@
 import React from 'react';
+import CustomSelect from '../ui/CustomSelect';
 
 interface FilterOption {
   value: string;
@@ -30,49 +31,43 @@ const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
-      <div className="flex flex-col gap-1 min-w-[180px]">
-        <label className="text-xs font-bold text-slate-500 uppercase">目的地</label>
-        <select
-          value={filters.destination}
-          onChange={(e) => onFilterChange('destination', e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
-        >
-          <option value="">全部目的地</option>
-          {destinations.map(d => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
-      </div>
+      <CustomSelect
+        label="目的地"
+        containerClassName="min-w-[180px]"
+        value={filters.destination}
+        onChange={(e) => onFilterChange('destination', e.target.value)}
+      >
+        <option value="">全部目的地</option>
+        {destinations.map(d => (
+          <option key={d} value={d}>{d}</option>
+        ))}
+      </CustomSelect>
 
       {showCategory && (
-        <div className="flex flex-col gap-1 min-w-[150px]">
-          <label className="text-xs font-bold text-slate-500 uppercase">類別</label>
-          <select
-            value={filters.category}
-            onChange={(e) => onFilterChange('category', e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
-          >
-            <option value="">全部類別</option>
-            {categories.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
+        <CustomSelect
+          label="類別"
+          containerClassName="min-w-[150px]"
+          value={filters.category}
+          onChange={(e) => onFilterChange('category', e.target.value)}
+        >
+          <option value="">全部類別</option>
+          {categories.map(c => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </CustomSelect>
       )}
 
-      <div className="flex flex-col gap-1 min-w-[150px]">
-        <label className="text-xs font-bold text-slate-500 uppercase">狀態</label>
-        <select
-          value={filters.status}
-          onChange={(e) => onFilterChange('status', e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
-        >
-          <option value="">全部狀態</option>
-          {statuses.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
+      <CustomSelect
+        label="狀態"
+        containerClassName="min-w-[150px]"
+        value={filters.status}
+        onChange={(e) => onFilterChange('status', e.target.value)}
+      >
+        <option value="">全部狀態</option>
+        {statuses.map(s => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </CustomSelect>
 
       {(filters.destination || filters.category || filters.status) && (
         <button

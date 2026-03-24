@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
 import TopBar from '../../components/TopBar';
 import DestinationMenu, { DESTINATION_GROUPS } from '../../components/DestinationMenu';
+import CustomSelect from '../../components/ui/CustomSelect';
 import { Search, MapPin, ImageOff, Calendar, Compass } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -164,28 +165,21 @@ const AgencyDashboardPage: React.FC = () => {
             <div className="hidden md:block w-px h-10 bg-slate-200/60 mx-2" />
 
             {/* Days Filter Part */}
-            <div className="relative w-full md:w-auto min-w-[180px] group border-t md:border-t-0 border-slate-100 pb-2 md:pb-0">
-              <div className="flex items-center px-4 md:px-2 gap-3">
-                <div className="text-slate-400 group-hover:text-blue-500 transition-colors">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">行程天數</div>
-                  <select
-                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-slate-700 cursor-pointer appearance-none"
-                    value={daysFilter || ''}
-                    onChange={(e) => setDaysFilter(e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">全部天數</option>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 21].map(d => (
-                      <option key={d} value={d}>{d} 天行程</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="text-slate-300 pointer-events-none pr-2">
-                  <span className="material-symbols-outlined text-sm">expand_more</span>
-                </div>
-              </div>
+            <div className="relative w-full md:w-auto min-w-[200px] group border-t md:border-t-0 border-slate-100 pb-2 md:pb-0 px-4 md:px-2">
+              <CustomSelect
+                label="行程天數"
+                labelClassName="!text-[10px] !uppercase !tracking-wider !font-bold !text-slate-400 !mb-0.5"
+                icon="calendar_month"
+                containerClassName="!gap-0"
+                className="!bg-transparent !border-none !focus:ring-0 !p-0 !text-sm !font-semibold !text-slate-700 !shadow-none !h-auto"
+                value={daysFilter || ''}
+                onChange={(e) => setDaysFilter(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">全部天數</option>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 21].map(d => (
+                  <option key={d} value={d}>{d} 天行程</option>
+                ))}
+              </CustomSelect>
             </div>
 
             {/* Clear/Action Button */}
