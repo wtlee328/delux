@@ -63,6 +63,8 @@ const ItineraryPlannerPage: React.FC = () => {
   const [tempSupplierId, setTempSupplierId] = useState<string>('');
   const [supplierSearch, setSupplierSearch] = useState('');
   const [isSupplierMenuOpen, setIsSupplierMenuOpen] = useState(false);
+  const [mapWidth, setMapWidth] = useState(350);
+  const [isResizing, setIsResizing] = useState(false);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -110,11 +112,42 @@ const ItineraryPlannerPage: React.FC = () => {
   };
 
   // Handler for structured day field changes (meals, hotel, notes)
-  const handleDayFieldChange = useCallback((dayNumber: number, field: string, value: any) => {
-    setTimeline(prev => prev.map(day =>
-      day.dayNumber === dayNumber ? { ...day, [field]: value } : day
-    ));
+  const handleDayFieldChange = (dayNumber: number, field: string, value: any) => {
+    setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, [field]: value } : d));
+  };
+
+  const handleMouseDown = useCallback(() => {
+    setIsResizing(true);
   }, []);
+
+  const handleResize = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    const maxWidth = window.innerWidth / 2;
+    const minWidth = 300;
+    
+    if (newWidth >= minWidth && newWidth <= maxWidth) {
+      setMapWidth(newWidth);
+    }
+  }, [isResizing]);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResize);
+      window.addEventListener('mouseup', stopResizing);
+    } else {
+      window.removeEventListener('mousemove', handleResize);
+      window.removeEventListener('mouseup', stopResizing);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleResize);
+      window.removeEventListener('mouseup', stopResizing);
+    };
+  }, [isResizing, handleResize, stopResizing]);
 
   // Trip preloading logic
   useEffect(() => {
@@ -668,7 +701,7 @@ const ItineraryPlannerPage: React.FC = () => {
           }
         />
 
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className={`flex-1 flex overflow-hidden relative ${isResizing ? 'select-none cursor-col-resize' : ''}`}>
           {/* Left Expand Button */}
           {!isMobileMenuOpen.library && (
             <button
@@ -740,10 +773,22 @@ const ItineraryPlannerPage: React.FC = () => {
             />
           </div>
 
+          {/* Map Panel Resize Handle */}
+          {isMobileMenuOpen.map && (
+            <div
+              onMouseDown={handleMouseDown}
+              className={`w-1 hover:w-1.5 bg-slate-200/50 hover:bg-blue-400/50 cursor-col-resize transition-all z-30 flex items-center justify-center ${isResizing ? 'bg-blue-500/50 w-1.5' : ''}`}
+              title="拖拽調整地圖寬度"
+            >
+              <div className="w-0.5 h-8 bg-slate-300 rounded-full opacity-50" />
+            </div>
+          )}
+
           {/* Map Panel */}
           <div
-            className={`bg-white border-l border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${isMobileMenuOpen.map ? 'w-[350px] opacity-100' : 'w-0 opacity-0 border-none'
+            className={`bg-white border-l border-slate-200 flex flex-col overflow-hidden ${isResizing ? '' : 'transition-all duration-300'} ${isMobileMenuOpen.map ? 'opacity-100' : 'w-0 opacity-0 border-none'
               }`}
+            style={{ width: isMobileMenuOpen.map ? `${mapWidth}px` : '0px' }}
           >
             <div className="p-4 border-b border-slate-100 flex justify-between items-center font-bold text-slate-700 bg-slate-50/50">
               <h3>地圖預覽</h3>
