@@ -79,6 +79,14 @@ const MapView: React.FC<MapViewProps> = ({
     }
   }, [targetDays, autoFit, fitBounds]);
 
+  // Force autoFit and fitBounds when focusing a specific day
+  React.useEffect(() => {
+    if (focusedDayNumber !== null) {
+      setAutoFit(true);
+      fitBounds();
+    }
+  }, [focusedDayNumber, fitBounds]);
+
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
   }, []);
@@ -93,14 +101,18 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Get markers with sequence numbers for the timeline
   const timelineMarkers = targetDays.flatMap(day => {
+    // Find absolute day index in the full timeline for color consistency
     const dayIndex = timelineData.findIndex(d => d.dayNumber === day.dayNumber);
+    const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
+    const color = dayColors[safeDayIndex % dayColors.length];
+
     return day.items
-      .filter(p => p.location)
+      .filter(p => p.location && p.location.lat && p.location.lng)
       .map((p, idx) => ({ 
         ...p, 
         dayNumber: day.dayNumber, 
         sequence: idx + 1,
-        color: dayColors[dayIndex % dayColors.length]
+        color
       }));
   });
 
@@ -153,7 +165,7 @@ const MapView: React.FC<MapViewProps> = ({
         {/* Markers for products in timeline with sequence labeling */}
         {timelineMarkers.map((item) => (
           <Marker
-            key={`timeline-${item.id}-${item.dayNumber}-${item.sequence}`}
+            key={`timeline-${item.timelineId || item.id}-${item.dayNumber}-${item.sequence}`}
             position={item.location!}
             title={`${item.sequence}. ${item.title}`}
             icon={{
@@ -163,6 +175,7 @@ const MapView: React.FC<MapViewProps> = ({
               strokeColor: '#FFFFFF',
               strokeWeight: 2,
               scale: 14,
+              labelOrigin: new window.google.maps.Point(0, 0)
             }}
             label={{
               text: `${item.sequence}`,
@@ -170,16 +183,17 @@ const MapView: React.FC<MapViewProps> = ({
               fontSize: '11px',
               fontWeight: 'bold',
             }}
-            zIndex={item.sequence}
+            zIndex={item.sequence + 100} // Higher zIndex than library markers
           />
         ))}
 
         {/* Polylines for each day's route */}
         {targetDays.map((day) => {
           const dayIndex = timelineData.findIndex(d => d.dayNumber === day.dayNumber);
-          const color = dayColors[dayIndex % dayColors.length];
+          const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
+          const color = dayColors[safeDayIndex % dayColors.length];
           const dayLocations = day.items
-            .filter(p => p.location)
+            .filter(p => p.location && p.location.lat && p.location.lng)
             .map(p => p.location!);
 
           if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
@@ -190,7 +204,7 @@ const MapView: React.FC<MapViewProps> = ({
                 options={{
                   strokeColor: color,
                   strokeOpacity: 0.9,
-                  strokeWeight: 5,
+                  strokeWeight: 6,
                 }}
               />
             );
