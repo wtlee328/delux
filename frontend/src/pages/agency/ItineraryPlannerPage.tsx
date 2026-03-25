@@ -355,8 +355,65 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
-    if (active.data.current?.type === 'resource' && over.data.current?.type === 'day') {
-      // No op
+    
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    
+    if (activeId === overId) return;
+
+    // We only care about moving items around if the active item is from the timeline
+    if (active.data.current?.type === 'resource') return;
+
+    // Find the containers (day indices)
+    let activeDayIndex = -1;
+    let activeItemIndex = -1;
+    let overDayIndex = -1;
+    let overItemIndex = -1;
+
+    timeline.forEach((day, dIdx) => {
+      const idx = day.items.findIndex(i => i.timelineId === activeId);
+      if (idx !== -1) {
+        activeDayIndex = dIdx;
+        activeItemIndex = idx;
+      }
+      
+      if (day.dayNumber === over.data.current?.dayNumber && over.id === `day-${day.dayNumber}`) {
+        overDayIndex = dIdx;
+        overItemIndex = day.items.length;
+      } else {
+        const oIdx = day.items.findIndex(i => i.timelineId === overId);
+        if (oIdx !== -1) {
+          overDayIndex = dIdx;
+          overItemIndex = oIdx;
+        }
+      }
+    });
+
+    if (activeDayIndex === -1 || overDayIndex === -1) return;
+
+    if (activeDayIndex !== overDayIndex) {
+      setTimeline(prev => {
+        const newTimeline = [...prev];
+        const sourceItems = [...newTimeline[activeDayIndex].items];
+        const destItems = [...newTimeline[overDayIndex].items];
+        
+        const [movedItem] = sourceItems.splice(activeItemIndex, 1);
+        destItems.splice(overItemIndex, 0, movedItem);
+        
+        newTimeline[activeDayIndex] = { ...newTimeline[activeDayIndex], items: recalculateTimes(sourceItems) };
+        newTimeline[overDayIndex] = { ...newTimeline[overDayIndex], items: recalculateTimes(destItems) };
+        
+        return newTimeline;
+      });
+    } else if (activeItemIndex !== overItemIndex) {
+      setTimeline(prev => {
+        const newTimeline = [...prev];
+        const items = [...newTimeline[activeDayIndex].items];
+        const reordered = arrayMove(items, activeItemIndex, overItemIndex);
+        
+        newTimeline[activeDayIndex] = { ...newTimeline[activeDayIndex], items: recalculateTimes(reordered) };
+        return newTimeline;
+      });
     }
   };
 
@@ -367,26 +424,22 @@ const ItineraryPlannerPage: React.FC = () => {
 
     if (!over) return;
 
-    // Handle dropping a resource (new item)
+    // For resource drops, we still use DragEnd to finalize the addition
     if (active.data.current?.type === 'resource') {
       const product = active.data.current.product;
       let targetDayNumber = -1;
       let insertIndex = -1;
 
-      // Case 1: Dropped directly on the day container
       if (over.data.current?.type === 'day') {
         targetDayNumber = over.data.current.dayNumber;
         const day = timeline.find(d => d.dayNumber === targetDayNumber);
         if (day) insertIndex = day.items.length;
-      }
-      // Case 2: Dropped over an existing item
-      else {
+      } else {
         const overId = over.id as string;
         const day = timeline.find(d => d.items.some(i => i.timelineId === overId));
         if (day) {
           targetDayNumber = day.dayNumber;
           const overIndex = day.items.findIndex(i => i.timelineId === overId);
-          // Insert after the hovered item
           insertIndex = overIndex + 1;
         }
       }
@@ -398,76 +451,16 @@ const ItineraryPlannerPage: React.FC = () => {
         setTimeline(prev => prev.map(day => {
           if (day.dayNumber === targetDayNumber) {
             const newItems = [...day.items];
-            if (insertIndex >= 0 && insertIndex <= newItems.length) {
-              newItems.splice(insertIndex, 0, productCopy);
-            } else {
-              newItems.push(productCopy);
-            }
+            newItems.splice(insertIndex, 0, productCopy);
             return { ...day, items: recalculateTimes(newItems) };
           }
           return day;
         }));
         showSuccess(`已將 ${product.title} 加入第 ${targetDayNumber} 天`);
-        return;
       }
     }
-
-    // Handle reordering (Timeline Item -> Timeline Item/Day)
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    if (activeId !== overId) {
-      let sourceDayIndex = -1;
-      let sourceItemIndex = -1;
-      let destDayIndex = -1;
-      let destItemIndex = -1;
-
-      timeline.forEach((day, dIndex) => {
-        const itemIndex = day.items.findIndex(i => i.timelineId === activeId);
-        if (itemIndex !== -1) {
-          sourceDayIndex = dIndex;
-          sourceItemIndex = itemIndex;
-        }
-
-        if (over.data.current?.type === 'day' && over.data.current.dayNumber === day.dayNumber) {
-          destDayIndex = dIndex;
-          destItemIndex = day.items.length;
-        } else {
-          const overItemIndex = day.items.findIndex(i => i.timelineId === overId);
-          if (overItemIndex !== -1) {
-            destDayIndex = dIndex;
-            destItemIndex = overItemIndex;
-          }
-        }
-      });
-
-      if (sourceDayIndex !== -1 && destDayIndex !== -1) {
-        setTimeline(prev => {
-          const newTimeline = [...prev];
-          const sourceDay = newTimeline[sourceDayIndex];
-          const destDay = newTimeline[destDayIndex];
-
-          if (sourceDayIndex === destDayIndex) {
-            const newItems = arrayMove(sourceDay.items, sourceItemIndex, destItemIndex);
-            const oldFirstTime = sourceDay.items[0]?.startTime || '09:00';
-            if (destItemIndex === 0) {
-              newItems[0].startTime = oldFirstTime;
-            }
-            newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(newItems) };
-          } else {
-            const [movedItem] = sourceDay.items.splice(sourceItemIndex, 1);
-            if (destItemIndex === 0) {
-              const destFirstTime = destDay.items[0]?.startTime || '09:00';
-              movedItem.startTime = destFirstTime;
-            }
-            destDay.items.splice(destItemIndex, 0, movedItem);
-            newTimeline[sourceDayIndex] = { ...sourceDay, items: recalculateTimes(sourceDay.items) };
-            newTimeline[destDayIndex] = { ...destDay, items: recalculateTimes(destDay.items) };
-          }
-          return newTimeline;
-        });
-      }
-    }
+    // Reordering within timeline is already handled live in handleDragOver
+    // but some final state synchronization can happen here if needed.
   };
 
   const handleDeleteCard = useCallback((dayNumber: number, uniqueId: string) => {
