@@ -113,6 +113,13 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, [field]: value } : d));
   };
 
+  const findContainer = (id: string) => {
+    if (!id) return null;
+    if (timeline.some(d => `day-${d.dayNumber}` === id)) return id;
+    const day = timeline.find(d => d.items.some(i => i.timelineId === id));
+    return day ? `day-${day.dayNumber}` : null;
+  };
+
   const handleMouseDown = useCallback(() => {
     setIsResizing(true);
   }, []);
@@ -360,59 +367,55 @@ const ItineraryPlannerPage: React.FC = () => {
     const overId = over.id as string;
     
     if (activeId === overId) return;
-
-    // We only care about moving items around if the active item is from the timeline
     if (active.data.current?.type === 'resource') return;
 
-    // Find the containers (day indices)
-    let activeDayIndex = -1;
-    let activeItemIndex = -1;
-    let overDayIndex = -1;
-    let overItemIndex = -1;
+    const activeContainer = findContainer(activeId);
+    const overContainer = findContainer(overId);
 
-    timeline.forEach((day, dIdx) => {
-      const idx = day.items.findIndex(i => i.timelineId === activeId);
-      if (idx !== -1) {
-        activeDayIndex = dIdx;
-        activeItemIndex = idx;
-      }
-      
-      if (day.dayNumber === over.data.current?.dayNumber && over.id === `day-${day.dayNumber}`) {
-        overDayIndex = dIdx;
-        overItemIndex = day.items.length;
-      } else {
-        const oIdx = day.items.findIndex(i => i.timelineId === overId);
-        if (oIdx !== -1) {
-          overDayIndex = dIdx;
-          overItemIndex = oIdx;
-        }
-      }
-    });
+    if (!activeContainer || !overContainer) return;
 
-    if (activeDayIndex === -1 || overDayIndex === -1) return;
+    const sourceDayNum = parseInt(activeContainer.split('-')[1]);
+    const destDayNum = parseInt(overContainer.split('-')[1]);
+    
+    const sourceDayIdx = timeline.findIndex(d => d.dayNumber === sourceDayNum);
+    const destDayIdx = timeline.findIndex(d => d.dayNumber === destDayNum);
 
-    if (activeDayIndex !== overDayIndex) {
+    if (sourceDayIdx === -1 || destDayIdx === -1) return;
+
+    if (activeContainer !== overContainer) {
       setTimeline(prev => {
         const newTimeline = [...prev];
-        const sourceItems = [...newTimeline[activeDayIndex].items];
-        const destItems = [...newTimeline[overDayIndex].items];
+        const sourceItems = [...newTimeline[sourceDayIdx].items];
+        const destItems = [...newTimeline[destDayIdx].items];
         
-        const [movedItem] = sourceItems.splice(activeItemIndex, 1);
-        destItems.splice(overItemIndex, 0, movedItem);
+        const activeIdx = sourceItems.findIndex(i => i.timelineId === activeId);
+        let overIdx = destItems.findIndex(i => i.timelineId === overId);
         
-        newTimeline[activeDayIndex] = { ...newTimeline[activeDayIndex], items: recalculateTimes(sourceItems) };
-        newTimeline[overDayIndex] = { ...newTimeline[overDayIndex], items: recalculateTimes(destItems) };
+        // If not over an item, use length (drop at end)
+        if (overIdx === -1) overIdx = destItems.length;
+
+        const [item] = sourceItems.splice(activeIdx, 1);
+        destItems.splice(overIdx, 0, item);
+        
+        newTimeline[sourceDayIdx] = { ...newTimeline[sourceDayIdx], items: recalculateTimes(sourceItems) };
+        newTimeline[destDayIdx] = { ...newTimeline[destDayIdx], items: recalculateTimes(destItems) };
         
         return newTimeline;
       });
-    } else if (activeItemIndex !== overItemIndex) {
+    } else {
+      // Reordering within same day
       setTimeline(prev => {
-        const newTimeline = [...prev];
-        const items = [...newTimeline[activeDayIndex].items];
-        const reordered = arrayMove(items, activeItemIndex, overItemIndex);
+        const day = prev[sourceDayIdx];
+        const activeIdx = day.items.findIndex(i => i.timelineId === activeId);
+        const overIdx = day.items.findIndex(i => i.timelineId === overId);
         
-        newTimeline[activeDayIndex] = { ...newTimeline[activeDayIndex], items: recalculateTimes(reordered) };
-        return newTimeline;
+        if (activeIdx !== -1 && overIdx !== -1 && activeIdx !== overIdx) {
+          const newItems = arrayMove(day.items, activeIdx, overIdx);
+          const newTimeline = [...prev];
+          newTimeline[sourceDayIdx] = { ...day, items: recalculateTimes(newItems) };
+          return newTimeline;
+        }
+        return prev;
       });
     }
   };
