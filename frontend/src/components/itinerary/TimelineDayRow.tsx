@@ -280,9 +280,9 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                             {onCalculateRoute && day.items.length >= 2 && !day.routeInfo && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onCalculateRoute(day.dayNumber); }}
-                                    className="text-xs flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                                    className="text-xs flex items-center gap-1.5 bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-black transition-all font-bold shadow-sm"
                                 >
-                                    <span className="material-symbols-outlined text-[14px]">directions_car</span>
+                                    <span className="material-symbols-outlined text-[16px]">directions_car</span>
                                     計算本日路線
                                 </button>
                             )}
