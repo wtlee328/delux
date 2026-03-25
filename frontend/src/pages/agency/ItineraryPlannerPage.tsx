@@ -137,6 +137,10 @@ const ItineraryPlannerPage: React.FC = () => {
 
         setStartDate(tomorrow);
         setEndDate(endDateCalc);
+        
+        if (trip.destination) {
+          setSelectedDestination(trip.destination);
+        }
 
         // Build timeline from trip data
         const newTimeline: TimelineDay[] = [];
@@ -213,6 +217,12 @@ const ItineraryPlannerPage: React.FC = () => {
         
         if (it.startDate) setStartDate(new Date(it.startDate));
         if (it.endDate) setEndDate(new Date(it.endDate));
+        if (it.destination) {
+          setSelectedDestination(it.destination);
+        } else if (it.location) {
+          // If destination not set but location exists, try to extract it from location.address or similar
+          // For now, assume it might be in it.destination
+        }
 
         const timelineData: TimelineDay[] = it.timelineData.map((day: any) => ({
           ...day,
@@ -446,8 +456,19 @@ const ItineraryPlannerPage: React.FC = () => {
   }, []);
 
   const handleAddItem = useCallback((dayNumber: number, productId: string) => {
-    const product = availableProducts.find(p => p.id === productId);
-    if (!product) return;
+    // Determine the products that match the current scope
+    const scopedProducts = availableProducts.filter(p => {
+        const matchesSupplier = restrictedSupplierName ? p.supplierName === restrictedSupplierName : true;
+        const currentDest = selectedDestination || initialDestination;
+        const matchesDestination = currentDest ? p.destination.toLowerCase().includes(currentDest.toLowerCase().trim()) : true;
+        return matchesSupplier && matchesDestination;
+    });
+
+    const product = scopedProducts.find(p => p.id === productId);
+    if (!product) {
+        console.warn('Product not found in current scope:', productId);
+        return;
+    }
 
     const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
     const productCopy = { ...product, timelineId: uniqueId, duration: 60 };
@@ -460,7 +481,7 @@ const ItineraryPlannerPage: React.FC = () => {
       return day;
     }));
     showSuccess(`已將 ${product.title} 加入第 ${dayNumber} 天`);
-  }, [availableProducts, showSuccess]);
+  }, [availableProducts, showSuccess, restrictedSupplierName, selectedDestination, initialDestination]);
 
   const handleReorder = useCallback((dayNumber: number, uniqueId: string, direction: 'up' | 'down') => {
     setTimeline(prev => prev.map(day => {
@@ -709,7 +730,12 @@ const ItineraryPlannerPage: React.FC = () => {
               onAddItem={handleAddItem}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
-              products={availableProducts}
+              products={availableProducts.filter(p => {
+                const currentDest = (selectedDestination || initialDestination || '').toLowerCase().trim();
+                const matchesSupplier = restrictedSupplierName ? p.supplierName === restrictedSupplierName : true;
+                const matchesDestination = currentDest ? p.destination.toLowerCase().trim().includes(currentDest) : true;
+                return matchesSupplier && matchesDestination;
+              })}
               onDayFieldChange={handleDayFieldChange}
             />
           </div>
