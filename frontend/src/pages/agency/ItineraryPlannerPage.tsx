@@ -445,6 +445,39 @@ const ItineraryPlannerPage: React.FC = () => {
     });
   }, []);
 
+  const handleAddItem = useCallback((dayNumber: number, productId: string) => {
+    const product = availableProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const uniqueId = `${product.id}-${Date.now()}-${Math.random()}`;
+    const productCopy = { ...product, timelineId: uniqueId, duration: 60 };
+
+    setTimeline(prev => prev.map(day => {
+      if (day.dayNumber === dayNumber) {
+        const newItems = [...day.items, productCopy];
+        return { ...day, items: recalculateTimes(newItems) };
+      }
+      return day;
+    }));
+    showSuccess(`已將 ${product.title} 加入第 ${dayNumber} 天`);
+  }, [availableProducts, showSuccess]);
+
+  const handleReorder = useCallback((dayNumber: number, uniqueId: string, direction: 'up' | 'down') => {
+    setTimeline(prev => prev.map(day => {
+      if (day.dayNumber === dayNumber) {
+        const idx = day.items.findIndex(i => (i.timelineId || i.id) === uniqueId);
+        if (idx === -1) return day;
+        if (direction === 'up' && idx === 0) return day;
+        if (direction === 'down' && idx === day.items.length - 1) return day;
+        
+        const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+        const newItems = arrayMove(day.items, idx, newIdx);
+        return { ...day, items: recalculateTimes(newItems) };
+      }
+      return day;
+    }));
+  }, []);
+
   const handleUpdateTime = useCallback((dayNumber: number, uniqueId: string, startTime: string, duration: number) => {
     setTimeline(prevTimeline => {
       return prevTimeline.map(day => {
@@ -672,6 +705,8 @@ const ItineraryPlannerPage: React.FC = () => {
               ref={timelineRef}
               timeline={timeline}
               onDelete={handleDeleteCard}
+              onReorder={handleReorder}
+              onAddItem={handleAddItem}
               onTimeUpdate={handleUpdateTime}
               onPreview={setPreviewProduct}
               products={availableProducts}

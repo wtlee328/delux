@@ -1,43 +1,45 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Product } from '../../types/itinerary';
 
 interface TimelineActivityItemProps {
     item: Product;
-    colorTheme: { primary: string; light: string; dot: string };
-    onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
-    onEdit?: (id: string) => void;
-    isStartTimeEditable: boolean;
-    onPreview: (product: Product) => void;
+    onReorder?: (id: string, direction: 'up' | 'down') => void;
+    isFirst?: boolean;
+    isLast?: boolean;
 }
 
-const categoryLabels: Record<string, string> = {
-    'landmark': '地標',
-    'accommodation': '住宿',
-    'food': '餐飲',
-    'transportation': '交通'
+export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineItem?: boolean }> = ({
+    item,
+}) => {
+    return (
+        <div className="flex justify-between items-center p-3 bg-white border border-slate-300 rounded-lg shadow-lg relative opacity-90 scale-[1.02] cursor-grabbing">
+            <div className="flex items-center gap-3">
+                <div className="text-slate-400 flex items-center">
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>drag_indicator</span>
+                </div>
+                <span className="font-bold text-slate-700">{item.title}</span>
+            </div>
+            <div className="flex items-center gap-0.5 opacity-30">
+                <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>expand_less</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>expand_more</span>
+                <span className="material-symbols-outlined ml-1" style={{ fontSize: '20px' }}>delete</span>
+            </div>
+        </div>
+    );
 };
+
+
 
 export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     item,
-    colorTheme,
-    onTimeUpdate,
     onDelete,
-    onEdit,
-    isStartTimeEditable,
-    onPreview,
+    onReorder,
+    isFirst,
+    isLast,
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [editTime, setEditTime] = useState(item.startTime || '09:00');
-    const [editDuration, setEditDuration] = useState(item.duration || 60);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const durationInputRef = useRef<HTMLInputElement>(null);
-    const editContainerRef = useRef<HTMLDivElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-
     const {
         attributes,
         listeners,
@@ -50,474 +52,55 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        ...styles.container,
-        zIndex: isDragging ? 1000 : (isMenuOpen ? 100 : 1),
+        zIndex: isDragging ? 1000 : 1,
         opacity: isDragging ? 0.5 : 1,
-        position: 'relative' as const,
         touchAction: 'none',
     };
 
-    useEffect(() => {
-        if (isEditing) {
-            if (isStartTimeEditable && inputRef.current) {
-                inputRef.current.focus();
-            } else if (!isStartTimeEditable && durationInputRef.current) {
-                durationInputRef.current.focus();
-            }
-        }
-    }, [isEditing, isStartTimeEditable]);
-
-    // Sync local state with props when they change (e.g. from parent updates)
-    useEffect(() => {
-        setEditTime(item.startTime || '09:00');
-        setEditDuration(item.duration || 60);
-    }, [item.startTime, item.duration]);
-
-    const handleSave = () => {
-        onTimeUpdate(item.timelineId!, editTime, editDuration);
-        setIsEditing(false);
-    };
-
-    // Handle click outside to save
-    // Handle click outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-            if (isEditing && editContainerRef.current && !editContainerRef.current.contains(event.target as Node)) {
-                handleSave();
-            }
-            if (isMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsMenuOpen(false);
-            }
-        };
-
-        if (isEditing || isMenuOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('touchstart', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('touchstart', handleClickOutside);
-        };
-    }, [isEditing, editTime, editDuration, isMenuOpen]);
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') {
-            handleSave();
-        } else if (e.key === 'Escape') {
-            setIsEditing(false);
-            setEditTime(item.startTime || '09:00');
-            setEditDuration(item.duration || 60);
-        }
-    };
-
-    if (!item.timelineId) return null;
-
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            {/* Connection Line Segment (Top half) */}
-            <div style={{ ...styles.lineSegment, backgroundColor: colorTheme.primary, top: 0, height: '100%' }} />
-
-            {/* Dot Marker */}
-            <div style={{ ...styles.dot, backgroundColor: colorTheme.dot }} />
-
-            {/* Card */}
-            <div
-                style={{
-                    ...styles.card,
-                    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-                    boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
-                    cursor: isDragging ? 'grabbing' : 'grab',
-                }}
-            >
-                <div style={styles.cardContent}>
-                    <div style={styles.headerRow}>
-                        <h4 style={styles.title}>{item.title}</h4>
-                        <div style={{ position: 'relative' }} ref={menuRef}>
-                            <button
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                                style={styles.menuBtn}
-                                title="More options"
-                            >
-                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_horiz</span>
-                            </button>
-                            {isMenuOpen && (
-                                <div style={styles.menuDropdown}>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onPreview(item);
-                                            setIsMenuOpen(false);
-                                        }}
-                                        style={styles.menuItem}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f2f6'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
-                                        預覽
-                                    </button>
-                                    {onEdit && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onEdit(item.timelineId!);
-                                                setIsMenuOpen(false);
-                                            }}
-                                            style={styles.menuItem}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f2f6'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
-                                            編輯
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDelete(item.timelineId!);
-                                            setIsMenuOpen(false);
-                                        }}
-                                        style={{ ...styles.menuItem, color: '#ff7675' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fff0f0'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                                        刪除
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div style={styles.infoRow}>
-                        {isEditing ? (
-                            <div
-                                ref={editContainerRef}
-                                style={styles.editContainer}
-                                onPointerDown={(e) => e.stopPropagation()}
-                            >
-                                <div style={styles.editRow}>
-                                    <input
-                                        ref={inputRef}
-                                        type="time"
-                                        className="no-clock-icon"
-                                        value={editTime}
-                                        onChange={(e) => setEditTime(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        style={{
-                                            ...styles.timeInput,
-                                            backgroundColor: isStartTimeEditable ? 'white' : '#f1f2f6',
-                                            color: isStartTimeEditable ? '#2d3436' : '#b2bec3',
-                                            padding: '2px 4px',
-                                            fontSize: '0.85rem',
-                                        }}
-                                        disabled={!isStartTimeEditable}
-                                    />
-                                </div>
-                                <div style={styles.editRow}>
-                                    <div style={{ position: 'relative', width: '100%' }}>
-                                        <input
-                                            ref={durationInputRef}
-                                            type="number"
-                                            value={editDuration}
-                                            onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)}
-                                            onKeyDown={handleKeyDown}
-                                            style={{
-                                                ...styles.durationInput,
-                                                padding: '2px 4px',
-                                                paddingRight: '24px',
-                                                fontSize: '0.85rem'
-                                            }}
-                                            min="15"
-                                            step="15"
-                                        />
-                                        <span style={{ ...styles.unit, fontSize: '0.75rem', right: '4px' }}>分</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div
-                                style={{
-                                    ...styles.timeDisplay,
-                                    padding: '0',
-                                    marginLeft: '0',
-                                    display: 'none', // Hide time display as requested
-                                }}
-                                onClick={() => setIsEditing(true)}
-                                onPointerDown={(e) => e.stopPropagation()}
-                                title="點擊編輯時間"
-                            >
-                                <span style={styles.timeText}>{item.startTime || '09:00'}</span>
-                                <span style={styles.durationText}>({item.duration || 60}m)</span>
-                            </div>
-                        )}
-
-                        {/* Hide category badge as requested */}
-                        {/* <span style={styles.categoryBadge}>
-                            {categoryLabels[item.category] || item.category}
-                        </span> */}
-                    </div>
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className="flex justify-between items-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mb-2 relative group"
+        >
+            <div className="flex items-center gap-3">
+                <div {...attributes} {...listeners} className="cursor-grab text-slate-300 hover:text-slate-500 transition-colors flex items-center">
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>drag_indicator</span>
                 </div>
+                <span className="font-bold text-slate-700">{item.title}</span>
+            </div>
+
+            <div className="flex items-center gap-0.5" onPointerDown={(e) => e.stopPropagation()}>
+                {onReorder && (
+                    <>
+                        <button
+                            onClick={() => onReorder(item.timelineId!, 'up')}
+                            disabled={isFirst}
+                            className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-300 transition-colors flex items-center"
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>expand_less</span>
+                        </button>
+                        <button
+                            onClick={() => onReorder(item.timelineId!, 'down')}
+                            disabled={isLast}
+                            className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:hover:text-slate-300 transition-colors flex items-center"
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>expand_more</span>
+                        </button>
+                    </>
+                )}
+                
+                <button
+                    onClick={() => onDelete(item.timelineId!)}
+                    className="p-1 text-red-100 hover:text-red-500 transition-colors flex items-center ml-1"
+                >
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                </button>
             </div>
         </div>
     );
 };
 
-export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineItem?: boolean }> = ({
-    item,
-    isTimelineItem,
-}) => {
-    return (
-        <div style={{ ...styles.container, paddingLeft: isTimelineItem ? '3rem' : 0 }}>
-            {/* Card */}
-            <div
-                style={{
-                    ...styles.card,
-                    transform: 'scale(1.02)',
-                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
-                    opacity: 0.9,
-                    cursor: 'grabbing',
-                }}
-            >
-                <div style={styles.cardContent}>
-                    <div style={styles.headerRow}>
-                        <h4 style={styles.title}>{item.title}</h4>
-                    </div>
-                    <div style={styles.infoRow}>
-                        <div style={styles.timeInfo}>
-                            {item.startTime || '09:00'} • {item.duration || 60}m
-                        </div>
-                        <span style={styles.categoryBadge}>
-                            {categoryLabels[item.category] || item.category}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
-const styles = {
-    container: {
-        paddingLeft: '3rem',
-        marginBottom: '1rem',
-        userSelect: 'none' as const,
-    },
-    lineSegment: {
-        position: 'absolute' as const,
-        left: '27px',
-        width: '2px',
-        zIndex: 0,
-        opacity: 0.3,
-    },
-    dot: {
-        position: 'absolute' as const,
-        left: '20px',
-        top: '1.5rem',
-        width: '16px',
-        height: '16px',
-        borderRadius: '50%',
-        border: '3px solid white',
-        zIndex: 1,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    },
-    card: {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '0.75rem',
-        display: 'flex',
-        gap: '0.75rem',
-        border: '1px solid rgba(0,0,0,0.03)',
-        transition: 'all 0.2s ease',
-        cursor: 'grab',
-    },
-    cardContent: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0.25rem',
-        flex: 1,
-        minWidth: 0,
-    },
-    headerRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        width: '100%',
-        marginBottom: '2px',
-    },
-    title: {
-        margin: 0,
-        fontSize: '0.95rem',
-        fontWeight: '600',
-        color: '#2d3436',
-        lineHeight: 1.3,
-    },
-    infoRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: '2px',
-    },
-    timeInfo: {
-        fontSize: '0.8rem',
-        color: '#b2bec3',
-    },
-    deleteBtn: {
-        background: 'none',
-        border: 'none',
-        color: '#dfe6e9',
-        cursor: 'pointer',
-        fontSize: '1.5rem',
-        padding: '0 0.25rem',
-        lineHeight: 0.5,
-        marginTop: '-4px',
-        marginRight: '-8px',
-        transition: 'color 0.2s',
-    },
-    timeDisplay: {
-        display: 'flex',
-        alignItems: 'baseline',
-        gap: '0.5rem',
-        cursor: 'pointer',
-        padding: '4px 8px',
-        marginLeft: '-8px',
-        borderRadius: '8px',
-        transition: 'background-color 0.2s',
-        width: 'fit-content',
-    },
-    timeText: {
-        fontSize: '0.85rem',
-        fontWeight: '600',
-        color: '#2d3436',
-        fontFamily: 'monospace',
-    },
-    durationText: {
-        fontSize: '0.8rem',
-        color: '#b2bec3',
-    },
-    editContainer: {
-        display: 'flex',
-        gap: '8px',
-        marginTop: '0',
-        backgroundColor: '#f8f9fa',
-        padding: '4px',
-        borderRadius: '6px',
-        width: 'fit-content',
-        boxSizing: 'border-box' as const,
-        border: '1px solid #f1f2f6',
-    },
-    editRow: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0',
-        width: 'auto',
-    },
-    label: {
-        display: 'none',
-    },
-    timeInput: {
-        width: '90px',
-        border: '1px solid #dfe6e9',
-        borderRadius: '4px',
-        padding: '4px 4px',
-        fontSize: '0.9rem',
-        color: '#2d3436',
-        outline: 'none',
-        fontFamily: 'monospace',
-        backgroundColor: 'white',
-        boxSizing: 'border-box' as const,
-        transition: 'all 0.2s ease',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        appearance: 'none' as const,
-    },
-    durationInput: {
-        width: '70px',
-        border: '1px solid #dfe6e9',
-        borderRadius: '4px',
-        padding: '4px 4px',
-        fontSize: '0.9rem',
-        color: '#2d3436',
-        outline: 'none',
-        textAlign: 'center' as const,
-        backgroundColor: 'white',
-        boxSizing: 'border-box' as const,
-        transition: 'all 0.2s ease',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-    },
-    unit: {
-        fontSize: '0.85rem',
-        color: '#636e72',
-        position: 'absolute' as const,
-        right: '12px',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        pointerEvents: 'none' as const,
-    },
-    footerRow: {
-        display: 'none',
-    },
-    categoryBadge: {
-        fontSize: '0.7rem',
-        padding: '1px 6px',
-        borderRadius: '4px',
-        backgroundColor: '#f1f2f6',
-        color: '#636e72',
-        fontWeight: '500',
-    },
-    previewBtn: {
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '4px',
-        color: '#b2bec3',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '4px',
-        transition: 'all 0.2s',
-        marginRight: '-4px',
-    },
-    menuBtn: {
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '4px',
-        color: '#b2bec3',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '4px',
-        transition: 'all 0.2s',
-        marginRight: '-4px',
-        marginTop: '-4px',
-    },
-    menuDropdown: {
-        position: 'absolute' as const,
-        top: '100%',
-        right: 0,
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        padding: '4px',
-        zIndex: 10,
-        minWidth: '100px',
-        border: '1px solid #f1f2f6',
-    },
-    menuItem: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        width: '100%',
-        padding: '8px 12px',
-        border: 'none',
-        background: 'none',
-        cursor: 'pointer',
-        fontSize: '0.85rem',
-        color: '#2d3436',
-        borderRadius: '4px',
-        textAlign: 'left' as const,
-        transition: 'background-color 0.2s',
-    },
-};
+
+

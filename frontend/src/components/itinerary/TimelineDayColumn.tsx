@@ -41,9 +41,7 @@ interface TimelineDayColumnProps {
 export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
     day,
     colorTheme,
-    onTimeUpdate,
     onDelete,
-    onPreview,
 }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `day-${day.dayNumber}`,
@@ -65,16 +63,12 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                 )}
             </div>
 
-            {/* Timeline Area */}
             <div style={styles.timelineArea}>
-                {/* Central Line Background */}
-                <div style={{ ...styles.centralLine, backgroundColor: colorTheme.primary }} />
-
                 <div
                     ref={setNodeRef}
                     style={{
                         ...styles.dropZone,
-                        backgroundColor: isOver ? colorTheme.light + '20' : 'transparent',
+                        backgroundColor: isOver ? '#f1f5f9' : 'transparent',
                     }}
                 >
                     <SortableContext
@@ -90,11 +84,9 @@ export const TimelineDayColumn: React.FC<TimelineDayColumnProps> = ({
                                 <TimelineActivityItem
                                     key={item.timelineId}
                                     item={item}
-                                    colorTheme={colorTheme}
-                                    onTimeUpdate={onTimeUpdate}
                                     onDelete={onDelete}
-                                    isStartTimeEditable={index === 0}
-                                    onPreview={onPreview}
+                                    isFirst={index === 0}
+                                    isLast={index === day.items.length - 1}
                                 />
                             ))
                         )}
@@ -166,7 +158,7 @@ const styles = {
     },
     dropZone: {
         minHeight: '100%',
-        padding: '0 1rem 2rem 0', // Right padding for scrollbar space
+        padding: '1rem',
         position: 'relative' as const,
         zIndex: 1,
     },
@@ -177,7 +169,6 @@ const styles = {
         justifyContent: 'center',
         border: '2px dashed #f1f2f6',
         borderRadius: '16px',
-        margin: '1rem 1rem 1rem 3rem', // Left margin to clear the timeline line
         backgroundColor: '#fafafa',
     },
     emptyText: {

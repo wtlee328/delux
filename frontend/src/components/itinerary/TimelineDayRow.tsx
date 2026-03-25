@@ -10,6 +10,8 @@ interface TimelineDayRowProps {
     colorTheme: { primary: string; light: string; dot: string };
     onTimeUpdate: (id: string, startTime: string, duration: number) => void;
     onDelete: (id: string) => void;
+    onReorder?: (id: string, direction: 'up' | 'down') => void;
+    onAddItem?: (productId: string) => void;
     onEdit?: (id: string) => void;
     onPreview: (product: Product) => void;
     isExpanded: boolean;
@@ -118,24 +120,24 @@ const getDisplayText = (idValue: string | null | undefined, customValue: string 
 
 export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     day,
-    colorTheme,
-    onTimeUpdate,
     onDelete,
-    onEdit,
-    onPreview,
+    onReorder,
+    onAddItem,
     isExpanded,
     onToggle,
     products = [],
     onDayFieldChange,
 }) => {
+    const foodProducts = products.filter(p => p.productType === 'food');
+    const accommodationProducts = products.filter(p => p.productType === 'accommodation');
+    const landmarkProducts = products.filter(p => p.productType === 'landmark');
+
     const { setNodeRef, isOver } = useDroppable({
         id: `day-${day.dayNumber}`,
         data: { type: 'day', dayNumber: day.dayNumber },
     });
 
     const landmarks = day.items.filter(i => (i.productType === 'landmark' || i.productType === 'transportation') && i.timelineId);
-    const foodProducts = products.filter(p => p.category === 'food');
-    const accommodationProducts = products.filter(p => p.category === 'accommodation');
 
     // Summary display values
     const breakfastDisplay = getDisplayText(day.breakfastId, day.breakfastCustom, day.breakfastTitle);
@@ -277,42 +279,60 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                         </h4>
                         
                         {/* Attractions Drop Zone */}
-                        <div style={{ position: 'relative' }}>
-                            <div style={{ ...styles.timelineLine, backgroundColor: colorTheme.primary, left: '20px' }} />
-                            <div
+                        <div className="relative mt-2">
+                            <div 
                                 ref={setNodeRef}
                                 style={{
-                                    ...styles.dropZone,
-                                    padding: '0.5rem 0 0.5rem 2.5rem',
-                                    backgroundColor: isOver ? colorTheme.light + '20' : 'transparent',
-                                    minHeight: '60px'
+                                    backgroundColor: isOver ? '#f1f5f9' : 'transparent',
+                                    borderRadius: '12px',
+                                    transition: 'all 0.2s',
+                                    paddingLeft: '0',
                                 }}
                             >
-                                <SortableContext
-                                    items={day.items.map(item => item.timelineId!)}
+                                <SortableContext 
+                                    items={day.items.map(i => i.timelineId!)} 
                                     strategy={verticalListSortingStrategy}
                                 >
                                     {day.items.length === 0 ? (
-                                        <div style={{ ...styles.emptyState, margin: '0 0 0 1rem' }}>
-                                            <p style={styles.emptyText}>將活動拖曳至此</p>
+                                        <div className="flex items-center justify-center p-8 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl">
+                                            <p className="text-slate-400 font-medium">將活動拖曳至此</p>
                                         </div>
                                     ) : (
-                                        day.items.map((item) => (
+                                        day.items.map((item, idx) => (
                                             <TimelineActivityItem
                                                 key={item.timelineId}
                                                 item={item}
-                                                colorTheme={colorTheme}
-                                                onTimeUpdate={onTimeUpdate}
                                                 onDelete={onDelete}
-                                                onEdit={onEdit}
-                                                isStartTimeEditable={true}
-                                                onPreview={onPreview}
+                                                onReorder={onReorder}
+                                                isFirst={idx === 0}
+                                                isLast={idx === day.items.length - 1}
                                             />
                                         ))
                                     )}
                                 </SortableContext>
                             </div>
                         </div>
+
+                        {/* Add Landmark Dropdown */}
+                        {onAddItem && (
+                            <div className="mt-4">
+                                <CustomSelect
+                                    value=""
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val) onAddItem(val);
+                                    }}
+                                    className="bg-slate-50 border-slate-200 text-slate-500 font-medium"
+                                >
+                                    <option value="">+ 點擊選擇現有景點加入行程...</option>
+                                    <optgroup label="現有景點產品">
+                                        {landmarkProducts.map(p => (
+                                            <option key={p.id} value={p.id}>{p.title}</option>
+                                        ))}
+                                    </optgroup>
+                                </CustomSelect>
+                            </div>
+                        )}
                     </div>
 
                     {/* Notes */}

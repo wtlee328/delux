@@ -7,6 +7,8 @@ interface TimelineContainerProps {
     timeline: TimelineDay[];
     onTimeUpdate: (dayNumber: number, itemId: string, startTime: string, duration: number) => void;
     onDelete: (dayNumber: number, itemId: string) => void;
+    onReorder?: (dayNumber: number, itemId: string, direction: 'up' | 'down') => void;
+    onAddItem?: (dayNumber: number, productId: string) => void;
     onEdit?: (dayNumber: number, itemId: string) => void;
     onPreview: (product: Product) => void;
     onAddDay?: () => void;
@@ -32,6 +34,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         timeline,
         onTimeUpdate,
         onDelete,
+        onReorder,
+        onAddItem,
         onEdit,
         onPreview,
         onAddDay,
@@ -123,6 +127,8 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 colorTheme={dayColorThemes[index % dayColorThemes.length]}
                                 onTimeUpdate={(itemId, startTime, duration) => onTimeUpdate(day.dayNumber, itemId, startTime, duration)}
                                 onDelete={(itemId) => onDelete(day.dayNumber, itemId)}
+                                onReorder={(itemId, direction) => onReorder?.(day.dayNumber, itemId, direction)}
+                                onAddItem={(productId) => onAddItem?.(day.dayNumber, productId)}
                                 onEdit={(itemId) => onEdit?.(day.dayNumber, itemId)}
                                 onPreview={onPreview}
                                 isExpanded={!!expandedDays[day.dayNumber]}
