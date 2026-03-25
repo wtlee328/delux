@@ -9,6 +9,7 @@ interface TimelineActivityItemProps {
     onReorder?: (id: string, direction: 'up' | 'down') => void;
     isFirst?: boolean;
     isLast?: boolean;
+    onHover?: (id: string | null) => void;
 }
 
 export const TimelineActivityItemPreview: React.FC<{ item: Product; isTimelineItem?: boolean }> = ({
@@ -39,6 +40,7 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     onReorder,
     isFirst,
     isLast,
+    onHover,
 }) => {
     const {
         attributes,
@@ -61,7 +63,9 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
         <div 
             ref={setNodeRef} 
             style={style} 
-            className="flex justify-between items-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mb-2 relative group"
+            className="flex justify-between items-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mb-2 relative group hover:border-blue-400 transition-all"
+            onMouseEnter={() => onHover?.(item.timelineId!)}
+            onMouseLeave={() => onHover?.(null)}
         >
             <div className="flex items-center gap-3">
                 <div {...attributes} {...listeners} className="cursor-grab text-slate-300 hover:text-slate-500 transition-colors flex items-center">

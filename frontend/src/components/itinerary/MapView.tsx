@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Polyline, InfoWindow } from '@react-google-maps/api';
 import { Product, TimelineDay } from '../../types/itinerary';
 import { GOOGLE_MAPS_LOADER_CONFIG } from '../../config/google-maps';
 
@@ -8,6 +8,7 @@ interface MapViewProps {
   highlightedProductId?: string | null;
   timelineData?: TimelineDay[];
   focusedDayNumber?: number | null;
+  highlightedTimelineId?: string | null;
 }
 
 const containerStyle = {
@@ -37,11 +38,20 @@ const MapView: React.FC<MapViewProps> = ({
   highlightedProductId,
   timelineData = [],
   focusedDayNumber = null,
+  highlightedTimelineId = null,
 }) => {
   const { isLoaded } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [autoFit, setAutoFit] = useState(true);
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+
+  // Sync active marker if external highlight changes
+  React.useEffect(() => {
+    if (highlightedTimelineId) {
+      setActiveMarkerId(highlightedTimelineId);
+    }
+  }, [highlightedTimelineId]);
 
   // Determine which days to display
   const targetDays = focusedDayNumber 
@@ -182,27 +192,40 @@ const MapView: React.FC<MapViewProps> = ({
 
         {/* Markers for products in timeline with sequence labeling */}
         {timelineMarkers.map((item) => (
-          <Marker
-            key={`timeline-${item.timelineId || item.id}-${item.dayNumber}-${item.sequence}`}
-            position={item.location!}
-            title={`${item.sequence}. ${item.title}`}
-            icon={{
-              path: window.google.maps.SymbolPath.CIRCLE,
-              fillColor: item.color,
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2,
-              scale: 14,
-              labelOrigin: new window.google.maps.Point(0, 0)
-            }}
-            label={{
-              text: `${item.sequence}`,
-              color: 'white',
-              fontSize: '11px',
-              fontWeight: 'bold',
-            }}
-            zIndex={(item.dayNumber * 100) + item.sequence + 500} // Ensure day-based stacking order
-          />
+          <React.Fragment key={`timeline-${item.timelineId || item.id}-${item.dayNumber}-${item.sequence}`}>
+            <Marker
+              position={item.location!}
+              title={`${item.sequence}. ${item.title}`}
+              onClick={() => setActiveMarkerId(item.timelineId || item.id)}
+              icon={{
+                path: window.google.maps.SymbolPath.CIRCLE,
+                fillColor: item.color,
+                fillOpacity: 1,
+                strokeColor: '#FFFFFF',
+                strokeWeight: 2,
+                scale: 14,
+                labelOrigin: new window.google.maps.Point(0, 0)
+              }}
+              label={{
+                text: `${item.sequence}`,
+                color: 'white',
+                fontSize: '11px',
+                fontWeight: 'bold',
+              }}
+              zIndex={(item.dayNumber * 100) + item.sequence + 500} // Ensure day-based stacking order
+            />
+            {activeMarkerId === (item.timelineId || item.id) && (
+              <InfoWindow
+                position={item.location!}
+                onCloseClick={() => setActiveMarkerId(null)}
+              >
+                <div className="p-1">
+                  <p className="font-bold text-slate-800 text-sm mb-0.5">{item.title}</p>
+                  <p className="text-xs text-slate-500">第 {item.dayNumber} 天 • 第 {item.sequence} 站</p>
+                </div>
+              </InfoWindow>
+            )}
+          </React.Fragment>
         ))}
 
         {/* Polylines for each day's route */}

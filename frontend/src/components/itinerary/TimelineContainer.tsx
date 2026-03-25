@@ -17,6 +17,7 @@ interface TimelineContainerProps {
     onCalculateRoute?: (dayNumber: number) => void;
     onShowDayRoute?: (dayNumber: number) => void;
     focusedDay?: number | null;
+    onItemHover?: (itemId: string | null) => void;
 }
 
 export interface TimelineContainerRef {
@@ -47,6 +48,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         onCalculateRoute,
         onShowDayRoute,
         focusedDay,
+        onItemHover,
     },
     ref
 ) => {
@@ -144,6 +146,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 onCalculateRoute={onCalculateRoute}
                                 onShowDayRoute={onShowDayRoute}
                                 isFocused={focusedDay === day.dayNumber}
+                                onItemHover={onItemHover}
                             />
                         </div>
                     ))}

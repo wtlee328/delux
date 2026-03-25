@@ -21,6 +21,7 @@ interface TimelineDayRowProps {
     onCalculateRoute?: (dayNumber: number) => void;
     onShowDayRoute?: (dayNumber: number) => void;
     isFocused?: boolean;
+    onItemHover?: (itemId: string | null) => void;
 }
 
 // Meal predefined options
@@ -132,6 +133,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     onCalculateRoute,
     onShowDayRoute,
     isFocused,
+    onItemHover,
 }) => {
     const foodProducts = products.filter(p => p.productType === 'food');
     const accommodationProducts = products.filter(p => p.productType === 'accommodation');
@@ -338,6 +340,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                                                     onReorder={onReorder}
                                                     isFirst={idx === 0}
                                                     isLast={idx === day.items.length - 1}
+                                                    onHover={onItemHover}
                                                 />
                                                 {day.routeInfo?.legs[idx] && idx < day.items.length - 1 && (
                                                     <div className="flex ml-8 my-1 items-center gap-2 text-xs text-slate-500 font-medium">
