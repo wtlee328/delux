@@ -183,7 +183,7 @@ const MapView: React.FC<MapViewProps> = ({
               fontSize: '11px',
               fontWeight: 'bold',
             }}
-            zIndex={item.sequence + 100} // Higher zIndex than library markers
+            zIndex={(item.dayNumber * 100) + item.sequence + 500} // Ensure day-based stacking order
           />
         ))}
 
