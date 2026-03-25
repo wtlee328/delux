@@ -16,7 +16,7 @@ interface LocationFieldsProps {
 }
 
 type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
-const libraries: Library[] = ['places', 'marker'];
+const libraries: Library[] = ['places', 'marker', 'geometry'];
 
 const defaultCenter = {
   lat: 25.0330, // Taipei 101
