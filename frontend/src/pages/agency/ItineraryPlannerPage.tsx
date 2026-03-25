@@ -117,42 +117,43 @@ const ItineraryPlannerPage: React.FC = () => {
     const day = timeline.find(d => d.dayNumber === dayNumber);
     if (!day) return;
 
-    // SYNC: Enrich items with latest metadata from availableProducts if location is missing
-    // This handles the case where the user added an address/coordinates to a product AFTER placing it in the trip
-    let hasChanges = false;
-    const enrichedItems = day.items.map(item => {
+    // Filter items to those with ANY valid location data (coordinates or address)
+    // We try to use coordinates first, but address can work with Google Directions API
+    const items = day.items.map(item => {
+      // SYNC: Enrich items with latest metadata from availableProducts if info is missing
       if (!item.location || !item.location.lat || !item.location.lng) {
-        // Find latest product data from available pool
         const latest = availableProducts.find(p => p.id === item.id);
-        if (latest && latest.location && latest.location.lat && latest.location.lng) {
-          hasChanges = true;
-          return { ...item, location: latest.location };
+        if (latest) {
+          return { ...item, location: latest.location, address: latest.address || item.address };
         }
       }
       return item;
     });
 
-    if (hasChanges) {
-      setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, items: enrichedItems } : d));
-    }
+    const routeItems = items.filter(item => 
+      (item.location && item.location.lat && item.location.lng) || (item.address && item.address.trim().length > 0)
+    );
 
-    // Use enriched items for calculation
-    const currentItems = hasChanges ? enrichedItems : day.items;
-    const locations = currentItems.filter(item => item.location && item.location.lat && item.location.lng);
-    
-    if (locations.length < 2) {
-      showError('該天行程中有效的地理位置不足（需要至少 2 個定點），無法計算路線。請確保產品已設定地址或座標。');
+    if (routeItems.length < 2) {
+      showError('該天行程中有效的地理位置不足（需要至少 2 個景點），無法計算路線。請確保產品已設定地址或座標。');
       return;
     }
 
     try {
       const directionsService = new window.google.maps.DirectionsService();
       
-      const origin = new window.google.maps.LatLng(locations[0].location!.lat, locations[0].location!.lng);
-      const destination = new window.google.maps.LatLng(locations[locations.length - 1].location!.lat, locations[locations.length - 1].location!.lng);
+      const getPos = (item: Product): string | google.maps.LatLng => {
+        if (item.location && item.location.lat && item.location.lng) {
+          return new window.google.maps.LatLng(item.location.lat, item.location.lng);
+        }
+        return item.address || '';
+      };
+
+      const origin = getPos(routeItems[0]);
+      const destination = getPos(routeItems[routeItems.length - 1]);
       
-      const waypoints = locations.slice(1, -1).map(loc => ({
-        location: new window.google.maps.LatLng(loc.location!.lat, loc.location!.lng),
+      const waypoints = routeItems.slice(1, -1).map(item => ({
+        location: getPos(item),
         stopover: true,
       }));
 
@@ -161,7 +162,7 @@ const ItineraryPlannerPage: React.FC = () => {
         destination,
         waypoints,
         travelMode: window.google.maps.TravelMode.DRIVING,
-        optimizeWaypoints: false, // We must maintain the user's specific itinerary order
+        optimizeWaypoints: false,
       };
 
       const response = await directionsService.route(request);

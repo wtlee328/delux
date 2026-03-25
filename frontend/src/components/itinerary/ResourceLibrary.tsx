@@ -22,6 +22,7 @@ interface Product {
   timelineId?: string;
   startTime?: string;
   duration?: number;
+  address?: string;
 }
 
 interface ResourceLibraryProps {
@@ -196,7 +197,7 @@ const ResourceLibrary: React.FC<ResourceLibraryProps> = ({
           return {
             ...p,
             productType: categoryToType[p.category] || 'landmark',
-            location: { lat: 25.0330 + (Math.random() - 0.5) * 0.1, lng: 121.5654 + (Math.random() - 0.5) * 0.1 },
+            location: p.latitude && p.longitude ? { lat: p.latitude, lng: p.longitude } : undefined,
           };
         });
 
