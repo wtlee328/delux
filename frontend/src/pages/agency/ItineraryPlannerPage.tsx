@@ -693,6 +693,7 @@ const ItineraryPlannerPage: React.FC = () => {
             <MapView
               products={availableProducts}
               highlightedProductId={hoveredProduct?.id}
+              timelineProducts={timeline}
             />
           </div>
 

@@ -35,33 +35,34 @@ const MealSelect: React.FC<{
     const currentValue = idValue ? String(idValue) : (customValue || '');
 
     return (
-        <CustomSelect
-            label={label}
-            labelClassName="!text-[0.7rem] !text-[#b2bec3] !uppercase"
-            value={currentValue}
-            onChange={(e) => {
-                const val = e.target.value;
-                if (MEAL_PREDEFINED_OPTIONS.includes(val)) {
-                    onChange(null, val);
-                } else {
-                    onChange(val || null, null);
-                }
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="!text-[0.8rem] !py-1.5"
-        >
-            <option value="">-- 選擇 --</option>
-            <optgroup label="特殊選項">
-                {MEAL_PREDEFINED_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                ))}
-            </optgroup>
-            <optgroup label="餐食產品">
-                {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-            </optgroup>
-        </CustomSelect>
+        <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+            <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+            <CustomSelect
+                value={currentValue}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    if (MEAL_PREDEFINED_OPTIONS.includes(val)) {
+                        onChange(null, val);
+                    } else {
+                        onChange(val || null, null);
+                    }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="bg-white"
+            >
+                <option value="">-- 選擇 --</option>
+                <optgroup label="特殊選項">
+                    {MEAL_PREDEFINED_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </optgroup>
+                <optgroup label="餐食產品">
+                    {products.map(p => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                </optgroup>
+            </CustomSelect>
+        </div>
     );
 };
 
@@ -75,34 +76,35 @@ const HotelSelect: React.FC<{
     const currentValue = idValue ? String(idValue) : (customValue || '');
 
     return (
-        <CustomSelect
-            label="住宿"
-            labelClassName="!text-[0.8rem] !text-[#636e72]"
-            icon="hotel"
-            value={currentValue}
-            onChange={(e) => {
-                const val = e.target.value;
-                if (HOTEL_PREDEFINED_OPTIONS.includes(val)) {
-                    onChange(null, val);
-                } else {
-                    onChange(val || null, null);
-                }
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="!text-[0.8rem] !py-1.5"
-        >
-            <option value="">-- 選擇住宿 --</option>
-            <optgroup label="等級選項">
-                {HOTEL_PREDEFINED_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                ))}
-            </optgroup>
-            <optgroup label="住宿產品">
-                {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-            </optgroup>
-        </CustomSelect>
+        <div className="w-full">
+            <h4 className="font-bold text-slate-700 mb-2">住宿</h4>
+            <CustomSelect
+                icon="hotel"
+                value={currentValue}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    if (HOTEL_PREDEFINED_OPTIONS.includes(val)) {
+                        onChange(null, val);
+                    } else {
+                        onChange(val || null, null);
+                    }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="bg-white"
+            >
+                <option value="">-- 選擇住宿 --</option>
+                <optgroup label="等級選項">
+                    {HOTEL_PREDEFINED_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </optgroup>
+                <optgroup label="住宿產品">
+                    {products.map(p => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                </optgroup>
+            </CustomSelect>
+        </div>
     );
 };
 
@@ -215,15 +217,15 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
 
             {/* Expanded Content */}
             {isExpanded && (
-                <div style={styles.expandedArea}>
+                <div style={styles.expandedArea} className="p-6 space-y-6">
                     {/* Structured Fields: Meals */}
                     {onDayFieldChange && (
-                        <div style={fieldStyles.structuredSection}>
-                            <div style={fieldStyles.sectionLabel}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '4px' }}>restaurant</span>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-slate-800 font-bold">
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>restaurant</span>
                                 餐食安排
                             </div>
-                            <div style={fieldStyles.mealsGrid}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <MealSelect
                                     label="早餐"
                                     idValue={day.breakfastId}
@@ -254,7 +256,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
 
                     {/* Hotel */}
                     {onDayFieldChange && (
-                        <div style={fieldStyles.structuredSection}>
+                        <div>
                             <HotelSelect
                                 idValue={day.hotelId}
                                 customValue={day.hotelCustom}
@@ -268,51 +270,57 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                         </div>
                     )}
 
-                    {/* Attractions Drop Zone */}
-                    <div style={{ position: 'relative' }}>
-                        <div style={{ ...styles.timelineLine, backgroundColor: colorTheme.primary }} />
-                        <div
-                            ref={setNodeRef}
-                            style={{
-                                ...styles.dropZone,
-                                backgroundColor: isOver ? colorTheme.light + '20' : 'transparent'
-                            }}
-                        >
-                            <SortableContext
-                                items={day.items.map(item => item.timelineId!)}
-                                strategy={verticalListSortingStrategy}
+                    {/* Attractions list header */}
+                    <div>
+                        <h4 className="font-bold text-slate-700 mb-3 flex justify-between items-center">
+                            景點列表
+                        </h4>
+                        
+                        {/* Attractions Drop Zone */}
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ ...styles.timelineLine, backgroundColor: colorTheme.primary, left: '20px' }} />
+                            <div
+                                ref={setNodeRef}
+                                style={{
+                                    ...styles.dropZone,
+                                    padding: '0.5rem 0 0.5rem 2.5rem',
+                                    backgroundColor: isOver ? colorTheme.light + '20' : 'transparent',
+                                    minHeight: '60px'
+                                }}
                             >
-                                {day.items.length === 0 ? (
-                                    <div style={styles.emptyState}>
-                                        <p style={styles.emptyText}>將活動拖曳至此</p>
-                                    </div>
-                                ) : (
-                                    day.items.map((item) => (
-                                        <TimelineActivityItem
-                                            key={item.timelineId}
-                                            item={item}
-                                            colorTheme={colorTheme}
-                                            onTimeUpdate={onTimeUpdate}
-                                            onDelete={onDelete}
-                                            onEdit={onEdit}
-                                            isStartTimeEditable={true}
-                                            onPreview={onPreview}
-                                        />
-                                    ))
-                                )}
-                            </SortableContext>
+                                <SortableContext
+                                    items={day.items.map(item => item.timelineId!)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {day.items.length === 0 ? (
+                                        <div style={{ ...styles.emptyState, margin: '0 0 0 1rem' }}>
+                                            <p style={styles.emptyText}>將活動拖曳至此</p>
+                                        </div>
+                                    ) : (
+                                        day.items.map((item) => (
+                                            <TimelineActivityItem
+                                                key={item.timelineId}
+                                                item={item}
+                                                colorTheme={colorTheme}
+                                                onTimeUpdate={onTimeUpdate}
+                                                onDelete={onDelete}
+                                                onEdit={onEdit}
+                                                isStartTimeEditable={true}
+                                                onPreview={onPreview}
+                                            />
+                                        ))
+                                    )}
+                                </SortableContext>
+                            </div>
                         </div>
                     </div>
 
                     {/* Notes */}
                     {onDayFieldChange && (
-                        <div style={fieldStyles.structuredSection}>
-                            <div style={fieldStyles.sectionLabel}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px', verticalAlign: 'middle', marginRight: '4px' }}>edit_note</span>
-                                當日備註
-                            </div>
+                        <div>
+                            <h4 className="font-bold text-slate-700 mb-2">當日備註</h4>
                             <textarea
-                                style={fieldStyles.notesInput}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-slate-800 bg-white"
                                 rows={2}
                                 value={day.notes || ''}
                                 placeholder="輸入當日行程備註..."
@@ -327,64 +335,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     );
 };
 
-const fieldStyles = {
-    structuredSection: {
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid #f1f2f6',
-    },
-    sectionLabel: {
-        fontSize: '0.8rem',
-        fontWeight: '600' as const,
-        color: '#636e72',
-        marginBottom: '0.5rem',
-        display: 'flex',
-        alignItems: 'center',
-    },
-    mealsGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '0.5rem',
-    },
-    mealItem: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0.25rem',
-    },
-    fieldLabel: {
-        fontSize: '0.7rem',
-        fontWeight: '600' as const,
-        color: '#b2bec3',
-        textTransform: 'uppercase' as const,
-    },
-    select: {
-        width: '100%',
-        padding: '0.4rem',
-        borderRadius: '6px',
-        border: '1px solid #dfe6e9',
-        fontSize: '0.8rem',
-        outline: 'none',
-        backgroundColor: 'white',
-        color: '#2d3436',
-        cursor: 'pointer',
-    },
-    hotelSection: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '0.5rem',
-    },
-    notesInput: {
-        width: '100%',
-        padding: '0.5rem',
-        borderRadius: '6px',
-        border: '1px solid #dfe6e9',
-        fontSize: '0.85rem',
-        outline: 'none',
-        resize: 'vertical' as const,
-        fontFamily: 'inherit',
-        color: '#2d3436',
-        boxSizing: 'border-box' as const,
-    },
-};
+
 
 const styles = {
     container: {
