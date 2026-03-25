@@ -115,12 +115,33 @@ const ItineraryPlannerPage: React.FC = () => {
 
   const handleCalculateRoute = useCallback(async (dayNumber: number) => {
     const day = timeline.find(d => d.dayNumber === dayNumber);
-    if (!day || day.items.length < 2) return;
+    if (!day) return;
 
-    // Filter items to those with valid locations
-    const locations = day.items.filter(item => item.location && item.location.lat && item.location.lng);
+    // SYNC: Enrich items with latest metadata from availableProducts if location is missing
+    // This handles the case where the user added an address/coordinates to a product AFTER placing it in the trip
+    let hasChanges = false;
+    const enrichedItems = day.items.map(item => {
+      if (!item.location || !item.location.lat || !item.location.lng) {
+        // Find latest product data from available pool
+        const latest = availableProducts.find(p => p.id === item.id);
+        if (latest && latest.location && latest.location.lat && latest.location.lng) {
+          hasChanges = true;
+          return { ...item, location: latest.location };
+        }
+      }
+      return item;
+    });
+
+    if (hasChanges) {
+      setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, items: enrichedItems } : d));
+    }
+
+    // Use enriched items for calculation
+    const currentItems = hasChanges ? enrichedItems : day.items;
+    const locations = currentItems.filter(item => item.location && item.location.lat && item.location.lng);
+    
     if (locations.length < 2) {
-      showError('該天行程中有效的地理位置不足，無法計算路線。');
+      showError('該天行程中有效的地理位置不足（需要至少 2 個定點），無法計算路線。請確保產品已設定地址或座標。');
       return;
     }
 
