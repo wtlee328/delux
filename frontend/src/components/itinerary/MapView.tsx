@@ -31,7 +31,7 @@ const dayColors = [
 ];
 
 type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
-const libraries: Library[] = ['places', 'marker'];
+const libraries: Library[] = ['places', 'marker', 'geometry'];
 
 const MapView: React.FC<MapViewProps> = ({
   products,
@@ -154,6 +154,20 @@ const MapView: React.FC<MapViewProps> = ({
             .filter(p => p.location)
             .map(p => p.location!);
 
+          if (day.routeInfo?.polyline && (window as any).google?.maps?.geometry) {
+            return (
+              <Polyline
+                key={`route-day-${day.dayNumber}`}
+                path={(window as any).google.maps.geometry.encoding.decodePath(day.routeInfo.polyline)}
+                options={{
+                  strokeColor: dayColors[index % dayColors.length],
+                  strokeOpacity: 0.9,
+                  strokeWeight: 4,
+                }}
+              />
+            );
+          }
+
           if (dayLocations.length < 2) return null;
 
           return (
@@ -162,8 +176,9 @@ const MapView: React.FC<MapViewProps> = ({
               path={dayLocations}
               options={{
                 strokeColor: dayColors[index % dayColors.length],
-                strokeOpacity: 0.8,
+                strokeOpacity: 0.6, // Making fallback straight line slightly more transparent
                 strokeWeight: 3,
+                geodesic: true,
               }}
             />
           );

@@ -16,9 +16,9 @@ interface TimelineDayRowProps {
     onPreview: (product: Product) => void;
     isExpanded: boolean;
     onToggle: () => void;
-    // Structured day fields
     products?: Product[];
     onDayFieldChange?: (dayNumber: number, field: string, value: any) => void;
+    onCalculateRoute?: (dayNumber: number) => void;
 }
 
 // Meal predefined options
@@ -127,6 +127,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     onToggle,
     products = [],
     onDayFieldChange,
+    onCalculateRoute,
 }) => {
     const foodProducts = products.filter(p => p.productType === 'food');
     const accommodationProducts = products.filter(p => p.productType === 'accommodation');
@@ -274,8 +275,17 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
 
                     {/* Attractions list header */}
                     <div>
-                        <h4 className="font-bold text-slate-700 mb-3 flex justify-between items-center">
-                            景點列表
+                        <h4 className="font-bold text-slate-700 mb-3 flex items-center justify-between">
+                            <span>景點列表</span>
+                            {onCalculateRoute && day.items.length >= 2 && !day.routeInfo && (
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onCalculateRoute(day.dayNumber); }}
+                                    className="text-xs flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">directions_car</span>
+                                    計算本日路線
+                                </button>
+                            )}
                         </h4>
                         
                         {/* Attractions Drop Zone */}
@@ -299,14 +309,21 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                                         </div>
                                     ) : (
                                         day.items.map((item, idx) => (
-                                            <TimelineActivityItem
-                                                key={item.timelineId}
-                                                item={item}
-                                                onDelete={onDelete}
-                                                onReorder={onReorder}
-                                                isFirst={idx === 0}
-                                                isLast={idx === day.items.length - 1}
-                                            />
+                                            <React.Fragment key={item.timelineId}>
+                                                <TimelineActivityItem
+                                                    item={item}
+                                                    onDelete={onDelete}
+                                                    onReorder={onReorder}
+                                                    isFirst={idx === 0}
+                                                    isLast={idx === day.items.length - 1}
+                                                />
+                                                {day.routeInfo?.legs[idx] && idx < day.items.length - 1 && (
+                                                    <div className="flex ml-8 my-1 items-center gap-2 text-xs text-slate-500 font-medium">
+                                                        <span className="material-symbols-outlined text-[14px]">directions_car</span>
+                                                        <span>{day.routeInfo.legs[idx].distanceText} • {day.routeInfo.legs[idx].durationText}</span>
+                                                    </div>
+                                                )}
+                                            </React.Fragment>
                                         ))
                                     )}
                                 </SortableContext>

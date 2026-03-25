@@ -14,6 +14,7 @@ interface TimelineContainerProps {
     onAddDay?: () => void;
     products?: Product[];
     onDayFieldChange?: (dayNumber: number, field: string, value: any) => void;
+    onCalculateRoute?: (dayNumber: number) => void;
 }
 
 export interface TimelineContainerRef {
@@ -41,6 +42,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         onAddDay,
         products,
         onDayFieldChange,
+        onCalculateRoute,
     },
     ref
 ) => {
@@ -135,6 +137,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 onToggle={() => toggleDay(day.dayNumber)}
                                 products={products}
                                 onDayFieldChange={onDayFieldChange}
+                                onCalculateRoute={onCalculateRoute}
                             />
                         </div>
                     ))}

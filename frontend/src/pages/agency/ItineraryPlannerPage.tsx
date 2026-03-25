@@ -113,6 +113,74 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, [field]: value } : d));
   };
 
+  const handleCalculateRoute = useCallback(async (dayNumber: number) => {
+    const day = timeline.find(d => d.dayNumber === dayNumber);
+    if (!day || day.items.length < 2) return;
+
+    // Filter items to those with valid locations
+    const locations = day.items.filter(item => item.location && item.location.lat && item.location.lng);
+    if (locations.length < 2) {
+      showError('該天行程中有效的地理位置不足，無法計算路線。');
+      return;
+    }
+
+    try {
+      const directionsService = new window.google.maps.DirectionsService();
+      
+      const origin = new window.google.maps.LatLng(locations[0].location!.lat, locations[0].location!.lng);
+      const destination = new window.google.maps.LatLng(locations[locations.length - 1].location!.lat, locations[locations.length - 1].location!.lng);
+      
+      const waypoints = locations.slice(1, -1).map(loc => ({
+        location: new window.google.maps.LatLng(loc.location!.lat, loc.location!.lng),
+        stopover: true,
+      }));
+
+      const request: google.maps.DirectionsRequest = {
+        origin,
+        destination,
+        waypoints,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+        optimizeWaypoints: false, // We must maintain the user's specific itinerary order
+      };
+
+      const response = await directionsService.route(request);
+      
+      if (response.routes && response.routes.length > 0) {
+        const route = response.routes[0];
+        const legs = route.legs.map(leg => ({
+          distanceText: leg.distance?.text || '',
+          distanceValue: leg.distance?.value || 0,
+          durationText: leg.duration?.text || '',
+          durationValue: leg.duration?.value || 0,
+          startLocation: { lat: leg.start_location.lat(), lng: leg.start_location.lng() },
+          endLocation: { lat: leg.end_location.lat(), lng: leg.end_location.lng() },
+        }));
+
+        const totalDistance = legs.reduce((acc, leg) => acc + leg.distanceValue, 0);
+        const totalDuration = legs.reduce((acc, leg) => acc + leg.durationValue, 0);
+
+        setTimeline(prev => prev.map(d => {
+          if (d.dayNumber === dayNumber) {
+            return {
+              ...d,
+              routeInfo: {
+                polyline: route.overview_polyline,
+                legs,
+                totalDistance: `${(totalDistance / 1000).toFixed(1)} km`,
+                totalDuration: `${Math.round(totalDuration / 60)} 分鐘`,
+              }
+            };
+          }
+          return d;
+        }));
+        showSuccess(`第 ${dayNumber} 天路線計算完成`);
+      }
+    } catch (error) {
+      console.error('Directions API error:', error);
+      showError('路線計算失敗，請稍後再試。');
+    }
+  }, [timeline, showError, showSuccess]);
+
   const findContainer = (id: string, currentTimeline: TimelineDay[]) => {
     if (!id) return null;
     if (currentTimeline.some(d => `day-${d.dayNumber}` === id)) return id;
@@ -398,8 +466,8 @@ const ItineraryPlannerPage: React.FC = () => {
         const [item] = sourceItems.splice(activeIdx, 1);
         destItems.splice(overIdx, 0, item);
         
-        newTimeline[sourceDayIdx] = { ...newTimeline[sourceDayIdx], items: recalculateTimes(sourceItems) };
-        newTimeline[destDayIdx] = { ...newTimeline[destDayIdx], items: recalculateTimes(destItems) };
+        newTimeline[sourceDayIdx] = { ...newTimeline[sourceDayIdx], items: recalculateTimes(sourceItems), routeInfo: undefined };
+        newTimeline[destDayIdx] = { ...newTimeline[destDayIdx], items: recalculateTimes(destItems), routeInfo: undefined };
         
         return newTimeline;
       });
@@ -425,7 +493,7 @@ const ItineraryPlannerPage: React.FC = () => {
           if (activeIdx !== overIdx) {
             const newItems = arrayMove(day.items, activeIdx, overIdx);
             const newTimeline = [...prev];
-            newTimeline[sourceDayIdx] = { ...day, items: recalculateTimes(newItems) };
+            newTimeline[sourceDayIdx] = { ...day, items: recalculateTimes(newItems), routeInfo: undefined };
             return newTimeline;
           }
         }
@@ -480,7 +548,7 @@ const ItineraryPlannerPage: React.FC = () => {
           if (day.dayNumber === targetDayNumber) {
             const newItems = [...day.items];
             newItems.splice(insertIndex, 0, productCopy);
-            return { ...day, items: recalculateTimes(newItems) };
+            return { ...day, items: recalculateTimes(newItems), routeInfo: undefined };
           }
           return day;
         }));
@@ -499,6 +567,7 @@ const ItineraryPlannerPage: React.FC = () => {
           return {
             ...day,
             items: recalculateTimes(newItems),
+            routeInfo: undefined,
           };
         }
         return day;
@@ -533,7 +602,7 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prev => prev.map(day => {
       if (day.dayNumber === dayNumber) {
         const newItems = [...day.items, productCopy];
-        return { ...day, items: recalculateTimes(newItems) };
+        return { ...day, items: recalculateTimes(newItems), routeInfo: undefined };
       }
       return day;
     }));
@@ -550,7 +619,7 @@ const ItineraryPlannerPage: React.FC = () => {
         
         const newIdx = direction === 'up' ? idx - 1 : idx + 1;
         const newItems = arrayMove(day.items, idx, newIdx);
-        return { ...day, items: recalculateTimes(newItems) };
+        return { ...day, items: recalculateTimes(newItems), routeInfo: undefined };
       }
       return day;
     }));
@@ -795,6 +864,7 @@ const ItineraryPlannerPage: React.FC = () => {
                 return matchesSupplier && matchesDestination;
               })}
               onDayFieldChange={handleDayFieldChange}
+              onCalculateRoute={handleCalculateRoute}
             />
           </div>
 

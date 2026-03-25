@@ -21,6 +21,23 @@ export interface Product {
     ticketPrice?: number;
 }
 
+export interface RouteLeg {
+    distanceText: string;
+    distanceValue: number;
+    durationText: string;
+    durationValue: number;
+    startLocation: { lat: number; lng: number };
+    endLocation: { lat: number; lng: number };
+}
+
+export interface RouteInfo {
+    polyline: string;
+    legs: RouteLeg[];
+    totalDistance?: string;
+    totalDuration?: string;
+}
+
+
 export interface TimelineDay {
     dayNumber: number;
     items: Product[];
@@ -42,5 +59,7 @@ export interface TimelineDay {
     hotelTitle?: string | null;
     // Notes
     notes?: string | null;
+    // Route Cache
+    routeInfo?: RouteInfo;
 }
 
