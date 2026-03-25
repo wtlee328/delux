@@ -821,10 +821,10 @@ const ItineraryPlannerPage: React.FC = () => {
         )}
 
         <DragOverlay dropAnimation={null}>
-          {activeProduct && dragSourceType === 'resource' ? (
+          {activeProduct ? (
             <TimelineActivityItemPreview
               item={activeProduct}
-              isTimelineItem={false}
+              isTimelineItem={dragSourceType === 'timeline'}
             />
           ) : null}
         </DragOverlay>

@@ -52,8 +52,8 @@ export const TimelineActivityItem: React.FC<TimelineActivityItemProps> = ({
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 9999 : 1,
-        opacity: 1,
+        zIndex: isDragging ? 1000 : 1,
+        opacity: isDragging ? 0.5 : 1,
         touchAction: 'none',
     };
 
