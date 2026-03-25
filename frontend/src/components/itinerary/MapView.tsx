@@ -240,11 +240,6 @@ const MapView: React.FC<MapViewProps> = ({
                 strokeOpacity: 0.5,
                 strokeWeight: 3,
                 geodesic: true,
-                icons: [{
-                  icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
-                  offset: '100%',
-                  repeat: '100px'
-                }]
               }}
             />
           );
