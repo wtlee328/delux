@@ -66,6 +66,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [isSupplierMenuOpen, setIsSupplierMenuOpen] = useState(false);
   const [mapWidth, setMapWidth] = useState(350);
   const [isResizing, setIsResizing] = useState(false);
+  const [focusedDay, setFocusedDay] = useState<number | null>(null);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -112,6 +113,10 @@ const ItineraryPlannerPage: React.FC = () => {
   const handleDayFieldChange = (dayNumber: number, field: string, value: any) => {
     setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, [field]: value } : d));
   };
+
+  const handleShowDayRoute = useCallback((dayNumber: number) => {
+    setFocusedDay(prev => prev === dayNumber ? null : dayNumber);
+  }, []);
 
   const handleCalculateRoute = useCallback(async (dayNumber: number) => {
     const day = timeline.find(d => d.dayNumber === dayNumber);
@@ -887,6 +892,8 @@ const ItineraryPlannerPage: React.FC = () => {
               })}
               onDayFieldChange={handleDayFieldChange}
               onCalculateRoute={handleCalculateRoute}
+              onShowDayRoute={handleShowDayRoute}
+              focusedDay={focusedDay}
             />
           </div>
 
@@ -916,7 +923,8 @@ const ItineraryPlannerPage: React.FC = () => {
             <MapView
               products={availableProducts}
               highlightedProductId={hoveredProduct?.id}
-              timelineProducts={timeline}
+              timelineData={timeline}
+              focusedDayNumber={focusedDay}
             />
           </div>
 

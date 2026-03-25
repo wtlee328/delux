@@ -19,6 +19,8 @@ interface TimelineDayRowProps {
     products?: Product[];
     onDayFieldChange?: (dayNumber: number, field: string, value: any) => void;
     onCalculateRoute?: (dayNumber: number) => void;
+    onShowDayRoute?: (dayNumber: number) => void;
+    isFocused?: boolean;
 }
 
 // Meal predefined options
@@ -128,6 +130,8 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     products = [],
     onDayFieldChange,
     onCalculateRoute,
+    onShowDayRoute,
+    isFocused,
 }) => {
     const foodProducts = products.filter(p => p.productType === 'food');
     const accommodationProducts = products.filter(p => p.productType === 'accommodation');
@@ -277,14 +281,32 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                     <div>
                         <h4 className="font-bold text-slate-700 mb-3 flex items-center justify-between">
                             <span>景點列表</span>
-                            {onCalculateRoute && day.items.length >= 2 && !day.routeInfo && (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onCalculateRoute(day.dayNumber); }}
-                                    className="text-xs flex items-center gap-1.5 bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-black transition-all font-bold shadow-sm"
-                                >
-                                    <span className="material-symbols-outlined text-[16px]">directions_car</span>
-                                    計算本日路線
-                                </button>
+                            {onCalculateRoute && day.items.length >= 2 && (
+                                <div className="flex items-center gap-2">
+                                    {!day.routeInfo ? (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onCalculateRoute(day.dayNumber); }}
+                                            className="text-xs flex items-center gap-1.5 bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-black transition-all font-bold shadow-sm"
+                                        >
+                                            <span className="material-symbols-outlined text-[16px]">directions_car</span>
+                                            計算本日路線
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onShowDayRoute?.(day.dayNumber); }}
+                                            className={`text-xs flex items-center gap-1.5 px-4 py-2 rounded-full transition-all font-bold shadow-sm ${
+                                                isFocused 
+                                                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <span className="material-symbols-outlined text-[16px]">
+                                                {isFocused ? 'visibility' : 'visibility_off'}
+                                            </span>
+                                            {isFocused ? '正在顯示路線' : '顯示本日路線'}
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </h4>
                         

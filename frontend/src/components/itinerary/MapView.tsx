@@ -6,7 +6,8 @@ import { GOOGLE_MAPS_LOADER_CONFIG } from '../../config/google-maps';
 interface MapViewProps {
   products: Product[];
   highlightedProductId?: string | null;
-  timelineProducts?: TimelineDay[];
+  timelineData?: TimelineDay[];
+  focusedDayNumber?: number | null;
 }
 
 const containerStyle = {
@@ -34,19 +35,25 @@ const dayColors = [
 const MapView: React.FC<MapViewProps> = ({
   products,
   highlightedProductId,
-  timelineProducts = [],
+  timelineData = [],
+  focusedDayNumber = null,
 }) => {
   const { isLoaded } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG);
 
-  const [map, setMap] = useState<any>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [autoFit, setAutoFit] = useState(true);
 
+  // Determine which days to display
+  const targetDays = focusedDayNumber 
+    ? timelineData.filter(d => d.dayNumber === focusedDayNumber)
+    : timelineData;
+
   const fitBounds = useCallback(() => {
-    if (map && timelineProducts.length > 0 && (window as any).google) {
-      const bounds = new (window as any).google.maps.LatLngBounds();
+    if (map && targetDays.length > 0 && window.google) {
+      const bounds = new window.google.maps.LatLngBounds();
       let hasLocations = false;
 
-      timelineProducts.forEach(day => {
+      targetDays.forEach(day => {
         day.items.forEach(product => {
           if (product.location) {
             bounds.extend(product.location);
@@ -57,18 +64,22 @@ const MapView: React.FC<MapViewProps> = ({
 
       if (hasLocations) {
         map.fitBounds(bounds);
+        // If only one location, fitBounds might zoom too much
+        if (targetDays.flatMap(d => d.items).filter(i => i.location).length === 1) {
+          map.setZoom(15);
+        }
       }
     }
-  }, [map, timelineProducts]);
+  }, [map, targetDays]);
 
-  // Auto-fit bounds when timeline products change
+  // Auto-fit bounds when target days or autoFit setting changes
   React.useEffect(() => {
     if (autoFit) {
       fitBounds();
     }
-  }, [timelineProducts, autoFit, fitBounds]);
+  }, [targetDays, autoFit, fitBounds]);
 
-  const onLoad = useCallback((map: any) => {
+  const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
   }, []);
 
@@ -80,12 +91,18 @@ const MapView: React.FC<MapViewProps> = ({
     return <div style={styles.loading}>載入地圖中...</div>;
   }
 
-  // Get all products with locations from timeline
-  const timelineLocations = timelineProducts.flatMap(day =>
-    day.items
+  // Get markers with sequence numbers for the timeline
+  const timelineMarkers = targetDays.flatMap(day => {
+    const dayIndex = timelineData.findIndex(d => d.dayNumber === day.dayNumber);
+    return day.items
       .filter(p => p.location)
-      .map(p => ({ ...p, dayNumber: day.dayNumber }))
-  );
+      .map((p, idx) => ({ 
+        ...p, 
+        dayNumber: day.dayNumber, 
+        sequence: idx + 1,
+        color: dayColors[dayIndex % dayColors.length]
+      }));
+  });
 
   return (
     <div className="relative w-full h-full">
@@ -96,10 +113,6 @@ const MapView: React.FC<MapViewProps> = ({
         onLoad={onLoad}
         onUnmount={onUnmount}
         onDragStart={() => setAutoFit(false)}
-        onZoomChanged={() => {
-          // Note: Zoom can change during fitBounds, so we only disable autoFit if map is ready and user likely triggered it
-          // But a simple approach is better for now
-        }}
         options={{
           zoomControl: true,
           streetViewControl: false,
@@ -107,8 +120,8 @@ const MapView: React.FC<MapViewProps> = ({
           fullscreenControl: true,
         }}
       >
-        {/* Markers for products in resource library */}
-        {products
+        {/* Markers for products in resource library - Only show if NO day is focused or if it's the highlighted one */}
+        {!focusedDayNumber && products
           .filter(p => p.location)
           .map(product => (
             <Marker
@@ -119,42 +132,65 @@ const MapView: React.FC<MapViewProps> = ({
                 url: highlightedProductId === product.id
                   ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
                   : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                scaledSize: new window.google.maps.Size(32, 32),
               }}
             />
           ))}
 
-        {/* Markers for products in timeline */}
-        {timelineLocations.map((item) => (
+        {/* Highlighted library product should ALWAYS show even if a day is focused */}
+        {focusedDayNumber && highlightedProductId && products.find(p => p.id === highlightedProductId)?.location && (
+           <Marker
+              key={`highlight-${highlightedProductId}`}
+              position={products.find(p => p.id === highlightedProductId)!.location!}
+              icon={{
+                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                scaledSize: new window.google.maps.Size(40, 40),
+              }}
+              zIndex={1000}
+           />
+        )}
+
+        {/* Markers for products in timeline with sequence labeling */}
+        {timelineMarkers.map((item) => (
           <Marker
-            key={`timeline-${item.id}`}
+            key={`timeline-${item.id}-${item.dayNumber}-${item.sequence}`}
             position={item.location!}
-            title={item.title}
+            title={`${item.sequence}. ${item.title}`}
             icon={{
-              url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+              path: window.google.maps.SymbolPath.CIRCLE,
+              fillColor: item.color,
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+              scale: 14,
             }}
             label={{
-              text: `${item.dayNumber}`,
+              text: `${item.sequence}`,
               color: 'white',
+              fontSize: '11px',
               fontWeight: 'bold',
             }}
+            zIndex={item.sequence}
           />
         ))}
 
         {/* Polylines for each day's route */}
-        {timelineProducts.map((day, index) => {
+        {targetDays.map((day) => {
+          const dayIndex = timelineData.findIndex(d => d.dayNumber === day.dayNumber);
+          const color = dayColors[dayIndex % dayColors.length];
           const dayLocations = day.items
             .filter(p => p.location)
             .map(p => p.location!);
 
-          if (day.routeInfo?.polyline && (window as any).google?.maps?.geometry) {
+          if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
             return (
               <Polyline
                 key={`route-day-${day.dayNumber}`}
-                path={(window as any).google.maps.geometry.encoding.decodePath(day.routeInfo.polyline)}
+                path={window.google.maps.geometry.encoding.decodePath(day.routeInfo.polyline)}
                 options={{
-                  strokeColor: dayColors[index % dayColors.length],
+                  strokeColor: color,
                   strokeOpacity: 0.9,
-                  strokeWeight: 4,
+                  strokeWeight: 5,
                 }}
               />
             );
@@ -167,10 +203,15 @@ const MapView: React.FC<MapViewProps> = ({
               key={`route-day-${day.dayNumber}`}
               path={dayLocations}
               options={{
-                strokeColor: dayColors[index % dayColors.length],
-                strokeOpacity: 0.6, // Making fallback straight line slightly more transparent
+                strokeColor: color,
+                strokeOpacity: 0.5,
                 strokeWeight: 3,
                 geodesic: true,
+                icons: [{
+                  icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
+                  offset: '100%',
+                  repeat: '100px'
+                }]
               }}
             />
           );
