@@ -54,23 +54,32 @@ const MapView: React.FC<MapViewProps> = ({
       let hasLocations = false;
 
       targetDays.forEach(day => {
-        day.items.forEach(product => {
-          if (product.location) {
-            bounds.extend(product.location);
-            hasLocations = true;
-          }
-        });
+        // If we have a calculated route, use the decoded path to bound the map
+        if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
+          const path = window.google.maps.geometry.encoding.decodePath(day.routeInfo.polyline);
+          path.forEach(p => bounds.extend(p));
+          hasLocations = true;
+        } else {
+          // Otherwise bound to individual item locations
+          day.items.forEach(product => {
+            const loc = product.location || products.find(p => p.id === product.id)?.location;
+            if (loc && loc.lat && loc.lng) {
+              bounds.extend(loc);
+              hasLocations = true;
+            }
+          });
+        }
       });
 
       if (hasLocations) {
         map.fitBounds(bounds);
         // If only one location, fitBounds might zoom too much
-        if (targetDays.flatMap(d => d.items).filter(i => i.location).length === 1) {
+        if (targetDays.flatMap(d => d.items).filter(i => i.location || products.find(p => p.id === i.id)?.location).length === 1) {
           map.setZoom(15);
         }
       }
     }
-  }, [map, targetDays]);
+  }, [map, targetDays, products]);
 
   // Auto-fit bounds when target days or autoFit setting changes
   React.useEffect(() => {
@@ -106,7 +115,16 @@ const MapView: React.FC<MapViewProps> = ({
     const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
     const color = dayColors[safeDayIndex % dayColors.length];
 
-    return day.items
+    // Enrich items with location from products library if missing
+    const enrichedItems = day.items.map(item => {
+      if (!item.location || !item.location.lat || !item.location.lng) {
+        const productData = products.find(p => p.id === item.id);
+        return { ...item, location: productData?.location || item.location };
+      }
+      return item;
+    });
+
+    return enrichedItems
       .filter(p => p.location && p.location.lat && p.location.lng)
       .map((p, idx) => ({ 
         ...p, 
@@ -193,8 +211,9 @@ const MapView: React.FC<MapViewProps> = ({
           const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
           const color = dayColors[safeDayIndex % dayColors.length];
           const dayLocations = day.items
-            .filter(p => p.location && p.location.lat && p.location.lng)
-            .map(p => p.location!);
+            .map(item => item.location || products.find(p => p.id === item.id)?.location)
+            .filter(loc => loc && loc.lat && loc.lng)
+            .map(loc => loc!);
 
           if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
             return (
