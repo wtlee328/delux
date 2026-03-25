@@ -43,9 +43,12 @@ const DraggableProduct = ({
   onHover: (p: Product | null) => void;
   onPreview: (p: Product) => void;
 }) => {
+  const isLandmark = product.productType === 'landmark' || product.productType === 'transportation';
+
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: product.id,
     data: { type: 'resource', product },
+    disabled: !isLandmark,
   });
 
   // Map category to Chinese labels
@@ -60,26 +63,27 @@ const DraggableProduct = ({
     zIndex: isDragging ? 1000 : 1,
     position: 'relative' as const,
     touchAction: 'none',
+    cursor: isLandmark ? 'grab' : 'not-allowed',
+    opacity: isLandmark ? 1 : 0.6,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
+      {...(isLandmark ? listeners : {})}
+      {...(isLandmark ? attributes : {})}
     >
       <div
         style={{
           marginBottom: '0.75rem',
-          backgroundColor: 'white',
+          backgroundColor: isLandmark ? 'white' : '#f8f9fa',
           borderRadius: '12px',
           padding: '1rem',
           boxShadow: isDragging
             ? '0 12px 24px rgba(0,0,0,0.15)'
             : '0 2px 4px rgba(0,0,0,0.04)',
-          cursor: 'grab',
-          border: '1px solid #f1f2f6',
+          border: isLandmark ? '1px solid #f1f2f6' : '1px solid #e5e7eb',
           transition: 'all 0.2s',
           opacity: isDragging ? 0.8 : 1,
           display: 'flex',
@@ -95,7 +99,7 @@ const DraggableProduct = ({
               margin: 0,
               fontSize: '0.95rem',
               fontWeight: '600',
-              color: '#2d3436',
+              color: isLandmark ? '#2d3436' : '#9ca3af',
               lineHeight: '1.4',
               flex: 1,
             }}
@@ -137,17 +141,20 @@ const DraggableProduct = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <span style={{
-              backgroundColor: '#f1f2f6',
+              backgroundColor: isLandmark ? '#f1f2f6' : '#e5e7eb',
               padding: '2px 8px',
               borderRadius: '4px',
-              color: '#636e72',
+              color: isLandmark ? '#636e72' : '#9ca3af',
               fontWeight: '500'
             }}>
               {categoryLabels[product.category] || product.category}
             </span>
             <span style={{ color: '#b2bec3' }}>|</span>
-            <span style={{ color: '#636e72' }}>{product.supplierName}</span>
+            <span style={{ color: isLandmark ? '#636e72' : '#9ca3af' }}>{product.supplierName}</span>
           </div>
+          {!isLandmark && (
+            <span style={{ color: '#ff7675', fontWeight: '500', fontSize: '0.7rem' }}>不可拖曳</span>
+          )}
         </div>
       </div>
     </div>

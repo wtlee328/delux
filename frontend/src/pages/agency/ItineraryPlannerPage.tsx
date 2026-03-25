@@ -10,7 +10,7 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
-  closestCenter,
+  closestCorners,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useToast } from '../../components/Toast';
@@ -26,7 +26,7 @@ import TopBar from '../../components/TopBar';
 import { Product, TimelineDay } from '../../types/itinerary';
 
 const ItineraryPlannerPage: React.FC = () => {
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
   const { id: routeId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -113,10 +113,10 @@ const ItineraryPlannerPage: React.FC = () => {
     setTimeline(prev => prev.map(d => d.dayNumber === dayNumber ? { ...d, [field]: value } : d));
   };
 
-  const findContainer = (id: string) => {
+  const findContainer = (id: string, currentTimeline: TimelineDay[]) => {
     if (!id) return null;
-    if (timeline.some(d => `day-${d.dayNumber}` === id)) return id;
-    const day = timeline.find(d => d.items.some(i => i.timelineId === id));
+    if (currentTimeline.some(d => `day-${d.dayNumber}` === id)) return id;
+    const day = currentTimeline.find(d => d.items.some(i => i.timelineId === id));
     return day ? `day-${day.dayNumber}` : null;
   };
 
@@ -266,7 +266,8 @@ const ItineraryPlannerPage: React.FC = () => {
           items: day.items.map((item: any) => ({
             ...item,
             // Ensure necessary fields exist
-            productType: item.productType || 'landmark'
+            productType: item.productType || 'landmark',
+            timelineId: item.timelineId || `${item.id}-${Date.now()}-${Math.random()}`
           }))
         }));
 
@@ -369,21 +370,21 @@ const ItineraryPlannerPage: React.FC = () => {
     if (activeId === overId) return;
     if (active.data.current?.type === 'resource') return;
 
-    const activeContainer = findContainer(activeId);
-    const overContainer = findContainer(overId);
+    const activeContainer = findContainer(activeId, timeline);
+    const overContainer = findContainer(overId, timeline);
 
     if (!activeContainer || !overContainer) return;
 
     const sourceDayNum = parseInt(activeContainer.split('-')[1]);
     const destDayNum = parseInt(overContainer.split('-')[1]);
     
-    const sourceDayIdx = timeline.findIndex(d => d.dayNumber === sourceDayNum);
-    const destDayIdx = timeline.findIndex(d => d.dayNumber === destDayNum);
-
-    if (sourceDayIdx === -1 || destDayIdx === -1) return;
-
     if (activeContainer !== overContainer) {
       setTimeline(prev => {
+        const sourceDayIdx = prev.findIndex(d => d.dayNumber === sourceDayNum);
+        const destDayIdx = prev.findIndex(d => d.dayNumber === destDayNum);
+
+        if (sourceDayIdx === -1 || destDayIdx === -1) return prev;
+
         const newTimeline = [...prev];
         const sourceItems = [...newTimeline[sourceDayIdx].items];
         const destItems = [...newTimeline[destDayIdx].items];
@@ -405,15 +406,28 @@ const ItineraryPlannerPage: React.FC = () => {
     } else {
       // Reordering within same day
       setTimeline(prev => {
+        const sourceDayIdx = prev.findIndex(d => d.dayNumber === sourceDayNum);
+        if (sourceDayIdx === -1) return prev;
+        
         const day = prev[sourceDayIdx];
         const activeIdx = day.items.findIndex(i => i.timelineId === activeId);
-        const overIdx = day.items.findIndex(i => i.timelineId === overId);
+        let overIdx = day.items.findIndex(i => i.timelineId === overId);
         
-        if (activeIdx !== -1 && overIdx !== -1 && activeIdx !== overIdx) {
-          const newItems = arrayMove(day.items, activeIdx, overIdx);
-          const newTimeline = [...prev];
-          newTimeline[sourceDayIdx] = { ...day, items: recalculateTimes(newItems) };
-          return newTimeline;
+        if (activeIdx !== -1) {
+          // If overIdx is -1, it means we're over the day container itself
+          // We could move it to the end, but usually sortable items take up all space.
+          // For robustness, if overIdx is -1, we can ignore or move to end.
+          if (overIdx === -1) {
+            // overIdx = day.items.length - 1; // Example: move to end
+            return prev;
+          }
+          
+          if (activeIdx !== overIdx) {
+            const newItems = arrayMove(day.items, activeIdx, overIdx);
+            const newTimeline = [...prev];
+            newTimeline[sourceDayIdx] = { ...day, items: recalculateTimes(newItems) };
+            return newTimeline;
+          }
         }
         return prev;
       });
@@ -430,6 +444,14 @@ const ItineraryPlannerPage: React.FC = () => {
     // For resource drops, we still use DragEnd to finalize the addition
     if (active.data.current?.type === 'resource') {
       const product = active.data.current.product;
+
+      // Only allow Landmarks and Transportation to be added to the daily itinerary timeline
+      if (product.productType !== 'landmark' && product.productType !== 'transportation') {
+        const typeLabel = product.productType === 'food' ? '餐食' : product.productType === 'accommodation' ? '住宿' : '產品';
+        showError(`${typeLabel} 產品無法直接加入行程列表，請使用對應的餐食或住宿選單。`);
+        return;
+      }
+      
       let targetDayNumber = -1;
       let insertIndex = -1;
 
@@ -443,7 +465,10 @@ const ItineraryPlannerPage: React.FC = () => {
         if (day) {
           targetDayNumber = day.dayNumber;
           const overIndex = day.items.findIndex(i => i.timelineId === overId);
-          insertIndex = overIndex + 1;
+          // Insert at the position of the item we're over, or after it?
+          // To allow inserting at the beginning, we need to check if we are over the top half of the item.
+          // But dnd-kit normally does "insert after". Let's at least make it consistent.
+          insertIndex = overIndex; 
         }
       }
 
@@ -493,6 +518,12 @@ const ItineraryPlannerPage: React.FC = () => {
     const product = scopedProducts.find(p => p.id === productId);
     if (!product) {
         console.warn('Product not found in current scope:', productId);
+        return;
+    }
+
+    if (product.productType !== 'landmark' && product.productType !== 'transportation') {
+        const typeLabel = product.productType === 'food' ? '餐食' : product.productType === 'accommodation' ? '住宿' : '產品';
+        showError(`${typeLabel} 產品無法直接加入行程列表，請使用對應的餐食或住宿選單。`);
         return;
     }
 
@@ -660,7 +691,7 @@ const ItineraryPlannerPage: React.FC = () => {
   return (
     <DndContext
       sensors={startDate && endDate ? sensors : []}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
