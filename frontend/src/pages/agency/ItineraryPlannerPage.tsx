@@ -10,6 +10,7 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
+  closestCenter,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useToast } from '../../components/Toast';
@@ -71,11 +72,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [dragSourceType, setDragSourceType] = useState<'resource' | 'timeline' | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -667,6 +664,7 @@ const ItineraryPlannerPage: React.FC = () => {
   return (
     <DndContext
       sensors={startDate && endDate ? sensors : []}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
