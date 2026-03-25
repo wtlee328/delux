@@ -750,9 +750,9 @@ const ItineraryPlannerPage: React.FC = () => {
               </div>
             )}
             {tripTemplateName && (
-              <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-sm text-blue-700">
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>info</span>
-                基於供應商行程範本：<strong>{tripTemplateName}</strong>
+              <div className="px-6 py-4 flex items-center gap-2 text-sm text-slate-500">
+                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>info</span>
+                基於供應商行程範本：<span className="font-bold text-slate-700">{tripTemplateName}</span>
               </div>
             )}
             <TimelineContainer
