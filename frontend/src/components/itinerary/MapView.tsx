@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { Product, TimelineDay } from '../../types/itinerary';
+import { GOOGLE_MAPS_LOADER_CONFIG } from '../../config/google-maps';
 
 interface MapViewProps {
   products: Product[];
@@ -30,21 +31,12 @@ const dayColors = [
   '#85C1E2', // Sky Blue
 ];
 
-type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
-const libraries: Library[] = ['places', 'marker', 'geometry'];
-
 const MapView: React.FC<MapViewProps> = ({
   products,
   highlightedProductId,
   timelineProducts = [],
 }) => {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-    language: 'zh-TW',
-    version: 'weekly'
-  });
+  const { isLoaded } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG);
 
   const [map, setMap] = useState<any>(null);
   const [autoFit, setAutoFit] = useState(true);

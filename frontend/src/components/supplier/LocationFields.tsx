@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useJsApiLoader, GoogleMap } from '@react-google-maps/api';
+import { GOOGLE_MAPS_LOADER_CONFIG } from '../../config/google-maps';
 
 interface LocationFieldsProps {
   title: string;
@@ -14,9 +15,6 @@ interface LocationFieldsProps {
   longitude?: number;
   onCoordinatesChange: (lat: number, lng: number) => void;
 }
-
-type Library = "places" | "drawing" | "geometry" | "visualization" | "marker";
-const libraries: Library[] = ['places', 'marker', 'geometry'];
 
 const defaultCenter = {
   lat: 25.0330, // Taipei 101
@@ -348,13 +346,7 @@ const LocationFieldsContent: React.FC<LocationFieldsProps & { isLoaded: boolean 
 };
 
 const LocationFields: React.FC<LocationFieldsProps> = (props) => {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-    language: 'zh-TW',
-    version: 'weekly'
-  });
+  const { isLoaded, loadError } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG);
 
   if (loadError) {
     return (
