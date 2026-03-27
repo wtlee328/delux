@@ -364,7 +364,9 @@ const ItineraryPlannerPage: React.FC = () => {
             // Ensure necessary fields exist
             productType: item.productType || 'landmark',
             timelineId: item.timelineId || `${item.id}-${Date.now()}-${Math.random()}`
-          }))
+          })),
+          // Ensure routeInfo is preserved if it exists
+          routeInfo: day.routeInfo || undefined
         }));
 
         setTimeline(timelineData);
@@ -592,11 +594,11 @@ const ItineraryPlannerPage: React.FC = () => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
           const newItems = day.items.filter(item => (item.timelineId || item.id) !== uniqueId);
-          return {
-            ...day,
-            items: recalculateTimes(newItems),
-            routeInfo: undefined,
-          };
+            return {
+              ...day,
+              items: recalculateTimes(newItems),
+              routeInfo: undefined,
+            };
         }
         return day;
       });
