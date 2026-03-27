@@ -134,8 +134,14 @@ const AgencyDashboardPage: React.FC = () => {
             </button>
             {searchTerm && (
               <button
+                disabled={displayProducts.length === 0}
                 onClick={() => navigate(`/agency/itinerary-planner?destination=${encodeURIComponent(searchTerm)}`)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-right-4"
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-right-4 ${
+                  displayProducts.length === 0 
+                  ? 'bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200' 
+                  : 'bg-slate-800 hover:bg-slate-700 text-white hover:shadow-md'
+                }`}
+                title={displayProducts.length === 0 ? "此目的地目前尚無相關產品，無法開始規劃" : "開始規劃行程"}
               >
                 <span className="material-symbols-outlined text-lg">assignment</span> 行程規劃
               </button>
