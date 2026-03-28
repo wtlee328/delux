@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Polyline, InfoWindow } from '@react-google-maps/api';
 import { Product, TimelineDay } from '../../types/itinerary';
 import { GOOGLE_MAPS_LOADER_CONFIG } from '../../config/google-maps';
 
@@ -8,6 +8,7 @@ interface MapViewProps {
   highlightedProductId?: string | null;
   timelineData?: TimelineDay[];
   focusedDayNumber?: number | null;
+  highlightedTimelineId?: string | null;
 }
 
 const containerStyle = {
@@ -37,11 +38,20 @@ const MapView: React.FC<MapViewProps> = ({
   highlightedProductId,
   timelineData = [],
   focusedDayNumber = null,
+  highlightedTimelineId = null,
 }) => {
   const { isLoaded } = useJsApiLoader(GOOGLE_MAPS_LOADER_CONFIG);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [autoFit, setAutoFit] = useState(true);
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+
+  // Sync active marker if external highlight changes
+  React.useEffect(() => {
+    if (highlightedTimelineId) {
+      setActiveMarkerId(highlightedTimelineId);
+    }
+  }, [highlightedTimelineId]);
 
   // Determine which days to display
   const targetDays = focusedDayNumber 
@@ -54,23 +64,32 @@ const MapView: React.FC<MapViewProps> = ({
       let hasLocations = false;
 
       targetDays.forEach(day => {
-        day.items.forEach(product => {
-          if (product.location) {
-            bounds.extend(product.location);
-            hasLocations = true;
-          }
-        });
+        // If we have a calculated route, use the decoded path to bound the map
+        if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
+          const path = window.google.maps.geometry.encoding.decodePath(day.routeInfo.polyline);
+          path.forEach(p => bounds.extend(p));
+          hasLocations = true;
+        } else {
+          // Otherwise bound to individual item locations
+          day.items.forEach(product => {
+            const loc = product.location || products.find(p => p.id === product.id)?.location;
+            if (loc && loc.lat && loc.lng) {
+              bounds.extend(loc);
+              hasLocations = true;
+            }
+          });
+        }
       });
 
       if (hasLocations) {
         map.fitBounds(bounds);
         // If only one location, fitBounds might zoom too much
-        if (targetDays.flatMap(d => d.items).filter(i => i.location).length === 1) {
+        if (targetDays.flatMap(d => d.items).filter(i => i.location || products.find(p => p.id === i.id)?.location).length === 1) {
           map.setZoom(15);
         }
       }
     }
-  }, [map, targetDays]);
+  }, [map, targetDays, products]);
 
   // Auto-fit bounds when target days or autoFit setting changes
   React.useEffect(() => {
@@ -106,7 +125,16 @@ const MapView: React.FC<MapViewProps> = ({
     const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
     const color = dayColors[safeDayIndex % dayColors.length];
 
-    return day.items
+    // Enrich items with location from products library if missing
+    const enrichedItems = day.items.map(item => {
+      if (!item.location || !item.location.lat || !item.location.lng) {
+        const productData = products.find(p => p.id === item.id);
+        return { ...item, location: productData?.location || item.location };
+      }
+      return item;
+    });
+
+    return enrichedItems
       .filter(p => p.location && p.location.lat && p.location.lng)
       .map((p, idx) => ({ 
         ...p, 
@@ -164,27 +192,40 @@ const MapView: React.FC<MapViewProps> = ({
 
         {/* Markers for products in timeline with sequence labeling */}
         {timelineMarkers.map((item) => (
-          <Marker
-            key={`timeline-${item.timelineId || item.id}-${item.dayNumber}-${item.sequence}`}
-            position={item.location!}
-            title={`${item.sequence}. ${item.title}`}
-            icon={{
-              path: window.google.maps.SymbolPath.CIRCLE,
-              fillColor: item.color,
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2,
-              scale: 14,
-              labelOrigin: new window.google.maps.Point(0, 0)
-            }}
-            label={{
-              text: `${item.sequence}`,
-              color: 'white',
-              fontSize: '11px',
-              fontWeight: 'bold',
-            }}
-            zIndex={(item.dayNumber * 100) + item.sequence + 500} // Ensure day-based stacking order
-          />
+          <React.Fragment key={`timeline-${item.timelineId || item.id}-${item.dayNumber}-${item.sequence}`}>
+            <Marker
+              position={item.location!}
+              title={`${item.sequence}. ${item.title}`}
+              onClick={() => setActiveMarkerId(item.timelineId || item.id)}
+              icon={{
+                path: window.google.maps.SymbolPath.CIRCLE,
+                fillColor: item.color,
+                fillOpacity: 1,
+                strokeColor: '#FFFFFF',
+                strokeWeight: 2,
+                scale: 14,
+                labelOrigin: new window.google.maps.Point(0, 0)
+              }}
+              label={{
+                text: `${item.sequence}`,
+                color: 'white',
+                fontSize: '11px',
+                fontWeight: 'bold',
+              }}
+              zIndex={(item.dayNumber * 100) + item.sequence + 500} // Ensure day-based stacking order
+            />
+            {activeMarkerId === (item.timelineId || item.id) && (
+              <InfoWindow
+                position={item.location!}
+                onCloseClick={() => setActiveMarkerId(null)}
+              >
+                <div className="p-1">
+                  <p className="font-bold text-slate-800 text-sm mb-0.5">{item.title}</p>
+                  <p className="text-xs text-slate-500">第 {item.dayNumber} 天 • 第 {item.sequence} 站</p>
+                </div>
+              </InfoWindow>
+            )}
+          </React.Fragment>
         ))}
 
         {/* Polylines for each day's route */}
@@ -193,8 +234,9 @@ const MapView: React.FC<MapViewProps> = ({
           const safeDayIndex = dayIndex >= 0 ? dayIndex : day.dayNumber - 1;
           const color = dayColors[safeDayIndex % dayColors.length];
           const dayLocations = day.items
-            .filter(p => p.location && p.location.lat && p.location.lng)
-            .map(p => p.location!);
+            .map(item => item.location || products.find(p => p.id === item.id)?.location)
+            .filter(loc => loc && loc.lat && loc.lng)
+            .map(loc => loc!);
 
           if (day.routeInfo?.polyline && window.google?.maps?.geometry) {
             return (
@@ -221,11 +263,6 @@ const MapView: React.FC<MapViewProps> = ({
                 strokeOpacity: 0.5,
                 strokeWeight: 3,
                 geodesic: true,
-                icons: [{
-                  icon: { path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
-                  offset: '100%',
-                  repeat: '100px'
-                }]
               }}
             />
           );

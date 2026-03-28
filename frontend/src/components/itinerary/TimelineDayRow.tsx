@@ -21,6 +21,7 @@ interface TimelineDayRowProps {
     onCalculateRoute?: (dayNumber: number) => void;
     onShowDayRoute?: (dayNumber: number) => void;
     isFocused?: boolean;
+    onItemHover?: (itemId: string | null) => void;
 }
 
 // Meal predefined options
@@ -132,6 +133,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     onCalculateRoute,
     onShowDayRoute,
     isFocused,
+    onItemHover,
 }) => {
     const foodProducts = products.filter(p => p.productType === 'food');
     const accommodationProducts = products.filter(p => p.productType === 'accommodation');
@@ -209,16 +211,52 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                     </div>
                 </div>
 
-                {/* Expand/Collapse Arrow */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 1rem',
-                    color: '#b2bec3',
-                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
-                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}>
-                    <span className="material-symbols-outlined">expand_more</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Compact Route Button in Summary */}
+                    {day.items.length >= 2 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (!day.routeInfo) {
+                                    onCalculateRoute?.(day.dayNumber);
+                                } else {
+                                    onShowDayRoute?.(day.dayNumber);
+                                }
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                transition: 'all 0.2s',
+                                cursor: 'pointer',
+                                ...(day.routeInfo 
+                                    ? (isFocused ? { backgroundColor: '#2563eb', color: 'white' } : { backgroundColor: '#f1f5f9', color: '#64748b' })
+                                    : { backgroundColor: '#fef3c7', color: '#d97706' })
+                            }}
+                            title={!day.routeInfo ? '計算路線' : '顯示路線'}
+                            className="hover:scale-110 active:scale-95"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">
+                                {!day.routeInfo ? 'directions' : (isFocused ? 'visibility' : 'route')}
+                            </span>
+                        </button>
+                    )}
+
+                    {/* Expand/Collapse Arrow */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 0.5rem',
+                        color: '#b2bec3',
+                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
+                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}>
+                        <span className="material-symbols-outlined">expand_more</span>
+                    </div>
                 </div>
             </div>
 
@@ -338,6 +376,7 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
                                                     onReorder={onReorder}
                                                     isFirst={idx === 0}
                                                     isLast={idx === day.items.length - 1}
+                                                    onHover={onItemHover}
                                                 />
                                                 {day.routeInfo?.legs[idx] && idx < day.items.length - 1 && (
                                                     <div className="flex ml-8 my-1 items-center gap-2 text-xs text-slate-500 font-medium">

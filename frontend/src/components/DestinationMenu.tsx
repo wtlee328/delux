@@ -39,7 +39,6 @@ const DestinationMenu: React.FC = () => {
                 return (
                     <div key={group.region} className="relative group h-full">
                         <button 
-                            onClick={() => handleSelect(group.region)}
                             className={`flex items-center gap-1 px-4 py-5 text-[15px] font-medium transition-all border-b-[3px] h-full
                                 ${isActive 
                                     ? 'text-blue-600 border-blue-600 bg-blue-50/30' 

@@ -67,6 +67,7 @@ const ItineraryPlannerPage: React.FC = () => {
   const [mapWidth, setMapWidth] = useState(350);
   const [isResizing, setIsResizing] = useState(false);
   const [focusedDay, setFocusedDay] = useState<number | null>(null);
+  const [hoveredTimelineId, setHoveredTimelineId] = useState<string | null>(null);
   const timelineRef = React.useRef<TimelineContainerRef>(null);
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -363,7 +364,9 @@ const ItineraryPlannerPage: React.FC = () => {
             // Ensure necessary fields exist
             productType: item.productType || 'landmark',
             timelineId: item.timelineId || `${item.id}-${Date.now()}-${Math.random()}`
-          }))
+          })),
+          // Ensure routeInfo is preserved if it exists
+          routeInfo: day.routeInfo || undefined
         }));
 
         setTimeline(timelineData);
@@ -591,11 +594,11 @@ const ItineraryPlannerPage: React.FC = () => {
       return prevTimeline.map(day => {
         if (day.dayNumber === dayNumber) {
           const newItems = day.items.filter(item => (item.timelineId || item.id) !== uniqueId);
-          return {
-            ...day,
-            items: recalculateTimes(newItems),
-            routeInfo: undefined,
-          };
+            return {
+              ...day,
+              items: recalculateTimes(newItems),
+              routeInfo: undefined,
+            };
         }
         return day;
       });
@@ -894,6 +897,7 @@ const ItineraryPlannerPage: React.FC = () => {
               onCalculateRoute={handleCalculateRoute}
               onShowDayRoute={handleShowDayRoute}
               focusedDay={focusedDay}
+              onItemHover={setHoveredTimelineId}
             />
           </div>
 
@@ -925,6 +929,7 @@ const ItineraryPlannerPage: React.FC = () => {
               highlightedProductId={hoveredProduct?.id}
               timelineData={timeline}
               focusedDayNumber={focusedDay}
+              highlightedTimelineId={hoveredTimelineId}
             />
           </div>
 
