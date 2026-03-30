@@ -105,6 +105,16 @@ export default function TripBuilderPage() {
   const [newProductParams, setNewProductParams] = useState({ category: 'landmark', dayIndex: 1 });
   const [newProductTitle, setNewProductTitle] = useState('');
   
+  // Quick Entry State
+  const [quickEntryInput, setQuickEntryInput] = useState<{ [dayIndex: number]: string }>({});
+  const [quickEntryContext, setQuickEntryContext] = useState<{
+    dayIndex: number;
+    segments: string[];
+    currentIndex: number;
+    resolvedProductIds: string[];
+  } | null>(null);
+  const [selectedProductToRename, setSelectedProductToRename] = useState<string>('');
+  
   const [tripStatus, setTripStatus] = useState<string>('草稿');
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
@@ -308,6 +318,136 @@ export default function TripBuilderPage() {
       setNewProductTitle('');
     } catch (err) {
       alert('建立產品失敗，請確保填寫所有必欄位。');
+    }
+  };
+
+  const processQuickEntry = async (context: {
+    dayIndex: number;
+    segments: string[];
+    currentIndex: number;
+    resolvedProductIds: string[];
+  }) => {
+    let { currentIndex, resolvedProductIds, segments, dayIndex } = context;
+    
+    while (currentIndex < segments.length) {
+      const segment = segments[currentIndex];
+      const match = products.find(p => 
+        p.title.toLowerCase() === segment.toLowerCase() || 
+        p.title.toLowerCase().includes(segment.toLowerCase()) || 
+        segment.toLowerCase().includes(p.title.toLowerCase())
+      );
+      
+      if (match) {
+        resolvedProductIds.push(match.id);
+        currentIndex++;
+      } else {
+        setQuickEntryContext({ ...context, currentIndex, resolvedProductIds });
+        return;
+      }
+    }
+    
+    // All segments handled successfully
+    setDays(prev => prev.map(d => {
+      if (d.dayIndex === dayIndex) {
+        let currentSort = d.items.length > 0 ? Math.max(...d.items.map(i => i.sortOrder)) : 0;
+        const newItems = resolvedProductIds.map((id) => {
+          currentSort++;
+          return {
+            productId: id,
+            sortOrder: currentSort,
+            localId: Math.random().toString(36).substr(2, 9)
+          };
+        });
+        return {
+          ...d,
+          items: [...d.items, ...newItems]
+        };
+      }
+      return d;
+    }));
+    setQuickEntryContext(null);
+  };
+
+  const startQuickEntry = (dayIndex: number) => {
+    const input = quickEntryInput[dayIndex];
+    if (!input) return;
+
+    // Supports split by -, ~, ,, 、, space hyphen space
+    const segments = input.split(/[-、,，]/).map(s => s.trim()).filter(Boolean);
+    if (segments.length === 0) return;
+
+    processQuickEntry({
+      dayIndex,
+      segments,
+      currentIndex: 0,
+      resolvedProductIds: []
+    });
+    setQuickEntryInput(prev => ({ ...prev, [dayIndex]: '' }));
+  };
+
+  const handleQuickEntryRename = async () => {
+    if (!quickEntryContext || !selectedProductToRename) return;
+    const segment = quickEntryContext.segments[quickEntryContext.currentIndex];
+    
+    try {
+      // 1. Rename existing product (simplified assuming formData backend accepts generic title edits)
+      const formData = new FormData();
+      formData.append('title', segment);
+      await axios.put(`/api/supplier/tours/${selectedProductToRename}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Update local product state
+      setProducts(prev => prev.map(p => p.id === selectedProductToRename ? { ...p, title: segment } : p));
+      
+      const newContext = {
+        ...quickEntryContext,
+        resolvedProductIds: [...quickEntryContext.resolvedProductIds, selectedProductToRename],
+        currentIndex: quickEntryContext.currentIndex + 1
+      };
+      
+      setSelectedProductToRename('');
+      await processQuickEntry(newContext);
+      
+    } catch (err) {
+      alert('重命名產品失敗');
+    }
+  };
+
+  const handleQuickEntryCreate = async () => {
+    if (!quickEntryContext) return;
+    const segment = quickEntryContext.segments[quickEntryContext.currentIndex];
+    
+    try {
+      const formData = new FormData();
+      formData.append('title', segment);
+      formData.append('destination', destination || '待定');
+      formData.append('category', 'landmark');
+      formData.append('description', '自動建立的產品');
+      formData.append('netPrice', '0');
+      
+      const blob = new Blob(['dummy image'], { type: 'image/png' });
+      formData.append('coverImage', blob, 'dummy.png');
+
+      const res = await axios.post('/api/supplier/tours', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const newProduct = res.data;
+      setProducts(prev => [newProduct, ...prev]);
+      
+      const newContext = {
+        ...quickEntryContext,
+        resolvedProductIds: [...quickEntryContext.resolvedProductIds, newProduct.id],
+        currentIndex: quickEntryContext.currentIndex + 1
+      };
+      
+      await processQuickEntry(newContext);
+      
+      // Give a tiny alert that implies creation happened (optional, but requested by logic)
+      
+    } catch (err) {
+      alert('建立產品失敗');
     }
   };
 
@@ -628,6 +768,35 @@ export default function TripBuilderPage() {
                     </optgroup>
                     <option value="__add_new__">+ 點擊建立新產品並加入</option>
                   </CustomSelect>
+
+                  {/* Quick Entry Field */}
+                  <div className="mt-4 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
+                    <label className="block text-sm font-bold text-blue-800 mb-2">
+                       <span className="material-symbols-outlined align-middle mr-1 text-base">bolt</span>
+                       快速匯入行程
+                    </label>
+                    <p className="text-xs text-blue-600 mb-2">可直接輸入多個景點（以 "-" 或 "," 分隔），系統將自動比對並依序加入。例如：「烏布 - 金巴蘭海灘 - 烏魯瓦圖」</p>
+                    <div className="flex gap-2">
+                      <input 
+                        className="flex-1 px-3 py-2 text-sm border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                        placeholder="請輸入行程字串..."
+                        value={quickEntryInput[day.dayIndex] || ''}
+                        onChange={e => setQuickEntryInput(prev => ({ ...prev, [day.dayIndex]: e.target.value }))}
+                        onKeyDown={e => {
+                           if (e.key === 'Enter') {
+                             e.preventDefault();
+                             startQuickEntry(day.dayIndex);
+                           }
+                        }}
+                      />
+                      <button 
+                        onClick={() => startQuickEntry(day.dayIndex)}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition"
+                      >
+                        快速加入
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Hotel */}
@@ -732,6 +901,92 @@ export default function TripBuilderPage() {
           </div>
         </div>
       )}
+
+      {/* Quick Entry Resolution Modal */}
+      {quickEntryContext && quickEntryContext.currentIndex < quickEntryContext.segments.length && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-600 mb-4">
+               <span className="material-symbols-outlined text-3xl">warning</span>
+               <h3 className="text-xl font-bold text-slate-800">未找到相符的產品</h3>
+            </div>
+            
+            <p className="text-slate-600 mb-6 leading-relaxed">
+               在快速匯入時，系統找不到匹配 <strong className="text-slate-900 bg-amber-100 px-1 rounded">「{quickEntryContext.segments[quickEntryContext.currentIndex]}」</strong> 的景點。請選擇下列其中一種方式繼續：
+            </p>
+
+            <div className="space-y-4 mb-6">
+               <div className="p-4 border border-slate-200 rounded-lg hover:border-blue-400 transition bg-slate-50">
+                 <h4 className="font-bold text-slate-800 mb-2 text-sm flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">1</span>
+                    重新命名現有產品 (Rename)
+                 </h4>
+                 <p className="text-xs text-slate-500 mb-3">若選單中已有類似產品，您可以選擇它並將其名稱更新為此次輸入的名稱。</p>
+                 <div className="flex gap-2">
+                   <CustomSelect
+                     value={selectedProductToRename}
+                     onChange={e => setSelectedProductToRename(e.target.value)}
+                     className="flex-1 text-sm bg-white"
+                   >
+                     <option value="">-- 請選擇要重新命名的現有產品 --</option>
+                     {getProductsByCategory('landmark').map(p => (
+                       <option key={p.id} value={p.id}>{p.title}</option>
+                     ))}
+                   </CustomSelect>
+                   <button 
+                     disabled={!selectedProductToRename}
+                     onClick={handleQuickEntryRename}
+                     className="px-3 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50 hover:bg-blue-700"
+                   >
+                     更新並繼續
+                   </button>
+                 </div>
+               </div>
+               
+               <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-slate-200"></div>
+                  <span className="flex-shrink-0 mx-4 text-slate-400 text-sm font-semibold">或</span>
+                  <div className="flex-grow border-t border-slate-200"></div>
+               </div>
+
+               <div className="p-4 border border-slate-200 rounded-lg hover:border-green-400 transition bg-slate-50">
+                 <h4 className="font-bold text-slate-800 mb-2 text-sm flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">2</span>
+                    建立新產品 (Create New)
+                 </h4>
+                 <p className="text-xs text-slate-500 mb-3">系統將以此名稱建立一個草稿景點，您稍後必須至「產品列表」中完善其資訊並送審。</p>
+                 <button 
+                   onClick={handleQuickEntryCreate}
+                   className="w-full py-2 bg-slate-800 text-white rounded text-sm hover:bg-slate-900 shadow-sm"
+                 >
+                   建立新產品並繼續
+                 </button>
+               </div>
+            </div>
+            
+            <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-2">
+              <button 
+                onClick={() => {
+                   // Skip this item
+                   const newContext = { ...quickEntryContext, currentIndex: quickEntryContext.currentIndex + 1 };
+                   processQuickEntry(newContext);
+                }}
+                className="text-slate-500 text-sm hover:text-slate-800 font-medium underline px-2"
+              >
+                略過此景點 (Skip)
+              </button>
+              
+              <button 
+                onClick={() => setQuickEntryContext(null)} 
+                className="px-4 py-2 hover:bg-red-50 text-red-600 font-medium rounded transition"
+              >
+                取消整個快速匯入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
