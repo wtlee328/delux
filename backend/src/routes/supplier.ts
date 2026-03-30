@@ -229,7 +229,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     }
 
     // Update product status with ownership validation
-    const product = await updateProductStatus(id, status, supplierId);
+    const product = await updateProductStatus(id, status, supplierId, undefined, req.body.currentUpdatedAt);
 
     res.json(product);
   } catch (error) {

@@ -493,6 +493,9 @@ export async function updateProductStatus(
   if (rejectionReason !== undefined) {
     updates.push(`rejection_reason = $${paramCount++}`);
     values.push(rejectionReason);
+  } else if (status === '待審核' || status === '草稿') {
+    // If supplier is moving it to review or explicitly back to draft, clear feedback
+    updates.push(`rejection_reason = NULL`);
   }
 
   const result = await pool.query(
