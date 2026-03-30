@@ -222,9 +222,9 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     const supplierId = req.user!.userId;
 
     // Validate status
-    const validStatuses: ProductStatus[] = ['草稿', '待審核'];
+    const validStatuses: ProductStatus[] = ['草稿', '待審核', '需要修改'];
     if (!status || !validStatuses.includes(status)) {
-      res.status(400).json({ error: 'Invalid status. Suppliers can only set status to 草稿 or 待審核' });
+      res.status(400).json({ error: 'Invalid status. Suppliers can only set status to 草稿, 待審核, or 需要修改' });
       return;
     }
 
@@ -397,10 +397,10 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
     const { status, currentUpdatedAt } = req.body;
     const supplierId = req.user!.userId;
 
-    // Validate status - suppliers can only submit for review
-    const validStatuses: TripStatus[] = ['草稿', '審核中'];
+    // Validate status - suppliers can only submit for review or keep as revision
+    const validStatuses: TripStatus[] = ['草稿', '審核中', '已退回'];
     if (!status || !validStatuses.includes(status)) {
-      res.status(400).json({ error: '無效的狀態。供應商僅能將行程設為草稿或提交審核。' });
+      res.status(400).json({ error: '無效的狀態。供應商僅能將行程設為草稿、提交審核或保留退回狀態。' });
       return;
     }
 

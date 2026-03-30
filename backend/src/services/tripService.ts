@@ -239,10 +239,8 @@ export async function updateTrip(id: string, supplierId: string, updateData: Upd
       throw new Error('行程正在審核中，請先撤回申請後再進行修改。');
     }
 
-    // Auto-reset status: If the trip was already '已通過', revert it to '草稿'
-    const newStatus = currentTrip.status === '已通過' ? '草稿' : '草稿'; 
-    // Actually we default to '草稿' anyway in the original code, 
-    // but let's be explicit about resetting rejection_reason too
+    // Auto-reset status: If the trip was already '已通過' or '已退回', revert it to '草稿'
+    const statusToReset = ['已通過', '已退回'];
     
     await client.query(
       `UPDATE supplier_trips 

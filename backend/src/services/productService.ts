@@ -213,8 +213,8 @@ export async function updateProduct(
     values.push(productData.longitude);
   }
 
-  // Auto-reset status: If the product was already '已發佈', revert it to '草稿'
-  if (currentProduct.status === '已發佈') {
+  // Auto-reset status: If the product was already '已發佈' or '需要修改', revert it to '草稿'
+  if (currentProduct.status === '已發佈' || currentProduct.status === '需要修改') {
     updates.push(`status = '草稿'`);
     updates.push(`rejection_reason = NULL`);
   }
