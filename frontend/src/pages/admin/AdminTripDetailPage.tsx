@@ -14,6 +14,7 @@ interface TripDetail {
   status: TripStatus;
   rejectionReason?: string;
   createdAt: string;
+  updatedAt: string;
   days: any[];
 }
 
@@ -51,12 +52,20 @@ const AdminTripDetailPage: React.FC = () => {
   const handleUpdateStatus = async (status: TripStatus, reason?: string) => {
     try {
       setUpdating(true);
-      await axios.put(`/api/admin/trips/${id}/status`, { status, rejectionReason: reason });
+      await axios.put(`/api/admin/trips/${id}/status`, { 
+        status, 
+        rejectionReason: reason,
+        currentUpdatedAt: trip?.updatedAt
+      });
       await fetchTrip();
       setShowRevisionModal(false);
       setRevisionFeedback('');
     } catch (err: any) {
-      alert('更新狀態失敗');
+      if (err.response?.status === 409) {
+        alert('行程內容已由供應商更新，請重新整理頁面核對最新內容。');
+      } else {
+        alert('更新狀態失敗');
+      }
     } finally {
       setUpdating(false);
     }

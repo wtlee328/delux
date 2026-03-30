@@ -175,6 +175,7 @@ export default function TripBuilderPage() {
   
   const [tripStatus, setTripStatus] = useState<string>('草稿');
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [tripUpdatedAt, setTripUpdatedAt] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -209,6 +210,7 @@ export default function TripBuilderPage() {
       setDaysCountInput(String(trip.daysCount));
       setTripStatus(trip.status);
       setRejectionReason(trip.rejectionReason || null);
+      setTripUpdatedAt(trip.updatedAt);
       setDays(trip.days.length ? trip.days.map((d: any) => ({
         ...d,
         items: d.items ? d.items.map((i: any) => ({ ...i, localId: Math.random().toString(36).substr(2, 9) })) : []
@@ -531,19 +533,30 @@ export default function TripBuilderPage() {
       };
 
       if (isEditing) {
-        await axios.put(`/api/supplier/trips/${id}`, payload);
+        await axios.put(`/api/supplier/trips/${id}`, payload, {
+          headers: { 'x-updated-at': tripUpdatedAt || '' }
+        });
       } else {
         await axios.post('/api/supplier/trips', payload);
       }
 
       if (isSubmitForReviewRef.current) {
-        await axios.put(`/api/supplier/trips/${id}/status`, { status: '審核中' });
+        await axios.put(`/api/supplier/trips/${id}/status`, { 
+          status: '審核中',
+          currentUpdatedAt: tripUpdatedAt
+        });
         alert('行程已儲存並成功提交審核！');
       }
 
       navigate('/supplier/dashboard?tab=trips');
     } catch (err: any) {
-      setError(err.response?.data?.error || '儲存行程失敗');
+      if (err.response?.status === 403) {
+        alert(err.response.data.error || '行程正在審核中，無法修改。若需修改請先撤回申請。');
+      } else if (err.response?.status === 409) {
+        alert('此行程內容已被更新（可能在其他分頁已修改），請刷新頁面後再試。');
+      } else {
+        setError(err.response?.data?.error || '儲存行程失敗');
+      }
     } finally {
       setSaving(false);
       isSubmitForReviewRef.current = false;
@@ -554,12 +567,19 @@ export default function TripBuilderPage() {
     if (!isEditing) return;
     try {
       setSaving(true);
-      await axios.put(`/api/supplier/trips/${id}/status`, { status: newStatus });
+      await axios.put(`/api/supplier/trips/${id}/status`, { 
+        status: newStatus,
+        currentUpdatedAt: tripUpdatedAt
+      });
       setTripStatus(newStatus);
       if (newStatus === '草稿') setRejectionReason(null);
       alert(newStatus === '審核中' ? '已提交審核' : (newStatus === '草稿' ? '行程已撤回至草稿' : '已更新狀態'));
     } catch (err: any) {
-      alert(err.response?.data?.message || '更新狀態失敗');
+      if (err.response?.status === 409) {
+        alert('行程內容已被更新，請重新整理頁面後再試。');
+      } else {
+        alert(err.response?.data?.message || err.response?.data?.error || '更新狀態失敗');
+      }
     } finally {
       setSaving(false);
     }

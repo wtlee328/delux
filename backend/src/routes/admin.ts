@@ -244,7 +244,7 @@ router.get('/trips/:id', async (req: Request, res: Response) => {
 router.put('/trips/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status, rejectionReason } = req.body;
+    const { status, rejectionReason, currentUpdatedAt } = req.body;
 
     const validStatuses = ['草稿', '審核中', '已通過', '已退回'];
     if (!status || !validStatuses.includes(status)) {
@@ -252,9 +252,15 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
     }
 
     const { updateTripStatus } = await import('../services/tripService');
-    const trip = await updateTripStatus(id, status, undefined, rejectionReason);
+    const trip = await updateTripStatus(id, status, undefined, rejectionReason, currentUpdatedAt);
     res.json(trip);
-  } catch (error) {
+  } catch (error: any) {
+    const message = error.message;
+
+    if (message === '此行程內容已被更新，請重新載入並審核新版本。') {
+      return res.status(409).json({ error: message });
+    }
+
     console.error('Update trip status error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
