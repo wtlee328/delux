@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -202,13 +202,10 @@ const EditProductPage: React.FC = () => {
     }
   };
 
-  const isSubmitForReviewRef = useRef(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, isSubmitForReview: boolean = false) => {
+    if (e) e.preventDefault();
 
     if (!validateForm()) {
-      isSubmitForReviewRef.current = false;
       return;
     }
 
@@ -250,7 +247,7 @@ const EditProductPage: React.FC = () => {
         },
       });
 
-      if (isSubmitForReviewRef.current) {
+      if (isSubmitForReview) {
         await axios.put(`/api/supplier/tours/${id}/status`, { status: '待審核' });
         alert('產品已儲存並成功提交審核！');
       }
@@ -268,7 +265,6 @@ const EditProductPage: React.FC = () => {
       }
     } finally {
       setIsSubmitting(false);
-      isSubmitForReviewRef.current = false;
     }
   };
 
@@ -555,23 +551,9 @@ const EditProductPage: React.FC = () => {
       <DraftStatusFooter
         status={currentStatus}
         rejectionReason={rejectionReason}
-        onSaveDraft={() => {
-          // EditProductPage has a form with onSubmit={handleSubmit}
-          // We can just call handleSubmit manually if we have the event or just trigger the button
-          const editBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-          if (editBtn) editBtn.click();
-          else {
-            const e = { preventDefault: () => {} } as React.FormEvent;
-            handleSubmit(e);
-          }
-        }}
+        onSaveDraft={() => handleSubmit()}
         onSubmitForReview={() => handleStatusChange('待審核')}
-        onSaveAndSubmitForReview={() => {
-          isSubmitForReviewRef.current = true;
-          const editBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-          if (editBtn) editBtn.click();
-          else handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-        }}
+        onSaveAndSubmitForReview={() => handleSubmit(undefined, true)}
         onWithdraw={() => handleStatusChange('草稿')}
         isSubmitting={isSubmitting}
         itemType="產品"
