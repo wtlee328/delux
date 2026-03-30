@@ -854,14 +854,14 @@ export default function TripBuilderPage() {
 
                   {destination && (
                     <div className="mt-4 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
-                      <label className="block text-sm font-bold text-blue-800 mb-2">
+                      <label className="block text-sm font-bold text-slate-800 mb-2">
                          <span className="material-symbols-outlined align-middle mr-1 text-base">bolt</span>
                          快速匯入行程
                       </label>
-                      <p className="text-xs text-blue-600 mb-2">可直接輸入多個景點（以 "-" 或 "," 分隔），系統將自動比對並依序加入。例如：「烏布 - 金巴蘭海灘 - 烏魯瓦圖」</p>
+                      <p className="text-xs text-slate-500 mb-2">可直接輸入多個景點（以 "-" 或 "," 分隔），系統將自動比對並依序加入。例如：「烏布 - 金巴蘭海灘 - 烏魯瓦圖」</p>
                       <div className="flex gap-2">
                         <input 
-                          className="flex-1 px-3 py-2 text-sm border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                          className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-400 bg-white"
                           placeholder="請輸入行程字串..."
                           value={quickEntryInput[day.dayIndex] || ''}
                           onChange={e => setQuickEntryInput(prev => ({ ...prev, [day.dayIndex]: e.target.value }))}
@@ -874,7 +874,7 @@ export default function TripBuilderPage() {
                         />
                         <button 
                           onClick={() => processQuickEntry(day.dayIndex)}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition"
+                          className="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded hover:bg-slate-900 transition border border-slate-700"
                         >
                           快速加入
                         </button>
