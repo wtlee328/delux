@@ -623,6 +623,34 @@ export default function TripBuilderPage() {
     });
   };
 
+  const handleDestinationChange = (newDest: string) => {
+    // Check if there's any content already selected in the itinerary
+    const hasContent = days.some(d => 
+      d.items.length > 0 || 
+      d.breakfastId || d.breakfastCustom || 
+      d.lunchId || d.lunchCustom || 
+      d.dinnerId || d.dinnerCustom || 
+      d.hotelId || d.hotelCustom
+    );
+
+    if (hasContent && destination && destination !== newDest) {
+      const confirmed = window.confirm('更換目的地將會清空目前已編排的行程內容（包含所有景點、餐食、住宿）。確定要繼續嗎？');
+      if (!confirmed) return;
+
+      // Clear all content
+      setDays(prev => prev.map(d => ({
+        ...d,
+        breakfastId: null, breakfastCustom: null,
+        lunchId: null, lunchCustom: null,
+        dinnerId: null, dinnerCustom: null,
+        hotelId: null, hotelCustom: null,
+        items: []
+      })));
+    }
+
+    setDestination(newDest);
+  };
+
   if (loading) return <div className="p-8 text-center text-slate-500">載入中...</div>;
 
   return (
@@ -673,10 +701,10 @@ export default function TripBuilderPage() {
                   if (e.target.value === '__add_new__') {
                     const newDest = window.prompt('請輸入新目的地名稱:');
                     if (newDest && newDest.trim()) {
-                      setDestination(newDest.trim());
+                      handleDestinationChange(newDest.trim());
                     }
                   } else {
-                    setDestination(e.target.value);
+                    handleDestinationChange(e.target.value);
                   }
                 }}
               >
