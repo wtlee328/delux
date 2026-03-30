@@ -31,6 +31,7 @@ export interface UpdateProductRequest {
   address?: string;
   latitude?: number;
   longitude?: number;
+  currentUpdatedAt?: string;
 }
 
 export type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
@@ -139,12 +140,19 @@ export async function updateProduct(
 ): Promise<Product> {
   // First verify ownership and that product is not soft-deleted
   const ownershipCheck = await pool.query(
-    'SELECT id FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
+    'SELECT id, status FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
     [id, supplierId]
   );
 
   if (ownershipCheck.rows.length === 0) {
     throw new Error('Product not found or access denied');
+  }
+
+  const currentProduct = ownershipCheck.rows[0];
+
+  // If product is under review, supplier cannot edit without withdrawing (optional but recommended for stability)
+  if (currentProduct.status === '待審核') {
+    throw new Error('產品正在審核中，請先撤回申請後再進行修改。');
   }
 
   // Build dynamic update query
@@ -203,6 +211,12 @@ export async function updateProduct(
   if (productData.longitude !== undefined) {
     updates.push(`longitude = $${paramCount++}`);
     values.push(productData.longitude);
+  }
+
+  // Auto-reset status: If the product was already '已發佈', revert it to '草稿'
+  if (currentProduct.status === '已發佈') {
+    updates.push(`status = '草稿'`);
+    updates.push(`rejection_reason = NULL`);
   }
 
   updates.push(`updated_at = CURRENT_TIMESTAMP`);
@@ -442,7 +456,8 @@ export async function updateProductStatus(
   id: string,
   status: ProductStatus,
   supplierId?: string,
-  rejectionReason?: string
+  rejectionReason?: string,
+  currentUpdatedAt?: string // For optimistic locking (admin side)
 ): Promise<Product> {
   // If supplierId is provided, verify ownership
   if (supplierId) {
@@ -453,6 +468,21 @@ export async function updateProductStatus(
 
     if (ownershipCheck.rows.length === 0) {
       throw new Error('Product not found or access denied');
+    }
+  } else if (currentUpdatedAt) {
+    // Admin / Manager approval: Check if the product has been modified since the manager last saw it
+    const staleCheck = await pool.query(
+      'SELECT updated_at FROM products WHERE id = $1',
+      [id]
+    );
+    
+    if (staleCheck.rows.length > 0) {
+      const dbUpdatedAt = new Date(staleCheck.rows[0].updated_at).toISOString();
+      const clientUpdatedAt = new Date(currentUpdatedAt).toISOString();
+      
+      if (dbUpdatedAt !== clientUpdatedAt) {
+         throw new Error('此產品內容已被更新，請重新載入並審核新版本。');
+      }
     }
   }
 

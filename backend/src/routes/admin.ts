@@ -346,7 +346,7 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 router.put('/tours/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status, feedback } = req.body;
+    const { status, feedback, currentUpdatedAt } = req.body;
 
     // Validate status
     const validStatuses = ['草稿', '待審核', '已發佈', '需要修改'];
@@ -362,7 +362,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     }
 
     const { updateProductStatus } = await import('../services/productService');
-    const product = await updateProductStatus(id, status, undefined, feedback);
+    const product = await updateProductStatus(id, status, undefined, feedback, currentUpdatedAt);
 
     // TODO: In task 17.5, send email notification with feedback if status is '需要修改'
 
@@ -372,6 +372,11 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
 
     if (message === 'Product not found') {
       res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === '此產品內容已被更新，請重新載入並審核新版本。') {
+      res.status(409).json({ error: message });
       return;
     }
 

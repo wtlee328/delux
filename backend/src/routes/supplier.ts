@@ -149,6 +149,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     const { id } = req.params;
     const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
     const supplierId = req.user!.userId;
+    const currentUpdatedAt = req.headers['x-updated-at'] as string;
     
     console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}`);
     console.log(`[DEBUG] Received address: "${address}", lat: ${latitude}, lng: ${longitude}`);
@@ -168,6 +169,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     if (address !== undefined) updateData.address = address;
     if (latitude !== undefined) updateData.latitude = latitude ? parseFloat(latitude) : null;
     if (longitude !== undefined) updateData.longitude = longitude ? parseFloat(longitude) : null;
+    if (currentUpdatedAt) updateData.currentUpdatedAt = currentUpdatedAt;
 
     // Handle cover image update if provided
     if (req.file) {
@@ -190,6 +192,16 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
 
     if (message === 'Product not found or access denied') {
       res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === '產品正在審核中，請先撤回申請後再進行修改。') {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    if (message === '此產品內容已被更新，請重新載入並審核新版本。') {
+      res.status(409).json({ error: message });
       return;
     }
 

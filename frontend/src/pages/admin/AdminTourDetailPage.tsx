@@ -22,6 +22,7 @@ interface ProductDetail {
   hasTicket: boolean;
   ticketPrice?: number;
   duration: number;
+  updatedAt: string;
 }
 
 const AdminTourDetailPage: React.FC = () => {
@@ -61,7 +62,10 @@ const AdminTourDetailPage: React.FC = () => {
     try {
       setUpdating(true);
       setError(null);
-      await axios.put(`/api/admin/tours/${id}/status`, { status: '已發佈' });
+      await axios.put(`/api/admin/tours/${id}/status`, { 
+        status: '已發佈',
+        currentUpdatedAt: product.updatedAt
+      });
 
       // Update local state
       setProduct({ ...product, status: '已發佈' });
@@ -94,7 +98,8 @@ const AdminTourDetailPage: React.FC = () => {
       setError(null);
       await axios.put(`/api/admin/tours/${id}/status`, {
         status: '需要修改',
-        feedback: revisionFeedback
+        feedback: revisionFeedback,
+        currentUpdatedAt: product.updatedAt
       });
 
       // Update local state
@@ -106,7 +111,11 @@ const AdminTourDetailPage: React.FC = () => {
       // Hide success message after 2 seconds
       setTimeout(() => setUpdateSuccess(false), 2000);
     } catch (err: any) {
-      setError('提交修改要求失敗');
+      if (err.response?.status === 409) {
+        setError('產品內容已由供應商更新，請重新載入頁面核對最新內容。');
+      } else {
+        setError('提交修改要求失敗');
+      }
       console.error('Error requesting revisions:', err);
     } finally {
       setUpdating(false);
