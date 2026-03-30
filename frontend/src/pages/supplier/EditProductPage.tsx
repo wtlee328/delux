@@ -24,6 +24,7 @@ interface FormData {
   address: string;
   latitude: number | undefined;
   longitude: number | undefined;
+  updatedAt?: string;
 }
 
 interface FormErrors {
@@ -40,7 +41,6 @@ interface FormErrors {
 const EditProductPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // const { showSuccess, showError } = useToast(); // Removed unused
 
   const [formData, setFormData] = useState<FormData>({
     產品標題: '',
@@ -76,7 +76,6 @@ const EditProductPage: React.FC = () => {
       const response = await axios.get(`/api/supplier/tours/${id}`);
       const product = response.data;
 
-      // Map backend category to frontend display value
       const categoryMap: Record<string, string> = {
         'landmark': '地標',
         'accommodation': '住宿',
@@ -98,6 +97,7 @@ const EditProductPage: React.FC = () => {
         address: product.address || '',
         latitude: product.latitude,
         longitude: product.longitude,
+        updatedAt: product.updatedAt
       });
 
       setExistingImageUrl(product.coverImageUrl);
@@ -105,7 +105,11 @@ const EditProductPage: React.FC = () => {
       setCurrentStatus(product.status);
       setRejectionReason(product.rejectionReason);
     } catch (err: any) {
-      setErrors({ submit: err.response?.data?.message || '載入產品失敗' });
+      if (err.response?.status === 409) {
+        setErrors({ submit: '產品內容已由管理員更新，請重新載入頁面核對最新內容。' });
+      } else {
+        setErrors({ submit: err.response?.data?.message || '載入產品失敗' });
+      }
     } finally {
       setLoading(false);
     }
@@ -242,6 +246,7 @@ const EditProductPage: React.FC = () => {
       await axios.put(`/api/supplier/tours/${id}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'x-updated-at': formData.updatedAt || '',
         },
       });
 
@@ -252,7 +257,11 @@ const EditProductPage: React.FC = () => {
 
       navigate('/supplier/dashboard?tab=products');
     } catch (error: any) {
-      if (error.response?.data?.message) {
+      if (error.response?.status === 403) {
+        alert(error.response.data.error || '產品正在審核中，無法修改。若需修改請先撤回申請。');
+      } else if (error.response?.status === 409) {
+        alert('此產品內容已被更新（可能在其他分頁已修改），請刷新頁面後再試。');
+      } else if (error.response?.data?.message) {
         setErrors({ submit: error.response.data.message });
       } else {
         setErrors({ submit: '更新失敗，請稍後再試' });
@@ -268,11 +277,16 @@ const EditProductPage: React.FC = () => {
     setErrors({});
 
     try {
-      await axios.put(`/api/supplier/tours/${id}/status`, { status: newStatus });
+      await axios.put(`/api/supplier/tours/${id}/status`, { 
+        status: newStatus,
+        currentUpdatedAt: formData.updatedAt 
+      });
       setCurrentStatus(newStatus);
       alert(`產品狀態已更新為：${newStatus}`);
     } catch (error: any) {
-      if (error.response?.data?.error) {
+      if (error.response?.status === 409) {
+        setErrors({ submit: '產品內容已由管理員更新，請重新載入頁面後再試。' });
+      } else if (error.response?.data?.error) {
         setErrors({ submit: error.response.data.error });
       } else {
         setErrors({ submit: '狀態更新失敗，請稍後再試' });

@@ -149,6 +149,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     const { id } = req.params;
     const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
     const supplierId = req.user!.userId;
+    const currentUpdatedAt = req.headers['x-updated-at'] as string;
     
     console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}`);
     console.log(`[DEBUG] Received address: "${address}", lat: ${latitude}, lng: ${longitude}`);
@@ -168,6 +169,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     if (address !== undefined) updateData.address = address;
     if (latitude !== undefined) updateData.latitude = latitude ? parseFloat(latitude) : null;
     if (longitude !== undefined) updateData.longitude = longitude ? parseFloat(longitude) : null;
+    if (currentUpdatedAt) updateData.currentUpdatedAt = currentUpdatedAt;
 
     // Handle cover image update if provided
     if (req.file) {
@@ -190,6 +192,16 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
 
     if (message === 'Product not found or access denied') {
       res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === '產品正在審核中，請先撤回申請後再進行修改。') {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    if (message === '此產品內容已被更新，請重新載入並審核新版本。') {
+      res.status(409).json({ error: message });
       return;
     }
 
@@ -217,7 +229,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     }
 
     // Update product status with ownership validation
-    const product = await updateProductStatus(id, status, supplierId);
+    const product = await updateProductStatus(id, status, supplierId, undefined, req.body.currentUpdatedAt);
 
     res.json(product);
   } catch (error) {
@@ -326,15 +338,28 @@ router.put('/trips/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const supplierId = req.user!.userId;
     const { name, destination, category, daysCount, days } = req.body;
+    const currentUpdatedAt = req.headers['x-updated-at'] as string;
 
-    const trip = await updateTrip(id, supplierId, { name, destination, category, daysCount, days });
+    const trip = await updateTrip(id, supplierId, { name, destination, category, daysCount, days, currentUpdatedAt });
     res.json(trip);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
+    
     if (message.includes('not found')) {
       res.status(404).json({ error: message });
       return;
     }
+
+    if (message === '行程正在審核中，請先撤回申請後再進行修改。') {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    if (message === '此行程內容已被更新，請重新載入並審核新版本。') {
+      res.status(409).json({ error: message });
+      return;
+    }
+
     console.error('Update trip error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -369,7 +394,7 @@ router.delete('/trips/:id', async (req: Request, res: Response) => {
 router.put('/trips/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, currentUpdatedAt } = req.body;
     const supplierId = req.user!.userId;
 
     // Validate status - suppliers can only submit for review
@@ -379,7 +404,7 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
       return;
     }
 
-    const trip = await updateTripStatus(id, status, supplierId);
+    const trip = await updateTripStatus(id, status, supplierId, undefined, currentUpdatedAt);
     res.json(trip);
   } catch (error: any) {
     const message = error.message;
@@ -389,6 +414,10 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
     }
     if (message.includes('not found')) {
       res.status(404).json({ error: message });
+      return;
+    }
+    if (message === '此行程內容已被更新，請重新載入並審核新版本。') {
+      res.status(409).json({ error: message });
       return;
     }
     console.error('Update trip status error:', error);

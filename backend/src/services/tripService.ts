@@ -53,6 +53,7 @@ export interface UpdateTripRequest {
   category: string;
   daysCount: number;
   days: Omit<TripDay, 'id'>[];
+  currentUpdatedAt?: string;
 }
 
 export async function createTrip(tripData: CreateTripRequest): Promise<Trip> {
@@ -222,20 +223,30 @@ export async function updateTrip(id: string, supplierId: string, updateData: Upd
   try {
     await client.query('BEGIN');
     
-    // Check ownership
+    // Check ownership and current status
     const ownershipResult = await client.query(
-      'SELECT id FROM supplier_trips WHERE id = $1 AND supplier_id = $2',
+      'SELECT id, status FROM supplier_trips WHERE id = $1 AND supplier_id = $2',
       [id, supplierId]
     );
     if (ownershipResult.rows.length === 0) {
       throw new Error('Trip not found or access denied');
     }
 
-    // Update Trip Master Record
-    // Note: Editing a trip resets it to '草稿' or keeps it in current non-reviewed state
+    const currentTrip = ownershipResult.rows[0];
+
+    // If trip is under review, supplier cannot edit without withdrawing
+    if (currentTrip.status === '審核中') {
+      throw new Error('行程正在審核中，請先撤回申請後再進行修改。');
+    }
+
+    // Auto-reset status: If the trip was already '已通過', revert it to '草稿'
+    const newStatus = currentTrip.status === '已通過' ? '草稿' : '草稿'; 
+    // Actually we default to '草稿' anyway in the original code, 
+    // but let's be explicit about resetting rejection_reason too
+    
     await client.query(
       `UPDATE supplier_trips 
-       SET name = $1, destination = $2, category = $3, days_count = $4, status = $5, updated_at = CURRENT_TIMESTAMP 
+       SET name = $1, destination = $2, category = $3, days_count = $4, status = $5, rejection_reason = NULL, updated_at = CURRENT_TIMESTAMP 
        WHERE id = $6`,
       [updateData.name, updateData.destination, updateData.category || '團體旅遊', updateData.daysCount, '草稿', id]
     );
@@ -301,7 +312,8 @@ export async function updateTripStatus(
   id: string,
   status: TripStatus,
   supplierId?: string,
-  rejectionReason?: string
+  rejectionReason?: string,
+  currentUpdatedAt?: string // For optimistic locking (admin side)
 ): Promise<Trip> {
   // If supplierId is provided, verify ownership
   if (supplierId) {
@@ -339,6 +351,21 @@ export async function updateTripStatus(
         throw new Error('此行程包含尚未審核通過的產品，請先完成產品審核後再提交行程審核。');
       }
     }
+  } else if (currentUpdatedAt) {
+    // Admin / Manager approval: Check if the trip has been modified since the manager last saw it
+    const staleCheck = await pool.query(
+      'SELECT updated_at FROM supplier_trips WHERE id = $1',
+      [id]
+    );
+    
+    if (staleCheck.rows.length > 0) {
+      const dbUpdatedAt = new Date(staleCheck.rows[0].updated_at).toISOString();
+      const clientUpdatedAt = new Date(currentUpdatedAt).toISOString();
+      
+      if (dbUpdatedAt !== clientUpdatedAt) {
+         throw new Error('此行程內容已被更新，請重新載入並審核新版本。');
+      }
+    }
   }
 
   const updates: string[] = ['status = $1', 'updated_at = CURRENT_TIMESTAMP'];
@@ -348,6 +375,9 @@ export async function updateTripStatus(
   if (rejectionReason !== undefined) {
     updates.push(`rejection_reason = $${paramCount++}`);
     values.push(rejectionReason);
+  } else if (status === '審核中' || status === '草稿') {
+    // If supplier is moving it to review or explicitly back to draft, clear feedback
+    updates.push(`rejection_reason = NULL`);
   }
 
   const result = await pool.query(
