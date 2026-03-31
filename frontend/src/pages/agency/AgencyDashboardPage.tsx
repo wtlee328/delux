@@ -246,7 +246,7 @@ const AgencyDashboardPage: React.FC = () => {
                 {trips.map(trip => (
                   <div
                     key={trip.id}
-                    onClick={() => navigate(`/agency/itinerary-planner?tripId=${trip.id}`)}
+                    onClick={() => navigate(`/agency/trips/${trip.id}?type=template`)}
                     className="group bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-200/60 p-5 hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] hover:border-blue-300 transition-all duration-300 cursor-pointer flex flex-col justify-between"
                   >
                     <div>

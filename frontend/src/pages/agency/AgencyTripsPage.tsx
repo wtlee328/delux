@@ -159,7 +159,7 @@ const AgencyTripsPage: React.FC = () => {
               {filteredItineraries.map((itinerary, index) => (
                 <div 
                   key={itinerary.id}
-                  onClick={() => navigate(`/agency/itinerary-planner?itineraryId=${itinerary.id}`)}
+                  onClick={() => navigate(`/agency/trips/${itinerary.id}`)}
                   className={`group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 hover:bg-slate-50 transition-colors cursor-pointer items-center ${
                     index === filteredItineraries.length - 1 ? 'rounded-b-[24px]' : ''
                   }`}

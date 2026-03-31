@@ -17,6 +17,7 @@ import AgencyDashboardPage from './pages/agency/AgencyDashboardPage';
 import AgencyTourDetailPage from './pages/agency/AgencyTourDetailPage';
 import ItineraryPlannerPage from './pages/agency/ItineraryPlannerPage';
 import AgencyTripsPage from './pages/agency/AgencyTripsPage';
+import AgencyTripDetailPage from './pages/agency/AgencyTripDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Component to handle role-based redirect after login
@@ -177,6 +178,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['agency']}>
                     <AgencyTripsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/agency/trips/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['agency']}>
+                    <AgencyTripDetailPage />
                   </ProtectedRoute>
                 }
               />
