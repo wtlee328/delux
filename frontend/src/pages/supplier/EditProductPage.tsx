@@ -240,6 +240,11 @@ const EditProductPage: React.FC = () => {
         submitData.append('coverImage', formData.封面圖);
       }
 
+      // Include submitForReview flag in the same request so backend handles save + status atomically
+      if (isSubmitForReview) {
+        submitData.append('submitForReview', 'true');
+      }
+
       await axios.put(`/api/supplier/tours/${id}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -248,16 +253,18 @@ const EditProductPage: React.FC = () => {
       });
 
       if (isSubmitForReview) {
-        await axios.put(`/api/supplier/tours/${id}/status`, { status: '待審核' });
         alert('產品已儲存並成功提交審核！');
       }
 
       navigate('/supplier/dashboard?tab=products');
     } catch (error: any) {
+      console.error('[EditProductPage] handleSubmit error:', error);
       if (error.response?.status === 403) {
         alert(error.response.data.error || '產品正在審核中，無法修改。若需修改請先撤回申請。');
       } else if (error.response?.status === 409) {
         alert('此產品內容已被更新（可能在其他分頁已修改），請刷新頁面後再試。');
+      } else if (error.response?.data?.error) {
+        setErrors({ submit: error.response.data.error });
       } else if (error.response?.data?.message) {
         setErrors({ submit: error.response.data.message });
       } else {

@@ -147,11 +147,11 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
 router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude } = req.body;
+    const { title, destination, category, description, netPrice, hasShopping, hasTicket, ticketPrice, duration, address, latitude, longitude, submitForReview } = req.body;
     const supplierId = req.user!.userId;
     const currentUpdatedAt = req.headers['x-updated-at'] as string;
     
-    console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}`);
+    console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}, submitForReview=${submitForReview}`);
     console.log(`[DEBUG] Received address: "${address}", lat: ${latitude}, lng: ${longitude}`);
 
     // Build update data
@@ -184,7 +184,14 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     }
 
     // Update product with ownership validation
-    const product = await updateProduct(id, supplierId, updateData);
+    let product = await updateProduct(id, supplierId, updateData);
+
+    // If submitForReview flag is set, also update status to '待審核' in the same request
+    const shouldSubmit = submitForReview === 'true' || submitForReview === true;
+    if (shouldSubmit) {
+      console.log(`[DEBUG] submitForReview=true, changing status to 待審核 for product ${id}`);
+      product = await updateProductStatus(id, '待審核', supplierId);
+    }
 
     res.json(product);
   } catch (error) {
