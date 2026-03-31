@@ -239,14 +239,15 @@ const EditProductPage: React.FC = () => {
       submitData.append('address', formData.address);
       if (formData.latitude !== undefined) submitData.append('latitude', formData.latitude.toString());
       if (formData.longitude !== undefined) submitData.append('longitude', formData.longitude.toString());
-      if (formData.封面圖) {
-        submitData.append('coverImage', formData.封面圖);
-      }
-
       // Include submitForReview flag in the same request so backend handles save + status atomically
+      // Appending this BEFORE the file to ensure Multer processes it correctly
       if (isSubmitForReview) {
         submitData.append('submitForReview', 'true');
         console.log('[EditProductPage] Including submitForReview: true in request');
+      }
+
+      if (formData.封面圖) {
+        submitData.append('coverImage', formData.封面圖);
       }
 
       console.log('[EditProductPage] Sending PUT request to /api/supplier/tours/' + id);

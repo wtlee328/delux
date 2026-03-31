@@ -147,12 +147,13 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
     const supplierId = req.user!.userId;
     const currentUpdatedAt = req.headers['x-updated-at'] as string;
     
-    console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}, submitForReview=${submitForReview}`);
-    console.log(`[DEBUG] Received address: "${address}", lat: ${latitude}, lng: ${longitude}`);
+    console.log(`[DEBUG] Updating product ${id} from supplier ${supplierId}`);
+    console.log(`[DEBUG] Received body keys: ${Object.keys(req.body).join(', ')}`);
+    console.log(`[DEBUG] submitForReview raw value: ${submitForReview} (${typeof submitForReview})`);
 
     // Build update data
     const updateData: any = {};
-
+    // ... (rest of updateData logic) ...
     if (title) updateData.title = title;
     if (destination) updateData.destination = destination;
     if (category) updateData.category = category;
@@ -181,20 +182,23 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
 
     // Update product with ownership validation
     let product = await updateProduct(id, supplierId, updateData);
-    console.log(`[DEBUG] Product saved, intermediate status: ${product.status}`);
+    console.log(`[DEBUG] updateProduct returned status: "${product.status}" (Length: ${product.status.length})`);
 
     // If submitForReview flag is set, also update status to '待審核' in the same request
     const shouldSubmit = submitForReview === 'true' || submitForReview === true;
+    console.log(`[DEBUG] shouldSubmit calculated as: ${shouldSubmit}`);
+
     if (shouldSubmit) {
-      console.log(`[DEBUG] submitForReview=true, changing status to 待審核 for product ${id}`);
+      console.log(`[DEBUG] ATTEMPTING to change status to 待審核 for product ${id}`);
       product = await updateProductStatus(id, '待審核', supplierId);
-      console.log(`[DEBUG] Status updated, new status: ${product.status}`);
+      console.log(`[DEBUG] updateProductStatus returned status: "${product.status}" (Length: ${product.status.length})`);
     }
 
     res.json(product);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Product update failed';
-
+    console.error(`[DEBUG] Error in product update:`, error);
+    // ... rest of error handling ...
     if (message === 'Product not found or access denied') {
       res.status(404).json({ error: message });
       return;
@@ -210,7 +214,6 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
       return;
     }
 
-    console.error('Update product error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
