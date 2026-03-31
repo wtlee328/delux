@@ -250,28 +250,19 @@ const EditProductPage: React.FC = () => {
         submitData.append('coverImage', formData.封面圖);
       }
 
-      console.log('[EditProductPage] Sending PUT request to /api/supplier/tours/' + id);
-      const response = await axios.put(`/api/supplier/tours/${id}`, submitData, {
+      await axios.put(`/api/supplier/tours/${id}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'x-updated-at': formData.updatedAt || '',
         },
       });
 
-      console.log('[EditProductPage] PUT request successful, response data:', response.data);
-      console.log('[EditProductPage] Final status from server:', response.data.status);
-
       if (isSubmitForReview) {
-        console.log('[EditProductPage] isSubmitForReview was true, showing success alert');
-        alert(`產品已儲存並成功提交審核！\n目前狀態: ${response.data.status}`);
+        alert('產品已儲存並成功提交審核！');
       }
 
-      console.log('[EditProductPage] Navigating back to dashboard');
       navigate('/supplier/dashboard?tab=products');
     } catch (error: any) {
-      console.error('[EditProductPage] handleSubmit error caught:', error);
-      console.error('[EditProductPage] Error response data:', error.response?.data);
-      console.error('[EditProductPage] Error status code:', error.response?.status);
       if (error.response?.status === 403) {
         alert(error.response.data.error || '產品正在審核中，無法修改。若需修改請先撤回申請。');
       } else if (error.response?.status === 409) {
