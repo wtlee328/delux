@@ -12,7 +12,7 @@ Migrations are executed in alphabetical order:
 
 ## Running Migrations
 
-### Development (using ts-node)
+### Local Development (using ts-node)
 
 ```bash
 # Run all pending migrations
@@ -22,41 +22,41 @@ npm run migrate:dev
 npm run migrate:dev:down
 ```
 
-### Production (using compiled JavaScript)
+### Production & Staging (using compiled JavaScript)
+
+The `run-migrations.sh` script handles connecting to Cloud SQL via proxy and executing migrations.
 
 ```bash
-# Build and run migrations
-npm run migrate
+# Run migrations on STAGING (Default)
+./src/migrations/run-migrations.sh staging
 
-# Build and rollback last migration
-npm run migrate:down
+# Run migrations on PRODUCTION
+./src/migrations/run-migrations.sh prod
 ```
 
-## Database Schema
+> [!IMPORTANT]
+> Always run migrations using the `delux_admin` user (handled automatically by the script) to ensure table ownership and permissions are correct.
 
-### Users Table
+## Troubleshooting & Best Practices
 
-- `id` (UUID, Primary Key)
-- `email` (VARCHAR, Unique, Indexed)
-- `password_hash` (VARCHAR)
-- `name` (VARCHAR)
-- `role` (VARCHAR, Indexed) - Values: 'admin', 'supplier', 'agency'
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+### Shell & Password Safety
+If you are running manual commands or setting up environment variables, be aware of **shell expansion**. 
+- If the `DB_PASSWORD` or any secret contains special characters (like `!`), **ALWAYS** use single quotes to wrap the value.
+- **Wrong**: `export DB_PASSWORD=mypass!word` (In zsh, `!` triggers event expansion)
+- **Correct**: `export DB_PASSWORD='mypass!word'`
 
-### Products Table
+### Permission Denied
+If you receive a `permission denied for table migrations` error, it means you are likely connected as the generic `postgres` user instead of the application owner (`delux_admin`). Use the provided `run-migrations.sh` script which selects the correct user.
 
-- `id` (UUID, Primary Key)
-- `supplier_id` (UUID, Foreign Key → users.id, Indexed)
-- `title` (VARCHAR)
-- `destination` (VARCHAR, Indexed)
-- `duration_days` (INTEGER, Indexed)
-- `description` (TEXT)
-- `cover_image_url` (VARCHAR)
-- `net_price` (DECIMAL)
-- `status` (VARCHAR, Indexed) - Values: 'pending', 'published'
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+## Environment Variables
+
+Ensure these are set in your `.env` file for local development:
+
+- `DB_HOST` - Database host
+- `DB_PORT` - Database port (default: 5432)
+- `DB_NAME` - Database name
+- `DB_USER` - Database user
+- `DB_PASSWORD` - Database password
 
 ## Creating New Migrations
 
@@ -74,13 +74,3 @@ export const down = async (pool: Pool): Promise<void> => {
   // Rollback logic
 };
 ```
-
-## Environment Variables
-
-Ensure these are set in your `.env` file:
-
-- `DB_HOST` - Database host
-- `DB_PORT` - Database port (default: 5432)
-- `DB_NAME` - Database name
-- `DB_USER` - Database user
-- `DB_PASSWORD` - Database password
