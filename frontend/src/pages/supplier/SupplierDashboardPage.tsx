@@ -18,7 +18,7 @@ interface Product {
 
 const SupplierDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'products' | 'trips') || 'products';
   const [activeTab, setActiveTab] = useState<'products' | 'trips'>(initialTab);
 
@@ -39,10 +39,6 @@ const SupplierDashboardPage: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const handleTabChange = (tab: 'products' | 'trips') => {
-    setSearchParams({ tab });
-    setActiveTab(tab);
-  };
 
   const fetchProducts = async () => {
     try {
@@ -153,33 +149,6 @@ const SupplierDashboardPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50">
       <TopBar title="供應商控制台" />
       
-      {/* Tab Navigation */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex gap-8">
-            <button
-              onClick={() => handleTabChange('products')}
-              className={`py-4 font-medium text-sm transition-colors border-b-2 ${
-                activeTab === 'products'
-                  ? 'border-slate-800 text-slate-800'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              景點
-            </button>
-            <button
-              onClick={() => handleTabChange('trips')}
-              className={`py-4 font-medium text-sm transition-colors border-b-2 ${
-                activeTab === 'trips'
-                  ? 'border-slate-800 text-slate-800'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              行程
-            </button>
-          </div>
-        </div>
-      </div>
 
       <main className="p-8 max-w-7xl mx-auto">
         {activeTab === 'products' ? (

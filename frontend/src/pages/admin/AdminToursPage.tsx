@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../config/axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
-import { useAuth } from '../../contexts/AuthContext';
 import TopBar from '../../components/TopBar';
 import CustomSelect from '../../components/ui/CustomSelect';
 
@@ -203,35 +202,10 @@ const AdminToursPage: React.FC = () => {
     .filter(Boolean)
     .filter(s => s !== '草稿');
 
-  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar title="後台管理" />
-      <div className="bg-white border-b border-slate-200 py-4 flex justify-center sticky top-16 z-30 shadow-sm">
-        <nav className="flex p-1 bg-slate-100 rounded-xl">
-          {user?.role === 'super_admin' && (
-            <button
-              onClick={() => navigate('/admin/users')}
-              className="px-6 py-2.5 text-slate-500 hover:text-slate-700 font-medium transition-all"
-            >
-              用戶管理
-            </button>
-          )}
-          <button
-            onClick={() => navigate('/admin/tours')}
-            className="px-6 py-2.5 bg-white text-slate-900 shadow-sm rounded-lg font-bold transition-all"
-          >
-            產品管理
-          </button>
-          <button
-            onClick={() => navigate('/admin/trips')}
-            className="px-6 py-2.5 text-slate-500 hover:text-slate-700 font-medium transition-all"
-          >
-            行程管理
-          </button>
-        </nav>
-      </div>
       <main className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">產品列表</h2>

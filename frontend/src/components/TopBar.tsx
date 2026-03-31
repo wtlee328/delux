@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from '../config/axios';
 import { useToast } from './Toast';
-import { ChevronDown, LogOut, User as UserIcon, Check } from 'lucide-react';
+import { ChevronDown, LogOut, User as UserIcon, Check, LayoutGrid, Map as MapIcon, Users } from 'lucide-react';
 
 interface TopBarProps {
     title?: string;
@@ -14,6 +14,7 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
     const { user, updateUser, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { showError, showSuccess } = useToast();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isSwitching, setIsSwitching] = useState(false);
@@ -101,13 +102,86 @@ const TopBar: React.FC<TopBarProps> = ({ title, actions, middleContent }) => {
                 <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                     <img src="/logo.png" alt="Delux+ Logo" className="h-8 w-auto" />
                 </Link>
-                {title && (
+                {title && !middleContent && (
                     <>
                         <div className="h-6 w-px bg-slate-200 mx-2"></div>
                         <h1 className="text-lg font-medium text-slate-600">{title}</h1>
                     </>
                 )}
-                {middleContent}
+            </div>
+
+            <div className="flex-1 flex justify-center items-center h-full">
+                {middleContent ? middleContent : (
+                    <div className="flex bg-slate-100/80 p-1 rounded-xl">
+                        {user?.role === 'supplier' && (
+                            <>
+                                <Link
+                                    to="/supplier/dashboard?tab=products"
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        (location.pathname === '/supplier/dashboard' || location.pathname.startsWith('/supplier/tours')) && 
+                                        new URLSearchParams(location.search).get('tab') !== 'trips'
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <LayoutGrid size={16} strokeWidth={2.5} />
+                                    我的產品
+                                </Link>
+                                <Link
+                                    to="/supplier/dashboard?tab=trips"
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        location.pathname.startsWith('/supplier/trips') ||
+                                        (location.pathname === '/supplier/dashboard' && new URLSearchParams(location.search).get('tab') === 'trips')
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <MapIcon size={16} strokeWidth={2.5} />
+                                    我的行程
+                                </Link>
+                            </>
+                        )}
+                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                            <>
+                                {user?.role === 'super_admin' && (
+                                    <Link
+                                        to="/admin/users"
+                                        className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                                            location.pathname === '/admin/users'
+                                                ? 'bg-white text-slate-900 shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                        }`}
+                                    >
+                                        <Users size={16} strokeWidth={2.5} />
+                                        用戶管理
+                                    </Link>
+                                )}
+                                <Link
+                                    to="/admin/tours"
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        location.pathname.startsWith('/admin/tours')
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <LayoutGrid size={16} strokeWidth={2.5} />
+                                    產品管理
+                                </Link>
+                                <Link
+                                    to="/admin/trips"
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        location.pathname.startsWith('/admin/trips')
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <MapIcon size={16} strokeWidth={2.5} />
+                                    行程管理
+                                </Link>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center gap-4">
