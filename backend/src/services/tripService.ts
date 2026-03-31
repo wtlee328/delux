@@ -236,7 +236,7 @@ export async function updateTrip(id: string, supplierId: string, updateData: Upd
 
     // If trip is under review, supplier cannot edit without withdrawing
     if (currentTrip.status === '待審核') {
-      throw new Error('行程正在審核中，請先撤回申請後再進行修改。');
+      throw new Error('行程正在待審核中，請先撤回申請後再進行修改。');
     }
 
     // Auto-reset status: If the trip was already '已通過' or '已退回', revert it to '草稿'

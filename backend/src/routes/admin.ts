@@ -201,7 +201,7 @@ router.get('/trips', async (req: Request, res: Response) => {
 router.get('/trips/pending', async (req: Request, res: Response) => {
   try {
     const { getTripsByStatus } = await import('../services/tripService');
-    const trips = await getTripsByStatus('審核中');
+    const trips = await getTripsByStatus('待審核');
     res.json(trips);
   } catch (error) {
     console.error('Get pending trips error:', error);
@@ -246,7 +246,7 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status, rejectionReason, currentUpdatedAt } = req.body;
 
-    const validStatuses = ['草稿', '審核中', '已通過', '已退回'];
+    const validStatuses = ['草稿', '待審核', '已通過', '已退回'];
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
@@ -355,14 +355,14 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     const { status, feedback, currentUpdatedAt } = req.body;
 
     // Validate status
-    const validStatuses = ['草稿', '待審核', '已發佈', '需要修改'];
+    const validStatuses = ['草稿', '待審核', '已發佈', '已退回'];
     if (!status || !validStatuses.includes(status)) {
-      res.status(400).json({ error: 'Invalid status. Must be one of: 草稿, 待審核, 已發佈, 需要修改' });
+      res.status(400).json({ error: 'Invalid status. Must be one of: 草稿, 待審核, 已發佈, 已退回' });
       return;
     }
 
     // Require feedback for revision requests
-    if (status === '需要修改' && !feedback) {
+    if (status === '已退回' && !feedback) {
       res.status(400).json({ error: 'Feedback is required when requesting revisions' });
       return;
     }
@@ -370,7 +370,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     const { updateProductStatus } = await import('../services/productService');
     const product = await updateProductStatus(id, status, undefined, feedback, currentUpdatedAt);
 
-    // TODO: In task 17.5, send email notification with feedback if status is '需要修改'
+    // TODO: In task 17.5, send email notification with feedback if status is '已退回'
 
     res.json(product);
   } catch (error) {
@@ -378,6 +378,16 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
 
     if (message === 'Product not found') {
       res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === '產品正在待審核中，請先撤回申請後再進行修改。') {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    if (message === '行程正在待審核中，請先撤回申請後再進行修改。') {
+      res.status(409).json({ error: message });
       return;
     }
 

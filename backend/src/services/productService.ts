@@ -152,7 +152,7 @@ export async function updateProduct(
 
   // If product is under review, supplier cannot edit without withdrawing (optional but recommended for stability)
   if (currentProduct.status === '待審核') {
-    throw new Error('產品正在審核中，請先撤回申請後再進行修改。');
+    throw new Error('產品正在待審核中，請先撤回申請後再進行修改。');
   }
 
   // Build dynamic update query

@@ -194,7 +194,7 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
       return;
     }
 
-    if (message === '產品正在審核中，請先撤回申請後再進行修改。') {
+    if (message === '產品正在待審核中，請先撤回申請後再進行修改。') {
       res.status(403).json({ error: message });
       return;
     }
@@ -222,7 +222,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     // Validate status
     const validStatuses: ProductStatus[] = ['草稿', '待審核', '已退回'];
     if (!status || !validStatuses.includes(status)) {
-      res.status(400).json({ error: 'Invalid status. Suppliers can only set status to 草稿, 待審核, or 需要修改' });
+      res.status(400).json({ error: 'Invalid status. Suppliers can only set status to 草稿, 待審核, or 已退回' });
       return;
     }
 
@@ -360,7 +360,7 @@ router.put('/trips/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    if (message === '行程正在審核中，請先撤回申請後再進行修改。') {
+    if (message === '行程正在待審核中，請先撤回申請後再進行修改。') {
       res.status(403).json({ error: message });
       return;
     }
