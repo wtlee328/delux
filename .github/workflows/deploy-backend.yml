@@ -70,7 +70,7 @@ jobs:
             --set-env-vars="GCS_BUCKET_NAME=${{ env.GCS_BUCKET_NAME }}" \
             --set-env-vars="CORS_ORIGIN=${{ env.FRONTEND_URL }}" \
             --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }} \
-            --service-account=${{ secrets.SERVICE_ACCOUNT_EMAIL }} \
+            --service-account=${{ github.ref == 'refs/heads/main' && secrets.SERVICE_ACCOUNT_EMAIL || 'delux-plus-storage-sa@delux-plus-staging-488508.iam.gserviceaccount.com' }} \
             --memory=512Mi \
             --cpu=1 \
             --timeout=300 \
