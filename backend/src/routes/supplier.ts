@@ -275,7 +275,7 @@ router.delete('/tours/:id', async (req: Request, res: Response) => {
  */
 router.post('/trips', async (req: Request, res: Response) => {
   try {
-    const { name, destination, category, daysCount, days } = req.body;
+    const { name, destination, category, daysCount, days, submitForReview } = req.body;
     const supplierId = req.user!.userId;
 
     if (!name || !category || typeof destination !== 'string' || typeof daysCount !== 'number' || !days) {
@@ -283,7 +283,13 @@ router.post('/trips', async (req: Request, res: Response) => {
       return;
     }
 
-    const trip = await createTrip({ supplierId, name, destination, category, daysCount, days });
+    let trip = await createTrip({ supplierId, name, destination, category, daysCount, days });
+
+    // Handle atomic status update
+    if (submitForReview === true || submitForReview === 'true') {
+      trip = await updateTripStatus(trip.id, '審核中', supplierId);
+    }
+
     res.status(201).json(trip);
   } catch (error) {
     console.error('Create trip error:', error);
@@ -335,10 +341,16 @@ router.put('/trips/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const supplierId = req.user!.userId;
-    const { name, destination, category, daysCount, days } = req.body;
+    const { name, destination, category, daysCount, days, submitForReview } = req.body;
     const currentUpdatedAt = req.headers['x-updated-at'] as string;
 
-    const trip = await updateTrip(id, supplierId, { name, destination, category, daysCount, days, currentUpdatedAt });
+    let trip = await updateTrip(id, supplierId, { name, destination, category, daysCount, days, currentUpdatedAt });
+
+    // Handle atomic status update
+    if (submitForReview === true || submitForReview === 'true') {
+      trip = await updateTripStatus(id, '審核中', supplierId);
+    }
+
     res.json(trip);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';

@@ -518,11 +518,13 @@ export default function TripBuilderPage() {
       }
 
       setSaving(true);
-      const payload = {
+      const isSubmitForReview = isSubmitForReviewRef.current;
+      const payload: any = {
         name,
         destination,
         category,
         daysCount,
+        submitForReview: isSubmitForReview,
         days: days.map(d => ({
           ...d,
           breakfastCustom: d.breakfastCustom === 'DEFAULT' ? null : d.breakfastCustom,
@@ -540,11 +542,7 @@ export default function TripBuilderPage() {
         await axios.post('/api/supplier/trips', payload);
       }
 
-      if (isSubmitForReviewRef.current) {
-        await axios.put(`/api/supplier/trips/${id}/status`, { 
-          status: '審核中',
-          currentUpdatedAt: tripUpdatedAt
-        });
+      if (isSubmitForReview) {
         alert('行程已儲存並成功提交審核！');
       }
 
