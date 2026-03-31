@@ -27,9 +27,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
       case '已通過':
         return 'bg-green-500 text-white border-green-600';
       case '待審核':
-      case '審核中':
         return 'bg-amber-400 text-black border-amber-500';
-      case '需要修改':
       case '已退回':
         return 'bg-red-500 text-white border-red-600';
       default:
@@ -37,7 +35,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
     }
   };
 
-  const displayStatus = (status === '待審核' || status === '審核中') ? '審核中' : (status === '需要修改' || status === '已退回') ? '已退回' : status;
+  const displayStatus = status === '待審核' ? '待審核' : status === '已退回' ? '已退回' : status;
 
   const handleSubmitConfirm = () => {
     if (window.confirm('準備提交審核！若有尚未儲存的變更，將會一併儲存。\n\n- 點擊「確定」：儲存並送出審核\n- 點擊「取消」：取消提交')) {
@@ -58,7 +56,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
           <div className={`px-4 py-1.5 rounded-full text-sm font-bold border ${getStatusStyle(status)}`}>
             {displayStatus}
           </div>
-          {(status === '已退回' || status === '需要修改') && rejectionReason && (
+          {(status === '已退回') && rejectionReason && (
             <div className="text-red-600 text-sm font-medium italic animate-pulse">
               原因：{rejectionReason}
             </div>
@@ -66,13 +64,13 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
           {(status === '草稿') && (
             <span className="text-slate-500 font-medium hidden md:inline">此{itemType}目前為草稿狀態</span>
           )}
-          {(status === '待審核' || status === '審核中') && (
+          {(status === '待審核') && (
             <span className="text-slate-500 font-medium hidden md:inline">此{itemType}正在審核中</span>
           )}
         </div>
         
         <div className="flex gap-4">
-          {onSaveDraft && (status === '草稿' || status === '已退回' || status === '需要修改') && (
+          {onSaveDraft && (status === '草稿' || status === '已退回') && (
             <button
               type="button"
               onClick={onSaveDraft}
@@ -83,7 +81,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
             </button>
           )}
           
-          {(status === '草稿' || status === '已退回' || status === '需要修改') && (
+          {(status === '草稿' || status === '已退回') && (
             <button
               type="button"
               onClick={handleSubmitConfirm}
@@ -94,7 +92,7 @@ const DraftStatusFooter: React.FC<DraftStatusFooterProps> = ({
             </button>
           )}
 
-          {(status === '待審核' || status === '審核中') && onWithdraw && (
+          {(status === '待審核') && onWithdraw && (
             <button
               type="button"
               onClick={onWithdraw}

@@ -32,7 +32,7 @@ router.post('/tours', upload.single('coverImage'), async (req: Request, res: Res
     const supplierId = req.user!.userId;
 
     // Validate status if provided
-    const validStatuses: ProductStatus[] = ['草稿', '待審核', '已發佈', '需要修改'];
+    const validStatuses: ProductStatus[] = ['草稿', '待審核', '已發佈', '已退回'];
     const productStatus: ProductStatus = status && validStatuses.includes(status) ? status : '草稿';
 
     // Validate required fields
@@ -220,7 +220,7 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
     const supplierId = req.user!.userId;
 
     // Validate status
-    const validStatuses: ProductStatus[] = ['草稿', '待審核', '需要修改'];
+    const validStatuses: ProductStatus[] = ['草稿', '待審核', '已退回'];
     if (!status || !validStatuses.includes(status)) {
       res.status(400).json({ error: 'Invalid status. Suppliers can only set status to 草稿, 待審核, or 需要修改' });
       return;
@@ -287,7 +287,7 @@ router.post('/trips', async (req: Request, res: Response) => {
 
     // Handle atomic status update
     if (submitForReview === true || submitForReview === 'true') {
-      trip = await updateTripStatus(trip.id, '審核中', supplierId);
+      trip = await updateTripStatus(trip.id, '待審核', supplierId);
     }
 
     res.status(201).json(trip);
@@ -348,7 +348,7 @@ router.put('/trips/:id', async (req: Request, res: Response) => {
 
     // Handle atomic status update
     if (submitForReview === true || submitForReview === 'true') {
-      trip = await updateTripStatus(id, '審核中', supplierId);
+      trip = await updateTripStatus(id, '待審核', supplierId);
     }
 
     res.json(trip);
@@ -408,7 +408,7 @@ router.put('/trips/:id/status', async (req: Request, res: Response) => {
     const supplierId = req.user!.userId;
 
     // Validate status - suppliers can only submit for review or keep as revision
-    const validStatuses: TripStatus[] = ['草稿', '審核中', '已退回'];
+    const validStatuses: TripStatus[] = ['草稿', '待審核', '已退回'];
     if (!status || !validStatuses.includes(status)) {
       res.status(400).json({ error: '無效的狀態。供應商僅能將行程設為草稿、提交審核或保留退回狀態。' });
       return;

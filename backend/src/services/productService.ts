@@ -34,7 +34,7 @@ export interface UpdateProductRequest {
   currentUpdatedAt?: string;
 }
 
-export type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+export type ProductStatus = '草稿' | '待審核' | '已發佈' | '已退回';
 
 export interface Product {
   id: string;
@@ -213,8 +213,8 @@ export async function updateProduct(
     values.push(productData.longitude);
   }
 
-  // Auto-reset status: If the product was already '已發佈' or '需要修改', revert it to '草稿'
-  if (currentProduct.status === '已發佈' || currentProduct.status === '需要修改') {
+  // Auto-reset status: If the product was already '已發佈' or '已退回', revert it to '草稿'
+  if (currentProduct.status === '已發佈' || currentProduct.status === '已退回') {
     updates.push(`status = '草稿'`);
     updates.push(`rejection_reason = NULL`);
   }

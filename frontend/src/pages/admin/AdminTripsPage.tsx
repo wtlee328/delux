@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import TopBar from '../../components/TopBar';
 import CustomSelect from '../../components/ui/CustomSelect';
 
-type TripStatus = '草稿' | '審核中' | '已通過' | '已退回';
+type TripStatus = '草稿' | '待審核' | '已通過' | '已退回';
 
 interface Trip {
   id: string;
@@ -47,7 +47,7 @@ const AdminTripsPage: React.FC = () => {
   const getStatusStyle = (status: TripStatus) => {
     const statusConfig = {
       '草稿': 'bg-slate-500 text-white',
-      '審核中': 'bg-amber-400 text-black',
+      '待審核': 'bg-amber-400 text-black',
       '已通過': 'bg-green-500 text-white',
       '已退回': 'bg-red-500 text-white',
     };
@@ -125,7 +125,7 @@ const AdminTripsPage: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <option value="">全部狀態</option>
-            <option value="審核中">審核中</option>
+            <option value="待審核">待審核</option>
             <option value="已通過">已通過</option>
             <option value="已退回">已退回</option>
           </CustomSelect>

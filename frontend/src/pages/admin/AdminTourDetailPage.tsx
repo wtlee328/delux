@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import TopBar from '../../components/TopBar';
 import { ImageOff } from 'lucide-react';
 
-type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '已退回';
 
 interface ProductDetail {
   id: string;
@@ -97,13 +97,13 @@ const AdminTourDetailPage: React.FC = () => {
       setUpdating(true);
       setError(null);
       await axios.put(`/api/admin/tours/${id}/status`, {
-        status: '需要修改',
+        status: '已退回',
         feedback: revisionFeedback,
         currentUpdatedAt: product.updatedAt
       });
 
       // Update local state
-      setProduct({ ...product, status: '需要修改', rejectionReason: revisionFeedback });
+      setProduct({ ...product, status: '已退回', rejectionReason: revisionFeedback });
       setUpdateSuccess(true);
       setShowRevisionModal(false);
       setRevisionFeedback('');
@@ -278,7 +278,7 @@ const AdminTourDetailPage: React.FC = () => {
               </div>
             )}
 
-            {product.status === '需要修改' && (
+            {product.status === '已退回' && (
               <div className="mt-8 p-4 bg-red-50 rounded-lg border border-red-100">
                 <p className="text-red-700 font-medium mb-2">此產品需要供應商修改</p>
                 {product.rejectionReason && (

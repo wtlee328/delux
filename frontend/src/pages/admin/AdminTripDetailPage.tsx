@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Utensils, BedDouble, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import TopBar from '../../components/TopBar';
 
-type TripStatus = '草稿' | '審核中' | '已通過' | '已退回';
+type TripStatus = '草稿' | '待審核' | '已通過' | '已退回';
 
 interface TripDetail {
   id: string;
@@ -90,14 +90,14 @@ const AdminTripDetailPage: React.FC = () => {
             </div>
             <div className={`px-4 py-1.5 rounded-full text-sm font-bold ${
               trip.status === '已通過' ? 'bg-green-500 text-white' : 
-              trip.status === '審核中' ? 'bg-amber-400 text-black' : 
+              trip.status === '待審核' ? 'bg-amber-400 text-black' : 
               trip.status === '已退回' ? 'bg-red-500 text-white' : 'bg-slate-400 text-white'
             }`}>
               {trip.status}
             </div>
           </div>
 
-          {trip.status === '審核中' ? (
+          {trip.status === '待審核' ? (
             <div className="flex gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 mb-8">
               <button 
                 onClick={() => handleUpdateStatus('已通過')}

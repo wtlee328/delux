@@ -5,7 +5,7 @@ import TopBar from '../../components/TopBar';
 import SupplierTripList from './SupplierTripList';
 import FilterBar from '../../components/supplier/FilterBar';
 
-type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '已退回';
 
 interface Product {
   id: string;
@@ -79,7 +79,7 @@ const SupplierDashboardPage: React.FC = () => {
       '草稿': 'bg-slate-500 text-white',
       '待審核': 'bg-amber-400 text-black',
       '已發佈': 'bg-green-500 text-white',
-      '需要修改': 'bg-red-500 text-white',
+      '已退回': 'bg-red-500 text-white',
     };
 
     const classes = statusConfig[status] || statusConfig['草稿'];

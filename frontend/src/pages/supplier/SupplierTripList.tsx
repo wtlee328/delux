@@ -65,7 +65,7 @@ const SupplierTripList: React.FC = () => {
     return uniqueCats.map(c => ({ value: c, label: c }));
   }, [trips]);
 
-  const statuses = ['草稿', '審核中', '已通過', '已退回'];
+  const statuses = ['草稿', '待審核', '已通過', '已退回'];
 
   const handleDeleteTrip = async (tripId: string, tripName: string) => {
     const confirmMessage = `⚠️ 警告：刪除行程\n\n您即將刪除行程：\n標題：${tripName}\n\n確定要繼續嗎？`;
@@ -157,7 +157,7 @@ const SupplierTripList: React.FC = () => {
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                       trip.status === '已通過' ? 'bg-green-50 text-green-700 border-green-200' :
-                      trip.status === '審核中' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                      trip.status === '待審核' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                       trip.status === '已退回' ? 'bg-red-50 text-red-700 border-red-200' :
                       'bg-slate-50 text-slate-700 border-slate-200'
                     }`}>

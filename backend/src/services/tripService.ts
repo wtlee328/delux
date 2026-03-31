@@ -22,7 +22,7 @@ export interface TripDay {
   items: TripDayItem[];
 }
 
-export type TripStatus = '草稿' | '審核中' | '已通過' | '已退回';
+export type TripStatus = '草稿' | '待審核' | '已通過' | '已退回';
 
 export interface Trip {
   id: string;
@@ -235,7 +235,7 @@ export async function updateTrip(id: string, supplierId: string, updateData: Upd
     const currentTrip = ownershipResult.rows[0];
 
     // If trip is under review, supplier cannot edit without withdrawing
-    if (currentTrip.status === '審核中') {
+    if (currentTrip.status === '待審核') {
       throw new Error('行程正在審核中，請先撤回申請後再進行修改。');
     }
 
@@ -325,7 +325,7 @@ export async function updateTripStatus(
     }
 
     // If submitting for review, check all products
-    if (status === '審核中') {
+    if (status === '待審核') {
       const unapprovedProducts = await pool.query(`
         SELECT p.title 
         FROM products p
@@ -373,7 +373,7 @@ export async function updateTripStatus(
   if (rejectionReason !== undefined) {
     updates.push(`rejection_reason = $${paramCount++}`);
     values.push(rejectionReason);
-  } else if (status === '審核中' || status === '草稿') {
+  } else if (status === '待審核' || status === '草稿') {
     // If supplier is moving it to review or explicitly back to draft, clear feedback
     updates.push(`rejection_reason = NULL`);
   }

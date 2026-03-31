@@ -8,7 +8,7 @@ import DraftStatusFooter from '../../components/supplier/DraftStatusFooter';
 import LocationFields from '../../components/supplier/LocationFields';
 import CustomSelect from '../../components/ui/CustomSelect';
 
-type ProductStatus = '草稿' | '待審核' | '已發佈' | '需要修改';
+type ProductStatus = '草稿' | '待審核' | '已發佈' | '已退回';
 
 interface FormData {
   產品標題: string;
@@ -264,7 +264,7 @@ const EditProductPage: React.FC = () => {
       navigate('/supplier/dashboard?tab=products');
     } catch (error: any) {
       if (error.response?.status === 403) {
-        alert(error.response.data.error || '產品正在審核中，無法修改。若需修改請先撤回申請。');
+        alert(error.response.data.error || '產品正在待審核中，無法修改。若需修改請先撤回申請。');
       } else if (error.response?.status === 409) {
         alert('此產品內容已被更新（可能在其他分頁已修改），請刷新頁面後再試。');
       } else if (error.response?.data?.error) {
@@ -351,7 +351,7 @@ const EditProductPage: React.FC = () => {
               </span>
             </div>
 
-            {currentStatus === '需要修改' && rejectionReason && (
+            {currentStatus === '已退回' && rejectionReason && (
               <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
                 <h4 className="font-bold mb-2 flex items-center gap-2">
                   <span className="material-symbols-outlined">error</span>
