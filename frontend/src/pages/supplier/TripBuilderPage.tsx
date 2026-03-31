@@ -211,10 +211,41 @@ export default function TripBuilderPage() {
       setTripStatus(trip.status);
       setRejectionReason(trip.rejectionReason || null);
       setTripUpdatedAt(trip.updatedAt);
-      setDays(trip.days.length ? trip.days.map((d: any) => ({
-        ...d,
-        items: d.items ? d.items.map((i: any) => ({ ...i, localId: Math.random().toString(36).substr(2, 9) })) : []
-      })) : [{
+      setDays(trip.days.length ? trip.days.map((d: any) => {
+        // Handle deleted meals/hotels - convert to custom entries
+        const dayWithDeletedFixes = { ...d };
+        if (d.breakfastIsDeleted) {
+          dayWithDeletedFixes.breakfastCustom = d.breakfastTitle;
+          dayWithDeletedFixes.breakfastId = null;
+        }
+        if (d.lunchIsDeleted) {
+          dayWithDeletedFixes.lunchCustom = d.lunchTitle;
+          dayWithDeletedFixes.lunchId = null;
+        }
+        if (d.dinnerIsDeleted) {
+          dayWithDeletedFixes.dinnerCustom = d.dinnerTitle;
+          dayWithDeletedFixes.dinnerId = null;
+        }
+        if (d.hotelIsDeleted) {
+          dayWithDeletedFixes.hotelCustom = d.hotelTitle;
+          dayWithDeletedFixes.hotelId = null;
+        }
+
+        return {
+          ...dayWithDeletedFixes,
+          items: d.items ? d.items.map((i: any) => {
+            if (i.productIsDeleted) {
+              return { 
+                ...i, 
+                unmatchedTitle: i.productTitle, 
+                productId: '', 
+                localId: Math.random().toString(36).substr(2, 9) 
+              };
+            }
+            return { ...i, localId: Math.random().toString(36).substr(2, 9) };
+          }) : []
+        };
+      }) : [{
         dayIndex: 1,
         breakfastId: null, breakfastCustom: null,
         lunchId: null, lunchCustom: null,

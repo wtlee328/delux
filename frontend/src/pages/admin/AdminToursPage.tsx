@@ -81,26 +81,54 @@ const AdminToursPage: React.FC = () => {
     navigate(`/admin/tours/${productId}`);
   };
 
-  const handleDeleteProduct = async (productId: string, productTitle: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent row click navigation
+  const handleDeleteProduct = async (productId: string, productTitle: string, event: React.MouseEvent, force: boolean = false) => {
+    if (event) event.stopPropagation(); // Protect against row click
 
-    const confirmMessage = `⚠️ 警告：刪除產品\n\n您即將刪除產品：\n標題：${productTitle}\n\n此操作將永久刪除該產品及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
-
-    if (!window.confirm(confirmMessage)) {
-      return;
+    if (!force) {
+      const confirmMessage = `⚠️ 警告：刪除產品\n\n您即將刪除產品：\n標題：${productTitle}\n\n此操作將永久刪除該產品及相關數據，且無法撤銷。\n\n確定要繼續嗎？`;
+      if (!window.confirm(confirmMessage)) {
+        return;
+      }
     }
 
     try {
-      await axios.delete(`/api/admin/tours/${productId}`);
+      await axios.delete(`/api/admin/tours/${productId}${force ? '?force=true' : ''}`);
       // Refresh the product list
       await fetchProducts();
       await fetchPendingCount();
       showSuccess('產品已刪除');
+      setDependencyError(null);
     } catch (err: any) {
+      const resp = err.response?.data;
+      if (resp?.code === 'USED_IN_APPROVED_TRIPS') {
+        setDependencyError({
+          type: 'BLOCK',
+          trips: resp.trips,
+          productId,
+          productTitle
+        });
+        return;
+      }
+      if (resp?.code === 'USED_IN_TRIPS') {
+        setDependencyError({
+          type: 'CONFIRM',
+          trips: resp.trips,
+          productId,
+          productTitle
+        });
+        return;
+      }
       showError('刪除產品失敗，請稍後再試');
       console.error('Error deleting product:', err);
     }
   };
+
+  const [dependencyError, setDependencyError] = useState<{
+    type: 'BLOCK' | 'CONFIRM';
+    trips: any[];
+    productId: string;
+    productTitle: string;
+  } | null>(null);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -392,6 +420,89 @@ const AdminToursPage: React.FC = () => {
           </div>
         )}
       </main>
+      {dependencyError && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="flex items-start gap-4 mb-6">
+              <div className={`p-3 rounded-full flex-shrink-0 ${dependencyError.type === 'BLOCK' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                <span className="material-symbols-outlined text-2xl">
+                  {dependencyError.type === 'BLOCK' ? 'block' : 'warning'}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {dependencyError.type === 'BLOCK' ? '無法刪除產品' : '此產品正被行程使用中'}
+                </h3>
+                <p className="text-slate-600 font-medium">
+                  產品「{dependencyError.productTitle}」正被以下現有行程引用：
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-xl border border-slate-100 overflow-hidden mb-6 max-h-48 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-100 text-slate-700 font-bold">
+                  <tr>
+                    <th className="px-4 py-2 text-left">行程名稱</th>
+                    <th className="px-4 py-2 text-left">狀態</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {dependencyError.trips.map(trip => (
+                    <tr key={trip.id}>
+                      <td className="px-4 py-3 text-slate-700 font-medium">{trip.name}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          trip.status === '已通過' ? 'bg-green-100 text-green-700' : 
+                          trip.status === '待審核' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {trip.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {dependencyError.type === 'BLOCK' ? (
+              <div className="space-y-4">
+                <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 italic">
+                  此產品正被已通過的行程使用，後台管理員也無法直接刪除。請先與供應商溝通，請其將行程設回草稿或刪除後，再進行此操作。
+                </p>
+                <div className="flex justify-end">
+                  <button 
+                    onClick={() => setDependencyError(null)}
+                    className="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition-colors shadow-lg"
+                  >
+                    確定
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100 italic">
+                  您正在以管理員身份刪除產品。刪除後，供應商的行程中將會顯示錯誤提示。確定要強制刪除嗎？
+                </p>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button 
+                    onClick={() => setDependencyError(null)}
+                    className="px-6 py-2 text-slate-500 font-bold hover:underline"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    onClick={(e: any) => handleDeleteProduct(dependencyError.productId, dependencyError.productTitle, e, true)}
+                    className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+                  >
+                    確定強制刪除
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

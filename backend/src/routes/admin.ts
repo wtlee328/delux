@@ -408,16 +408,35 @@ router.put('/tours/:id/status', async (req: Request, res: Response) => {
 router.delete('/tours/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { force } = req.query;
 
     const { deleteProduct } = await import('../services/productService');
-    await deleteProduct(id);
+    await deleteProduct(id, undefined, force === 'true');
 
     res.status(204).send();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Product deletion failed';
+  } catch (error: any) {
+    const message = error.message;
 
     if (message === 'Product not found') {
       res.status(404).json({ error: message });
+      return;
+    }
+
+    if (message === 'CANNOT_DELETE_USED_IN_APPROVED_TRIPS') {
+      res.status(403).json({ 
+        error: '此產品已被使用於已通過的行程中，無法刪除。',
+        code: 'USED_IN_APPROVED_TRIPS',
+        trips: error.trips 
+      });
+      return;
+    }
+
+    if (message === 'PRODUCT_USED_IN_TRIPS') {
+      res.status(409).json({ 
+        error: '此產品已被使用於現有行程中，刪除後將在供應商行程中顯示警告。確定要刪除嗎？',
+        code: 'USED_IN_TRIPS',
+        trips: error.trips 
+      });
       return;
     }
 

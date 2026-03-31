@@ -179,7 +179,7 @@ export async function getTripById(id: string, supplierId: string): Promise<Trip>
 
     // Fetch items with product titles for this day
     const itemsResult = await pool.query(
-      `SELECT i.*, p.title as product_title 
+      `SELECT i.*, p.title as product_title, p.is_deleted as product_is_deleted 
        FROM supplier_trip_day_items i 
        LEFT JOIN products p ON i.product_id = p.id 
        WHERE i.trip_day_id = $1 
@@ -191,6 +191,7 @@ export async function getTripById(id: string, supplierId: string): Promise<Trip>
       id: itemRow.id,
       productId: itemRow.product_id,
       productTitle: itemRow.product_title,
+      productIsDeleted: itemRow.product_is_deleted === true,
       sortOrder: itemRow.sort_order
     }));
 
@@ -198,18 +199,30 @@ export async function getTripById(id: string, supplierId: string): Promise<Trip>
     const mealHotelIds = [dayRow.breakfast_id, dayRow.lunch_id, dayRow.dinner_id, dayRow.hotel_id].filter(Boolean);
     if (mealHotelIds.length > 0) {
       const productsResult = await pool.query(
-        'SELECT id, title FROM products WHERE id = ANY($1)',
+        'SELECT id, title, is_deleted FROM products WHERE id = ANY($1)',
         [mealHotelIds]
       );
       const productMap = productsResult.rows.reduce((acc: any, p: any) => {
-        acc[p.id] = p.title;
+        acc[p.id] = { title: p.title, isDeleted: p.is_deleted };
         return acc;
       }, {});
 
-      if (dayRow.breakfast_id) day.breakfastTitle = productMap[dayRow.breakfast_id];
-      if (dayRow.lunch_id) day.lunchTitle = productMap[dayRow.lunch_id];
-      if (dayRow.dinner_id) day.dinnerTitle = productMap[dayRow.dinner_id];
-      if (dayRow.hotel_id) day.hotelTitle = productMap[dayRow.hotel_id];
+      if (dayRow.breakfast_id) {
+        day.breakfastTitle = productMap[dayRow.breakfast_id]?.title;
+        day.breakfastIsDeleted = productMap[dayRow.breakfast_id]?.isDeleted;
+      }
+      if (dayRow.lunch_id) {
+        day.lunchTitle = productMap[dayRow.lunch_id]?.title;
+        day.lunchIsDeleted = productMap[dayRow.lunch_id]?.isDeleted;
+      }
+      if (dayRow.dinner_id) {
+        day.dinnerTitle = productMap[dayRow.dinner_id]?.title;
+        day.dinnerIsDeleted = productMap[dayRow.dinner_id]?.isDeleted;
+      }
+      if (dayRow.hotel_id) {
+        day.hotelTitle = productMap[dayRow.hotel_id]?.title;
+        day.hotelIsDeleted = productMap[dayRow.hotel_id]?.isDeleted;
+      }
     }
 
     trip.days!.push(day);
@@ -528,10 +541,10 @@ export async function getApprovedTripById(id: string): Promise<Trip & { supplier
 
     // Fetch items with product titles
     const itemsResult = await pool.query(
-      `SELECT i.*, p.title as product_title
-       FROM supplier_trip_day_items i
-       LEFT JOIN products p ON i.product_id = p.id
-       WHERE i.trip_day_id = $1
+      `SELECT i.*, p.title as product_title, p.is_deleted as product_is_deleted 
+       FROM supplier_trip_day_items i 
+       LEFT JOIN products p ON i.product_id = p.id 
+       WHERE i.trip_day_id = $1 
        ORDER BY i.sort_order ASC`,
       [dayRow.id]
     );
@@ -540,6 +553,7 @@ export async function getApprovedTripById(id: string): Promise<Trip & { supplier
       id: itemRow.id,
       productId: itemRow.product_id,
       productTitle: itemRow.product_title,
+      productIsDeleted: itemRow.product_is_deleted === true,
       sortOrder: itemRow.sort_order
     }));
 
@@ -547,18 +561,30 @@ export async function getApprovedTripById(id: string): Promise<Trip & { supplier
     const mealHotelIds = [dayRow.breakfast_id, dayRow.lunch_id, dayRow.dinner_id, dayRow.hotel_id].filter(Boolean);
     if (mealHotelIds.length > 0) {
       const productsResult = await pool.query(
-        'SELECT id, title FROM products WHERE id = ANY($1)',
+        'SELECT id, title, is_deleted FROM products WHERE id = ANY($1)',
         [mealHotelIds]
       );
       const productMap = productsResult.rows.reduce((acc: any, p: any) => {
-        acc[p.id] = p.title;
+        acc[p.id] = { title: p.title, isDeleted: p.is_deleted };
         return acc;
       }, {});
 
-      if (dayRow.breakfast_id) day.breakfastTitle = productMap[dayRow.breakfast_id];
-      if (dayRow.lunch_id) day.lunchTitle = productMap[dayRow.lunch_id];
-      if (dayRow.dinner_id) day.dinnerTitle = productMap[dayRow.dinner_id];
-      if (dayRow.hotel_id) day.hotelTitle = productMap[dayRow.hotel_id];
+      if (dayRow.breakfast_id) {
+        day.breakfastTitle = productMap[dayRow.breakfast_id]?.title;
+        day.breakfastIsDeleted = productMap[dayRow.breakfast_id]?.isDeleted;
+      }
+      if (dayRow.lunch_id) {
+        day.lunchTitle = productMap[dayRow.lunch_id]?.title;
+        day.lunchIsDeleted = productMap[dayRow.lunch_id]?.isDeleted;
+      }
+      if (dayRow.dinner_id) {
+        day.dinnerTitle = productMap[dayRow.dinner_id]?.title;
+        day.dinnerIsDeleted = productMap[dayRow.dinner_id]?.isDeleted;
+      }
+      if (dayRow.hotel_id) {
+        day.hotelTitle = productMap[dayRow.hotel_id]?.title;
+        day.hotelIsDeleted = productMap[dayRow.hotel_id]?.isDeleted;
+      }
     }
 
     trip.days!.push(day);

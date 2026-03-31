@@ -599,32 +599,61 @@ export async function getProductCountByStatus(status: ProductStatus): Promise<nu
  * Soft delete a product (marks as deleted without removing from database)
  * @param id - Product ID
  * @param supplierId - Optional supplier ID for ownership validation (required for supplier deletes)
- * @throws Error if product not found or access denied
+ * @param force - If true, allow deletion even if used in pending/draft trips
+ * @throws Error if product not found, access denied, used in approved trips, or needs confirmation
  */
-export async function deleteProduct(id: string, supplierId?: string): Promise<void> {
-  // If supplierId is provided, verify ownership
+export async function deleteProduct(id: string, supplierId?: string, force: boolean = false): Promise<void> {
+  // 1. Ownership & existence check
   if (supplierId) {
     const ownershipCheck = await pool.query(
       'SELECT id FROM products WHERE id = $1 AND supplier_id = $2 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [id, supplierId]
     );
-
     if (ownershipCheck.rows.length === 0) {
       throw new Error('Product not found or access denied');
     }
   } else {
-    // Admin delete - just check if product exists and is not already deleted
     const existingProduct = await pool.query(
       'SELECT id FROM products WHERE id = $1 AND (is_deleted = FALSE OR is_deleted IS NULL)',
       [id]
     );
-
     if (existingProduct.rows.length === 0) {
       throw new Error('Product not found');
     }
   }
 
-  // Soft delete product by setting is_deleted flag and deleted_at timestamp
+  // 2. Check for trip dependencies (applied to both suppliers and admins to maintain data integrity)
+  const tripDeps = await pool.query(`
+    SELECT st.id, st.name, st.status 
+    FROM supplier_trips st
+    WHERE st.id IN (
+      SELECT trip_id FROM supplier_trip_days WHERE 
+        breakfast_id = $1 OR lunch_id = $1 OR dinner_id = $1 OR hotel_id = $1
+      UNION
+      SELECT d.trip_id FROM supplier_trip_day_items i
+      JOIN supplier_trip_days d ON i.trip_day_id = d.id
+      WHERE i.product_id = $1
+    )
+  `, [id]);
+
+  if (tripDeps.rows.length > 0) {
+    const approvedTrips = tripDeps.rows.filter(t => t.status === '已通過');
+    if (approvedTrips.length > 0) {
+      const error = new Error('CANNOT_DELETE_USED_IN_APPROVED_TRIPS') as any;
+      error.trips = approvedTrips;
+      throw error;
+    }
+    
+    // If we are here, there are dependencies but no approved ones (all are draft or pending)
+    // Check if force delete is requested
+    if (!force) {
+      const error = new Error('PRODUCT_USED_IN_TRIPS') as any;
+      error.trips = tripDeps.rows;
+      throw error;
+    }
+  }
+
+  // 3. Perform soft delete
   await pool.query(
     'UPDATE products SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
     [id]
