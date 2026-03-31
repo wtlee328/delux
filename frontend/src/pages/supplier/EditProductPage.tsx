@@ -250,14 +250,14 @@ const EditProductPage: React.FC = () => {
       }
 
       console.log('[EditProductPage] Sending PUT request to /api/supplier/tours/' + id);
-      await axios.put(`/api/supplier/tours/${id}`, submitData, {
+      const response = await axios.put(`/api/supplier/tours/${id}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'x-updated-at': formData.updatedAt || '',
         },
       });
 
-      console.log('[EditProductPage] PUT request successful');
+      console.log('[EditProductPage] PUT request successful, response data:', response.data);
 
       if (isSubmitForReview) {
         console.log('[EditProductPage] isSubmitForReview was true, showing success alert');
