@@ -105,7 +105,7 @@ const AgencyTripDetailPage: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <TopBar title="行程預覽" />
       
-      <main className="max-w-5xl mx-auto p-6 md:p-10">
+      <main className="w-[75%] mx-auto p-6 md:p-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <button 
             onClick={handleBack} 
