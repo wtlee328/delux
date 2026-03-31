@@ -87,7 +87,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts }) => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center pointer-events-none">
+    <div className="fixed top-20 right-6 z-[9999] flex flex-col items-end pointer-events-none gap-2">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} />
       ))}
@@ -135,7 +135,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      className={`bg-gray-900/60 backdrop-blur-xl text-white px-6 py-2 rounded-full shadow-lg flex items-center justify-between gap-3 min-w-[200px] max-w-[400px] animate-[slideDown_0.2s_ease-out] pointer-events-auto border border-white/10`}
+      className={`bg-gray-900/60 backdrop-blur-xl text-white px-6 py-2 rounded-full shadow-lg flex items-center justify-between gap-3 min-w-[200px] max-w-[400px] animate-[slideInRight_0.2s_ease-out] pointer-events-auto border border-white/10`}
     >
       <div className="flex items-center gap-2.5 flex-1 justify-center">
         <span className={`text-base font-bold ${getIconColor(toast.type)}`}>
@@ -147,13 +147,13 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
       </div>
       <style>
         {`
-          @keyframes slideDown {
+          @keyframes slideInRight {
             from {
-              transform: translateY(-20px);
+              transform: translateX(40px);
               opacity: 0;
             }
             to {
-              transform: translateY(0);
+              transform: translateX(0);
               opacity: 1;
             }
           }
