@@ -63,13 +63,13 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars="NODE_ENV=production" \
             --set-secrets="DB_PASSWORD=delux-db-password:latest,JWT_SECRET=delux-jwt-secret:latest" \
-            --set-env-vars="DB_HOST=/cloudsql/${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }}" \
+            --set-env-vars="DB_HOST=/cloudsql/${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ github.ref == 'refs/heads/main' && secrets.SQL_INSTANCE_NAME || 'delux-plus-db-staging' }}" \
             --set-env-vars="DB_PORT=5432" \
             --set-env-vars="DB_NAME=${{ env.DB_NAME }}" \
             --set-env-vars="DB_USER=${{ secrets.DB_USER }}" \
             --set-env-vars="GCS_BUCKET_NAME=${{ env.GCS_BUCKET_NAME }}" \
             --set-env-vars="CORS_ORIGIN=${{ env.FRONTEND_URL }}" \
-            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ secrets.SQL_INSTANCE_NAME }} \
+            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:${{ github.ref == 'refs/heads/main' && secrets.SQL_INSTANCE_NAME || 'delux-plus-db-staging' }} \
             --service-account=${{ github.ref == 'refs/heads/main' && secrets.SERVICE_ACCOUNT_EMAIL || 'delux-plus-storage-sa@delux-plus-staging-488508.iam.gserviceaccount.com' }} \
             --memory=512Mi \
             --cpu=1 \
