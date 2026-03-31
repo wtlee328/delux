@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '1.2.0', timestamp: new Date().toISOString() });
 });
 
 // Routes
