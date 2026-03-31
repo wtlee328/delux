@@ -140,10 +140,6 @@ router.get('/tours/:id', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * PUT /api/supplier/tours/:id
- * Update an existing tour product
- */
 router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -185,12 +181,14 @@ router.put('/tours/:id', upload.single('coverImage'), async (req: Request, res: 
 
     // Update product with ownership validation
     let product = await updateProduct(id, supplierId, updateData);
+    console.log(`[DEBUG] Product saved, intermediate status: ${product.status}`);
 
     // If submitForReview flag is set, also update status to '待審核' in the same request
     const shouldSubmit = submitForReview === 'true' || submitForReview === true;
     if (shouldSubmit) {
       console.log(`[DEBUG] submitForReview=true, changing status to 待審核 for product ${id}`);
       product = await updateProductStatus(id, '待審核', supplierId);
+      console.log(`[DEBUG] Status updated, new status: ${product.status}`);
     }
 
     res.json(product);
