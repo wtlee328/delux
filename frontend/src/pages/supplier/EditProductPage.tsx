@@ -258,10 +258,11 @@ const EditProductPage: React.FC = () => {
       });
 
       console.log('[EditProductPage] PUT request successful, response data:', response.data);
+      console.log('[EditProductPage] Final status from server:', response.data.status);
 
       if (isSubmitForReview) {
         console.log('[EditProductPage] isSubmitForReview was true, showing success alert');
-        alert('產品已儲存並成功提交審核！');
+        alert(`產品已儲存並成功提交審核！\n目前狀態: ${response.data.status}`);
       }
 
       console.log('[EditProductPage] Navigating back to dashboard');
