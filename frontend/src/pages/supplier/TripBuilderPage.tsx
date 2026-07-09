@@ -113,14 +113,14 @@ function SortableItem({
           <p className="text-[11px] text-slate-500 mb-3 font-medium">系統找不到匹配景點，請選擇：</p>
           <div className="flex flex-col gap-2">
             <button 
-              onClick={() => { onResolve('rename', id, unmatchedTitle); setShowOptions(false); }}
+              onClick={() => { onResolve('map', id, unmatchedTitle); setShowOptions(false); }}
               className="w-full text-left p-2 hover:bg-slate-50 rounded border border-slate-100 transition-colors flex items-center justify-between group"
             >
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-700">1. 選取現有產品並修正名稱</span>
-                <span className="text-[10px] text-slate-400">將現有景點名稱同步更新為「{unmatchedTitle}」</span>
+                <span className="text-xs font-bold text-slate-700">1. 選取現有產品對應</span>
+                <span className="text-[10px] text-slate-400">選取一個現有景點產品與此行程景點進行對應</span>
               </div>
-              <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">edit</span>
+              <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">link</span>
             </button>
             <button 
               onClick={() => { onResolve('create', id, unmatchedTitle); setShowOptions(false); }}
@@ -170,7 +170,7 @@ export default function TripBuilderPage() {
   
   // Quick Entry State
   const [quickEntryInput, setQuickEntryInput] = useState<{ [dayIndex: number]: string }>({});
-  const [showQuickResolveModal, setShowQuickResolveModal] = useState<{ type: 'rename' | 'create', localId: string, title: string } | null>(null);
+  const [showQuickResolveModal, setShowQuickResolveModal] = useState<{ type: 'map' | 'create', localId: string, title: string } | null>(null);
   const [selectedProductToRename, setSelectedProductToRename] = useState<string>('');
   
   const [tripStatus, setTripStatus] = useState<string>('草稿');
@@ -458,38 +458,23 @@ export default function TripBuilderPage() {
     setQuickEntryInput(prev => ({ ...prev, [dayIndex]: '' }));
   };
 
-  const handleResolveAction = (type: 'rename' | 'create', localId: string, title: string) => {
+  const handleResolveAction = (type: 'map' | 'create', localId: string, title: string) => {
     setShowQuickResolveModal({ type, localId, title });
   };
 
-  const finishResolveRename = async () => {
+  const finishResolveMap = () => {
     if (!showQuickResolveModal || !selectedProductToRename) return;
-    const { localId, title } = showQuickResolveModal;
+    const { localId } = showQuickResolveModal;
     
-    try {
-      setSaving(true);
-      const formData = new FormData();
-      formData.append('title', title);
-      await axios.put(`/api/supplier/tours/${selectedProductToRename}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      setProducts(prev => prev.map(p => p.id === selectedProductToRename ? { ...p, title: title } : p));
-      
-      setDays(prev => prev.map(d => ({
-        ...d,
-        items: d.items.map(item => item.localId === localId 
-          ? { ...item, productId: selectedProductToRename, unmatchedTitle: undefined } 
-          : item)
-      })));
-      
-      setSelectedProductToRename('');
-      setShowQuickResolveModal(null);
-    } catch (err) {
-      alert('重命名產品失敗');
-    } finally {
-      setSaving(false);
-    }
+    setDays(prev => prev.map(d => ({
+      ...d,
+      items: d.items.map(item => item.localId === localId 
+        ? { ...item, productId: selectedProductToRename, unmatchedTitle: undefined } 
+        : item)
+    })));
+    
+    setSelectedProductToRename('');
+    setShowQuickResolveModal(null);
   };
 
   const finishResolveCreate = async () => {
@@ -1034,15 +1019,15 @@ export default function TripBuilderPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl border border-slate-200">
             <h3 className="text-lg font-bold text-slate-800 mb-2">
-              {showQuickResolveModal.type === 'rename' ? '重新命名並對應' : '建立新景點產品'}
+              {showQuickResolveModal.type === 'map' ? '對應現有景點' : '建立新景點產品'}
             </h3>
             <p className="text-sm text-slate-500 mb-6">
-              {showQuickResolveModal.type === 'rename' 
-                ? `請選擇要對應到「${showQuickResolveModal.title}」的現有產品：`
+              {showQuickResolveModal.type === 'map' 
+                ? `請選擇要對應的現有產品：`
                 : `系統將自動建立一個名為「${showQuickResolveModal.title}」的景點。繼續嗎？`}
             </p>
 
-            {showQuickResolveModal.type === 'rename' && (
+            {showQuickResolveModal.type === 'map' && (
               <div className="mb-6">
                 <CustomSelect
                   value={selectedProductToRename}
@@ -1065,10 +1050,10 @@ export default function TripBuilderPage() {
                 取消
               </button>
               <button 
-                onClick={showQuickResolveModal.type === 'rename' ? finishResolveRename : finishResolveCreate}
-                disabled={showQuickResolveModal.type === 'rename' && !selectedProductToRename}
+                onClick={showQuickResolveModal.type === 'map' ? finishResolveMap : finishResolveCreate}
+                disabled={showQuickResolveModal.type === 'map' && !selectedProductToRename}
                 className={`px-6 py-2 rounded-lg font-bold text-white shadow-lg transition-transform active:scale-95 ${
-                  showQuickResolveModal.type === 'rename' ? 'bg-blue-600' : 'bg-slate-800'
+                  showQuickResolveModal.type === 'map' ? 'bg-blue-600' : 'bg-slate-800'
                 }`}
               >
                 確 定
