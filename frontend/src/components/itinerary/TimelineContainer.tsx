@@ -182,7 +182,15 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
             >
                 <div style={styles.contentWrapper}>
                     {timeline.map((day, index) => (
-                        <div id={`day-row-${day.dayNumber}`} key={day.dayNumber}>
+                        <div 
+                            id={`day-row-${day.dayNumber}`} 
+                            key={day.dayNumber}
+                            onClick={() => {
+                                if (activeDay !== day.dayNumber) {
+                                    setActiveDay(day.dayNumber);
+                                }
+                            }}
+                        >
                             <TimelineDayRow
                                 day={day}
                                 colorTheme={dayColorThemes[index % dayColorThemes.length]}
