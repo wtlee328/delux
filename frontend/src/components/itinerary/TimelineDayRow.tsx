@@ -145,8 +145,9 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     const containerStyle = {
         ...styles.container,
         boxShadow: isActive ? `0 0 0 2px ${colorTheme.dot}, 0 4px 15px -3px rgba(0,0,0,0.1)` : '0 2px 8px rgba(0,0,0,0.05)',
-        borderLeft: `6px solid ${isActive ? colorTheme.dot : 'transparent'}`,
+        borderLeft: `6px solid ${isActive ? colorTheme.dot : '#fafafa'}`,
         transition: 'all 0.3s ease',
+        overflow: 'hidden',
     };
 
     const dayColumnStyle = {
@@ -469,7 +470,6 @@ const styles = {
         cursor: 'pointer',
         minHeight: '80px',
         transition: 'background-color 0.2s',
-        borderRadius: '12px',
         overflow: 'hidden',
     },
     dayColumn: {
