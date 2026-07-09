@@ -82,6 +82,59 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
         }
     };
 
+    const activeDayRef = useRef(activeDay);
+    useEffect(() => {
+        activeDayRef.current = activeDay;
+    }, [activeDay]);
+
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+            if (isAtBottom && timeline.length > 0) {
+                const lastDay = timeline[timeline.length - 1].dayNumber;
+                if (activeDayRef.current !== lastDay) {
+                    setActiveDay(lastDay);
+                }
+                return;
+            }
+
+            const containerTop = container.getBoundingClientRect().top;
+            let bestDayNumber = activeDayRef.current;
+            let minDistance = Infinity;
+
+            timeline.forEach(day => {
+                const element = document.getElementById(`day-row-${day.dayNumber}`);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    if (rect.top <= containerTop + 100 && rect.bottom > containerTop + 100) {
+                        bestDayNumber = day.dayNumber;
+                        minDistance = 0;
+                    } else {
+                        const distance = Math.abs(rect.top - containerTop);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            bestDayNumber = day.dayNumber;
+                        }
+                    }
+                }
+            });
+
+            if (activeDayRef.current !== bestDayNumber) {
+                setActiveDay(bestDayNumber);
+            }
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+        };
+    }, [timeline]);
+
     const scrollToDay = (dayNumber: number) => {
         // Only scroll, do not force expand (per user request)
         setActiveDay(dayNumber);
