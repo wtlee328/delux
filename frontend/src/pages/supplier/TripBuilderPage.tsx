@@ -426,6 +426,7 @@ export default function TripBuilderPage() {
         const newItems = segments.map(segment => {
           currentSort++;
           const match = products.find(p => 
+            p.category === 'landmark' &&
             p.title.trim() === segment && 
             (p.destination || '').trim().toLowerCase().includes(destination.trim().toLowerCase())
           );

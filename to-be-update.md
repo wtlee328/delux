@@ -1,0 +1,4 @@
+In supplier role, When deleting a product that is used in an approved trip, system should notify the supplier the trips that are affected and ask for confirmation to delete/update to draft the trips. Only when the affected trips are all deleted or in draft status, the product can be deleted. If the affected trips are in approved status, the product cannot be deleted. If the affected trips are in pending status, the product can be deleted but the deleted product in trip itinerary should be in warning status and ask for user to 1. 選取現有產品並修正名稱 or 2. 以此名稱建立新產品, same as the warning status when creating a new product in trip editor.
+Update the operation buttons in manager role.
+Create the visual design for trips in agency view
+Add cover img upload for trips.
