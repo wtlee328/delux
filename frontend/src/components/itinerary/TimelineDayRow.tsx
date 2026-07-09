@@ -22,6 +22,7 @@ interface TimelineDayRowProps {
     onShowDayRoute?: (dayNumber: number) => void;
     isFocused?: boolean;
     onItemHover?: (itemId: string | null) => void;
+    isActive?: boolean;
 }
 
 // Meal predefined options
@@ -123,6 +124,7 @@ const getDisplayText = (idValue: string | null | undefined, customValue: string 
 
 export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     day,
+    colorTheme,
     onDelete,
     onReorder,
     onAddItem,
@@ -134,10 +136,30 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     onShowDayRoute,
     isFocused,
     onItemHover,
+    isActive,
 }) => {
     const foodProducts = products.filter(p => p.productType === 'food');
     const accommodationProducts = products.filter(p => p.productType === 'accommodation');
     const landmarkProducts = products.filter(p => p.productType === 'landmark');
+
+    const containerStyle = {
+        ...styles.container,
+        boxShadow: isActive ? `0 0 0 2px ${colorTheme.dot}, 0 4px 15px -3px rgba(0,0,0,0.1)` : '0 2px 8px rgba(0,0,0,0.05)',
+        borderLeft: `6px solid ${isActive ? colorTheme.dot : 'transparent'}`,
+        transition: 'all 0.3s ease',
+    };
+
+    const dayColumnStyle = {
+        ...styles.dayColumn,
+        backgroundColor: isActive ? colorTheme.light : '#fafafa',
+        transition: 'background-color 0.3s ease',
+    };
+
+    const dayNumberStyle = {
+        ...styles.dayNumber,
+        color: isActive ? colorTheme.dot : '#2d3436',
+        transition: 'color 0.3s ease',
+    };
 
     const { setNodeRef, isOver } = useDroppable({
         id: `day-${day.dayNumber}`,
@@ -159,11 +181,11 @@ export const TimelineDayRow: React.FC<TimelineDayRowProps> = ({
     };
 
     return (
-        <div style={styles.container}>
+        <div style={containerStyle}>
             {/* Summary Card */}
             <div style={styles.summaryCard} onClick={onToggle}>
-                <div style={styles.dayColumn}>
-                    <div style={styles.dayNumber}>
+                <div style={dayColumnStyle}>
+                    <div style={dayNumberStyle}>
                         第<span style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{day.dayNumber}</span>天
                     </div>
                 </div>

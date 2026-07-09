@@ -200,6 +200,7 @@ export const TimelineContainer = React.forwardRef<TimelineContainerRef, Timeline
                                 onShowDayRoute={onShowDayRoute}
                                 isFocused={focusedDay === day.dayNumber}
                                 onItemHover={onItemHover}
+                                isActive={activeDay === day.dayNumber}
                             />
                         </div>
                     ))}
