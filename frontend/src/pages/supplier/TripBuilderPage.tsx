@@ -930,7 +930,7 @@ export default function TripBuilderPage() {
                         setNewProductParams({ category: 'accommodation', dayIndex: day.dayIndex });
                         return;
                       }
-                      if (['五星或同級', '四星或同級', '三星或同級'].includes(val)) {
+                      if (['五星或同級', '四星或同級', '三星或同級', '回到溫暖的家'].includes(val)) {
                         handleDayChange(day.dayIndex, 'hotelId', null);
                         handleDayChange(day.dayIndex, 'hotelCustom', val);
                       } else {
@@ -944,6 +944,7 @@ export default function TripBuilderPage() {
                       <option value="五星或同級">五星或同級</option>
                       <option value="四星或同級">四星或同級</option>
                       <option value="三星或同級">三星或同級</option>
+                      <option value="回到溫暖的家">回到溫暖的家</option>
                     </optgroup>
                     <optgroup label="現有住宿產品">
                       {getProductsByCategory('accommodation').map(p => (

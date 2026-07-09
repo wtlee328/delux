@@ -28,7 +28,7 @@ interface TimelineDayRowProps {
 // Meal predefined options
 const MEAL_PREDEFINED_OPTIONS = ['酒店享用', '自理', '機上'];
 // Hotel predefined options
-const HOTEL_PREDEFINED_OPTIONS = ['五星或同級', '四星或同級', '三星或同級'];
+const HOTEL_PREDEFINED_OPTIONS = ['五星或同級', '四星或同級', '三星或同級', '回到溫暖的家'];
 
 const MealSelect: React.FC<{
     label: string;
